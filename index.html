@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BE RELAX — Massage Center and Spa | Dubai</title>
-<meta name="description" content="BE RELAX Massage Center and Spa — deep tissue, Swedish, hot stone, aromatherapy, Thai massage, Moroccan and Turkish bath. A warm candlelit sanctuary in Dubai.">
+<title>BE RELAX — Massage Center and Spa | Abu Dhabi</title>
+<meta name="description" content="BE RELAX Massage Center and Spa — deep tissue, Swedish, hot stone, aromatherapy, Thai massage, Moroccan and Turkish bath. A warm candlelit sanctuary in Abu Dhabi.">
+<link rel="icon" href="assets/logo/be-relax-logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -71,15 +72,20 @@ h1,h2,h3,h4{font-family:var(--serif);font-weight:400;line-height:1.15;margin:0;l
 
 /* ---------- header ---------- */
 header{
-  position:sticky;top:0;z-index:60;background:rgba(251,246,239,.88);
+  position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);
   backdrop-filter:blur(14px);border-bottom:1px solid var(--line);transition:.3s
 }
-header.scrolled{background:rgba(255,255,255,.96);box-shadow:var(--shadow-sm)}
-.nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:82px}
+header.scrolled{background:rgba(255,255,255,.98);box-shadow:var(--shadow-sm)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:92px}
 
 /* logo lockup — swaps to the real PNG the moment it is uploaded */
 .logo{display:flex;align-items:center;gap:13px;flex:none}
-.logo img{height:52px;width:auto;object-fit:contain}
+/* The logo files are used byte-for-byte as supplied. The wrapper simply crops
+   to the artwork's own bounding box, and mix-blend-mode drops the flat JPEG
+   background — neither touches the mark itself. */
+.logo-img-wrap{position:relative;overflow:hidden;height:64px;aspect-ratio:948/465;flex:none;display:none}
+.logo-img-wrap img{position:absolute;width:129.96%;max-width:none;left:-15.08%;top:-78.49%;
+  mix-blend-mode:multiply}
 .logo .mark{width:44px;height:44px;flex:none;color:var(--mint-800)}
 .logo .word{line-height:1}
 .logo .word b{
@@ -91,8 +97,7 @@ header.scrolled{background:rgba(255,255,255,.96);box-shadow:var(--shadow-sm)}
   color:var(--muted);margin-top:3px;font-weight:400
 }
 .logo-fallback{display:flex;align-items:center;gap:13px}
-.logo-img{display:none}
-.logo.has-file .logo-img{display:block}
+.logo.has-file .logo-img-wrap{display:block}
 .logo.has-file .logo-fallback{display:none}
 
 .menu{display:flex;gap:26px;align-items:center;margin:0 auto}
@@ -134,8 +139,8 @@ header.scrolled{background:rgba(255,255,255,.96);box-shadow:var(--shadow-sm)}
 /* hero visual: photo slot with SVG art underneath */
 .hero-art{position:relative}
 .frame{
-  position:relative;border-radius:200px 200px var(--r) var(--r);
-  overflow:hidden;box-shadow:var(--shadow-lg);aspect-ratio:4/5;
+  position:relative;border-radius:var(--r);
+  overflow:hidden;box-shadow:var(--shadow-lg);aspect-ratio:4/3;
   background:linear-gradient(160deg,var(--mint-200),var(--mint-100))
 }
 .frame img{width:100%;height:100%;object-fit:cover;display:none}
@@ -173,9 +178,9 @@ section{padding:118px 0}
 .tick{list-style:none;padding:0;margin:26px 0 32px;display:grid;gap:13px}
 .tick li{display:flex;gap:12px;align-items:flex-start;font-size:15px;color:var(--ink)}
 .tick svg{width:20px;height:20px;color:var(--mint-500);flex:none;margin-top:3px}
-.about-art{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.about-art .frame{border-radius:var(--r);aspect-ratio:3/4}
-.about-art .frame:first-child{border-radius:160px 160px var(--r) var(--r);margin-top:34px}
+.about-art{display:grid;gap:16px}
+.about-art .frame{aspect-ratio:3/2}
+
 
 /* ---------- services ---------- */
 .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
@@ -214,6 +219,7 @@ section{padding:118px 0}
 }
 .member:hover .frame{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
 .member h3{font-size:21px;margin-bottom:4px}
+.member span{display:block}
 .member span{font-size:11px;letter-spacing:.17em;text-transform:uppercase;color:var(--mint-600)}
 .member .langs{font-size:13px;color:var(--muted);font-weight:300;margin-top:7px}
 .ph-note{
@@ -228,28 +234,16 @@ section{padding:118px 0}
 }
 
 /* ---------- gallery ---------- */
-.gallery{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:200px;gap:16px}
-.gallery .frame{border-radius:var(--r);aspect-ratio:auto;height:100%}
-.gallery .g-tall{grid-row:span 2}
-.gallery .g-wide{grid-column:span 2}
+.gallery{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.gallery .frame{aspect-ratio:3/2}
+.gallery .g-full{grid-column:1/-1;aspect-ratio:5/2}
 
 /* ---------- video ---------- */
-.video-wrap{
-  border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-lg);
-  background:var(--mint-800);position:relative;aspect-ratio:16/9
-}
-.video-wrap video{width:100%;height:100%;object-fit:cover;display:block}
-.video-empty{
-  position:absolute;inset:0;display:grid;place-content:center;justify-items:center;
-  gap:16px;text-align:center;color:#F0E4D2;padding:32px;
-  background:
-    radial-gradient(60% 60% at 50% 40%,rgba(95,184,172,.34),transparent 70%),
-    linear-gradient(160deg,#4A3220,#2C1F16)
-}
-.video-empty svg{width:54px;height:54px;opacity:.65}
-.video-empty b{font-family:var(--serif);font-size:25px;font-weight:500}
-.video-empty p{margin:0;font-size:14px;font-weight:300;color:#C7B49A;max-width:34em}
-
+.reels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;
+  max-width:720px;margin:0 auto}
+.reel{aspect-ratio:9/16;border-radius:var(--r);overflow:hidden;
+  box-shadow:var(--shadow-lg);background:var(--mint-900)}
+.reel video{width:100%;height:100%;object-fit:cover;display:block;background:var(--mint-900)}
 /* ---------- testimonials ---------- */
 .quote{
   background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:34px 30px
@@ -310,6 +304,8 @@ footer h4{color:#fff;font-size:12px;letter-spacing:.18em;text-transform:uppercas
   font-family:var(--sans);font-weight:500;margin-bottom:18px}
 footer a:hover{color:#fff}
 footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.5px}
+.f-logo .logo-img-wrap{aspect-ratio:717/352;height:58px}
+.f-logo .logo-img-wrap img{width:102.93%;left:-1.67%;top:-53.41%;mix-blend-mode:screen}
 .f-logo .word b{color:#fff}
 .f-logo .word span{color:#B49B7C}
 .f-logo .mark{color:#fff}
@@ -361,6 +357,8 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   .nav-cta .btn-ghost{display:none}
 }
 @media(max-width:620px){
+  .badge{left:8px;bottom:-18px}
+  .reels{grid-template-columns:1fr;max-width:360px}
   section{padding:64px 0}
   .wrap{padding-inline:18px}
   .grid-3,.grid-4,.strip .wrap,.f-grid,.gallery,.row-2{grid-template-columns:1fr}
@@ -370,6 +368,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   .about-art .frame:first-child{margin-top:0}
   form{padding:28px 22px}
   .logo .word b{font-size:22px}
+  .logo-img-wrap{height:50px}
   .logo img{height:44px}
 }
 
@@ -721,11 +720,11 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   <div class="wrap">
     <div class="tb-group">
       <span class="tb-item"><svg><use href="#i-clock"/></svg> Open daily · 10:00 – 23:00</span>
-      <span class="tb-item"><svg><use href="#i-pin"/></svg> Dubai, United Arab Emirates</span>
+      <span class="tb-item"><svg><use href="#i-pin"/></svg> 250 Al Meena St, Al Zahiyah, Abu Dhabi</span>
     </div>
     <div class="tb-group">
-      <a class="tb-item" href="tel:+971000000000"><svg><use href="#i-phone"/></svg> +971 00 000 0000</a>
-      <a class="tb-item" href="mailto:hello@berelaxspa.ae"><svg><use href="#i-mail"/></svg> hello@berelaxspa.ae</a>
+      <a class="tb-item" href="tel:+971525108633"><svg><use href="#i-phone"/></svg> 052 510 8633</a>
+      <a class="tb-item" href="https://wa.me/971525108633" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg> WhatsApp</a>
     </div>
   </div>
 </div>
@@ -735,7 +734,8 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   <div class="wrap nav">
     <a href="#top" class="logo" id="logo" aria-label="BE RELAX — Massage Center and Spa">
       <!-- Real logo file. Drop assets/logo/be-relax-logo.png in and it appears automatically. -->
-      <img class="logo-img" src="assets/logo/be-relax-logo.png" alt="BE RELAX — Massage Center and Spa">
+      <span class="logo-img-wrap"><img class="logo-img" src="assets/logo/be-relax-logo.jpg"
+            alt="BE RELAX — Massage Center and Spa"></span>
       <!-- Temporary wordmark shown only while the logo file is missing -->
       <span class="logo-fallback">
         <svg class="mark" aria-hidden="true"><use href="#m-butterfly"/></svg>
@@ -753,7 +753,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
     </nav>
 
     <div class="nav-cta">
-      <a href="tel:+971000000000" class="btn btn-ghost">Call Us</a>
+      <a href="tel:+971525108633" class="btn btn-ghost">Call Us</a>
       <a href="#contact" class="btn btn-primary">Book Now</a>
       <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
         <svg><use href="#i-menu" id="burger-icon"/></svg>
@@ -812,7 +812,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   </div>
   <div class="wrap">
     <div>
-      <p class="eyebrow">Massage Center and Spa · Dubai</p>
+      <p class="eyebrow">Massage Center and Spa · Abu Dhabi</p>
       <h1>Where the city fades<br>and you <em>simply breathe</em>.</h1>
       <p class="lead">
         A candlelit sanctuary of warm teak, steam and slow hands.
@@ -831,8 +831,8 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
     </div>
 
     <div class="hero-art">
-      <div class="frame ph" data-src="assets/photos/hero.jpg">
-        <img alt="BE RELAX spa interior">
+      <div class="frame ph" data-src="assets/photos/spa-02.jpg">
+        <img alt="Candlelit pool and waterfall at BE RELAX">
         <svg class="art" aria-hidden="true"><use href="#a-stones"/></svg>
       </div>
       <div class="badge">
@@ -857,8 +857,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 <section id="about">
   <div class="wrap about rv">
     <div class="about-art">
-      <div class="frame ph" data-src="assets/photos/about-01.jpg"><img alt="Treatment room"><svg class="art"><use href="#a-bamboo"/></svg></div>
-      <div class="frame ph" data-src="assets/photos/about-02.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-lotus"/></svg></div>
+      <div class="frame ph" data-src="assets/photos/spa-03.jpg"><img alt="Massage in progress at BE RELAX"><svg class="art"><use href="#a-bamboo"/></svg></div>
     </div>
     <div>
       <p class="eyebrow">Our Philosophy</p>
@@ -976,39 +975,82 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 
     <div class="grid-4 rv">
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-01.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
-        <h3>Lina</h3><span>Deep Tissue &amp; Sports</span>
-        <p class="langs">English · Arabic</p>
+        <div class="frame ph" data-src="assets/team/team-01.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-02.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
-        <h3>Maya</h3><span>Thai &amp; Stretching</span>
-        <p class="langs">English · Thai</p>
+        <div class="frame ph" data-src="assets/team/team-02.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-03.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
-        <h3>Sofia</h3><span>Aromatherapy &amp; Swedish</span>
-        <p class="langs">English · Russian</p>
+        <div class="frame ph" data-src="assets/team/team-03.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-04.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
-        <h3>Nadia</h3><span>Moroccan Bath Specialist</span>
-        <p class="langs">Arabic · French</p>
+        <div class="frame ph" data-src="assets/team/team-04.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-05.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
-        <h3>Elena</h3><span>Hot Stone &amp; Relaxation</span>
-        <p class="langs">English · Russian</p>
+        <div class="frame ph" data-src="assets/team/team-05.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-06.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
-        <h3>Aisha</h3><span>Four Hands &amp; Reflexology</span>
-        <p class="langs">English · Arabic</p>
+        <div class="frame ph" data-src="assets/team/team-06.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-07.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-08.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-09.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-10.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-11.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-12.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-13.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-14.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-15.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-16.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-17.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-18.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-19.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <span>Certified Therapist</span>
       </div>
     </div>
-
-    <p class="center"><span class="ph-note"><svg><use href="#i-cam"/></svg>
-      Upload team photos as <code>team-01.jpg</code> … <code>team-06.jpg</code> to <code>assets/team/</code></span></p>
   </div>
 </section>
 
@@ -1023,16 +1065,11 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
     </div>
 
     <div class="gallery rv">
-      <div class="frame ph g-tall" data-src="assets/photos/gallery-01.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-water"/></svg></div>
-      <div class="frame ph g-wide" data-src="assets/photos/gallery-02.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-leaf"/></svg></div>
-      <div class="frame ph" data-src="assets/photos/gallery-03.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-fern"/></svg></div>
-      <div class="frame ph" data-src="assets/photos/gallery-04.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-lotus"/></svg></div>
-      <div class="frame ph" data-src="assets/photos/gallery-05.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-stones"/></svg></div>
-      <div class="frame ph g-wide" data-src="assets/photos/gallery-06.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-bamboo"/></svg></div>
+      <div class="frame ph g-full" data-src="assets/photos/spa-01.jpg"><img alt="Treatment room and pool"><svg class="art"><use href="#a-water"/></svg></div>
+      <div class="frame ph" data-src="assets/photos/spa-02.jpg"><img alt="Candlelit pool"><svg class="art"><use href="#a-lotus"/></svg></div>
+      <div class="frame ph" data-src="assets/photos/spa-03.jpg"><img alt="Massage room"><svg class="art"><use href="#a-fern"/></svg></div>
     </div>
 
-    <p class="center"><span class="ph-note"><svg><use href="#i-cam"/></svg>
-      Upload gallery images to <code>assets/photos/</code></span></p>
   </div>
 </section>
 
@@ -1046,15 +1083,18 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
       <p class="lead">A short walk through the center — the rooms, the steam and the quiet.</p>
     </div>
 
-    <div class="video-wrap rv">
-      <video id="spa-video" controls playsinline preload="none"
-             poster="assets/videos/spa-tour-poster.jpg" style="display:none">
-        <source src="assets/videos/spa-tour.mp4" type="video/mp4">
-      </video>
-      <div class="video-empty" id="video-empty">
-        <svg><use href="#i-play"/></svg>
-        <b>Your spa tour video goes here</b>
-        <p>Upload <code style="color:#DCF1E8">spa-tour.mp4</code> to <code style="color:#DCF1E8">assets/videos/</code> and this player switches on automatically.</p>
+    <div class="reels rv">
+      <div class="reel">
+        <video controls playsinline muted preload="metadata">
+          <source src="assets/videos/spa-tour-01.mp4" type="video/mp4">
+          Your browser cannot play this video.
+        </video>
+      </div>
+      <div class="reel">
+        <video controls playsinline muted preload="metadata">
+          <source src="assets/videos/spa-tour-02.mp4" type="video/mp4">
+          Your browser cannot play this video.
+        </video>
       </div>
     </div>
   </div>
@@ -1081,7 +1121,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
       </div>
       <div class="quote">
         <div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div>
-        <p>&ldquo;Booked the four hands massage on a whim before a flight. Easily the most relaxed I have ever been in Dubai.&rdquo;</p>
+        <p>&ldquo;Booked the four hands massage on a whim before a flight. Easily the most relaxed I have ever been in Abu Dhabi.&rdquo;</p>
         <div class="who"><div class="av">S</div><div><b>Sara H.</b><span>Four Hands · 60 min</span></div></div>
       </div>
     </div>
@@ -1103,11 +1143,14 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 
       <div class="info">
         <div class="it"><div class="ico"><svg><use href="#i-pin"/></svg></div>
-          <div><b>Visit Us</b><span>Street address, Dubai, United Arab Emirates</span></div></div>
+          <div><b>Visit Us</b><span>250 Al Meena Street, Al Zahiyah,<br>E14, Abu Dhabi, United Arab Emirates</span></div></div>
+        <div class="it"><div class="ico"><svg><use href="#i-wa"/></svg></div>
+          <div><b>Call or WhatsApp</b>
+            <a href="https://wa.me/971525108633" target="_blank" rel="noopener">052 510 8633</a></div></div>
         <div class="it"><div class="ico"><svg><use href="#i-phone"/></svg></div>
-          <div><b>Call or WhatsApp</b><a href="tel:+971000000000">+971 00 000 0000</a></div></div>
-        <div class="it"><div class="ico"><svg><use href="#i-mail"/></svg></div>
-          <div><b>Email</b><a href="mailto:hello@berelaxspa.ae">hello@berelaxspa.ae</a></div></div>
+          <div><b>Mobile</b><a href="tel:+971563429399">056 342 9399</a></div></div>
+        <div class="it"><div class="ico"><svg><use href="#i-phone"/></svg></div>
+          <div><b>Landline</b><a href="tel:+97125576533">02 557 6533</a></div></div>
         <div class="it"><div class="ico"><svg><use href="#i-clock"/></svg></div>
           <div><b>Opening Hours</b><span>Every day · 10:00 – 23:00</span></div></div>
       </div>
@@ -1145,20 +1188,21 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
     <div class="f-grid">
       <div>
         <div class="logo f-logo" id="logo-footer">
-          <img class="logo-img" src="assets/logo/be-relax-logo-white.png" alt="BE RELAX — Massage Center and Spa">
+          <span class="logo-img-wrap"><img class="logo-img" src="assets/logo/be-relax-logo-white.jpg"
+                alt="BE RELAX — Massage Center and Spa"></span>
           <span class="logo-fallback">
             <svg class="mark"><use href="#m-butterfly"/></svg>
             <span class="word"><b>BE RELAX</b><span>Massage Center and Spa</span></span>
           </span>
         </div>
         <p class="f-about">
-          A candlelit sanctuary in Dubai. Certified therapists, natural oils
+          A candlelit sanctuary in Abu Dhabi. Certified therapists, natural oils
           and treatments shaped around your body — not a fixed script.
         </p>
         <div class="social">
           <a href="#" aria-label="Instagram"><svg><use href="#i-ig"/></svg></a>
           <a href="#" aria-label="Facebook"><svg><use href="#i-fb"/></svg></a>
-          <a href="#" aria-label="WhatsApp"><svg><use href="#i-wa"/></svg></a>
+          <a href="https://wa.me/971525108633" target="_blank" rel="noopener" aria-label="WhatsApp"><svg><use href="#i-wa"/></svg></a>
         </div>
       </div>
       <div><h4>Explore</h4><ul>
@@ -1170,15 +1214,16 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
         <li><a href="#services">Hot Stone</a></li><li><a href="#services">Four Hands</a></li>
       </ul></div>
       <div><h4>Visit</h4><ul>
-        <li>Street address, Dubai, UAE</li>
-        <li><a href="tel:+971000000000">+971 00 000 0000</a></li>
-        <li><a href="mailto:hello@berelaxspa.ae">hello@berelaxspa.ae</a></li>
+        <li>250 Al Meena Street, Al Zahiyah<br>E14, Abu Dhabi, UAE</li>
+        <li><a href="https://wa.me/971525108633" target="_blank" rel="noopener">052 510 8633 · WhatsApp</a></li>
+        <li><a href="tel:+971563429399">056 342 9399</a></li>
+        <li><a href="tel:+97125576533">02 557 6533</a></li>
         <li>Daily · 10:00 – 23:00</li>
       </ul></div>
     </div>
     <div class="f-bottom">
       <span>&copy; <span id="yr">2026</span> BE RELAX Massage Center and Spa. All rights reserved.</span>
-      <span>Dubai, United Arab Emirates</span>
+      <span>Al Zahiyah, Abu Dhabi</span>
     </div>
   </div>
 </footer>
@@ -1189,7 +1234,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   <div class="box" id="lb-box"></div>
 </div>
 
-<a class="fab" href="https://wa.me/971000000000" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+<a class="fab" href="https://wa.me/971525108633" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
   <svg><use href="#i-wa"/></svg>
 </a>
 
@@ -1236,19 +1281,6 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
     probe.onload = function(){ img.src = src; frame.classList.add("has-file"); };
     probe.src = src;
   });
-
-  /* --- video: reveal the player only if the file is really there --- */
-  (function(){
-    var v = document.getElementById("spa-video"),
-        empty = document.getElementById("video-empty");
-    fetch("assets/videos/spa-tour.mp4", {method:"HEAD"})
-      .then(function(r){
-        if(!r.ok) return;
-        v.style.display = "block";
-        empty.style.display = "none";
-      })
-      .catch(function(){ /* file not uploaded yet — keep the placeholder */ });
-  })();
 
   /* --- reveal on scroll --- */
   var io = new IntersectionObserver(function(entries){
@@ -1359,7 +1391,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   addEventListener("keydown", function(e){ if(e.key === "Escape" && lb.classList.contains("on")) closeLb(); });
 
   /* --- booking form → WhatsApp --- */
-  var WHATSAPP = "971000000000";           /* <-- put your real number here */
+  var WHATSAPP = "971525108633";           /* <-- put your real number here */
   document.getElementById("booking").addEventListener("submit", function(e){
     e.preventDefault();
     var f = e.target;
