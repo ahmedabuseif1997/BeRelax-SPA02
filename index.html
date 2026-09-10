@@ -435,11 +435,31 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 .falls{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
 
 /* far cliff haze */
+/* a slow breath of warm light instead of falling streaks */
 .falls::before{
-  content:"";position:absolute;inset:0;
+  content:"";position:absolute;inset:-12%;
   background:
-    linear-gradient(180deg,rgba(95,184,172,.17),rgba(143,211,200,.07) 40%,transparent 68%),
-    radial-gradient(50% 56% at 74% 0%,rgba(62,154,142,.16),transparent 64%)
+    radial-gradient(38% 52% at 26% 34%,rgba(240,205,150,.26),transparent 70%),
+    radial-gradient(44% 56% at 76% 18%,rgba(226,214,190,.28),transparent 72%);
+  filter:blur(26px);animation:veil 22s ease-in-out infinite alternate
+}
+@keyframes veil{
+  from{transform:translate3d(-3%,2%,0) scale(1)}
+  to  {transform:translate3d(5%,-3%,0) scale(1.06)}
+}
+
+/* embers of candlelight drifting upward */
+.mote{
+  position:absolute;left:var(--x);bottom:-6%;width:var(--s);height:var(--s);
+  border-radius:50%;opacity:0;
+  background:radial-gradient(circle,rgba(255,240,214,.95),rgba(236,196,132,0) 70%);
+  animation:mote var(--d) ease-in-out infinite var(--dl);will-change:transform
+}
+@keyframes mote{
+  0%  {transform:translate3d(0,0,0) scale(.5);opacity:0}
+  18% {opacity:.75}
+  74% {opacity:.4}
+  100%{transform:translate3d(var(--dx),calc(-1 * var(--h)),0) scale(1.15);opacity:0}
 }
 /* the falling curtain reads as one sheet of water behind the ribbons */
 .falls::after{
@@ -450,27 +470,11 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 }
 @keyframes sheet{from{transform:translateY(-12%)}to{transform:translateY(12%)}}
 
-/* falling ribbons of water */
-.stream{
-  position:absolute;top:-55%;left:var(--x);width:var(--w);height:62%;
-  border-radius:999px;opacity:var(--o);
-  background:linear-gradient(to bottom,
-    transparent,rgba(255,255,255,.98) 18%,rgba(95,184,172,.85) 55%,rgba(42,110,102,.45) 80%,transparent);
-  box-shadow:0 0 6px rgba(255,255,255,.55);
-  animation:fall var(--d) linear infinite var(--dl);
-  will-change:transform
-}
-@keyframes fall{
-  0%{transform:translateY(0) scaleY(.85);opacity:0}
-  12%{opacity:var(--o)}
-  88%{opacity:var(--o)}
-  100%{transform:translateY(285%) scaleY(1.15);opacity:0}
-}
 
 /* spray/mist gathering at the base */
 .mist{
   position:absolute;left:-6%;right:-6%;bottom:-4%;height:46%;
-  background:radial-gradient(64% 100% at 50% 100%,rgba(255,255,255,.96),rgba(237,224,206,.5) 45%,transparent 75%);
+  background:radial-gradient(66% 100% at 50% 100%,rgba(255,248,236,.7),rgba(237,224,206,.34) 48%,transparent 78%);
   filter:blur(18px);animation:mist 8s ease-in-out infinite alternate
 }
 @keyframes mist{
@@ -478,29 +482,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   to  {opacity:.9;transform:translateY(-8px) scale(1.07)}
 }
 
-/* rising droplets */
-.drop{
-  position:absolute;bottom:6%;left:var(--x);width:var(--s);height:var(--s);
-  border-radius:50%;background:rgba(255,255,255,.9);opacity:0;
-  animation:rise var(--d) ease-in infinite var(--dl);will-change:transform
-}
-@keyframes rise{
-  0%{transform:translateY(0) scale(.4);opacity:0}
-  18%{opacity:.85}
-  100%{transform:translateY(calc(-1 * var(--h))) scale(1);opacity:0}
-}
 
-/* still pool rings at the foot of the falls */
-.ring{
-  position:absolute;left:50%;bottom:5%;width:var(--w);height:calc(var(--w) * .26);
-  margin-left:calc(var(--w) / -2);border:1.5px solid rgba(255,255,255,.95);
-  border-radius:50%;opacity:0;animation:ring var(--d) ease-out infinite var(--dl)
-}
-@keyframes ring{
-  0%{transform:scale(.25);opacity:0}
-  22%{opacity:.75}
-  100%{transform:scale(1.6);opacity:0}
-}
 
 /* drifting leaves across the whole page */
 .leafdrift{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
@@ -547,9 +529,8 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 
 /* --- respect reduced motion --- */
 @media(prefers-reduced-motion:reduce){
-  .stream,.mist,.drop,.ring,.lf{animation:none}
-  .leafdrift,.drop,.ring{display:none}
-  .stream{opacity:.28}
+  .mist,.mote,.lf,.falls::before{animation:none}
+  .leafdrift,.mote{display:none}
   .rv{opacity:1;transform:none;transition:none}
   html{scroll-behavior:auto}
 }
@@ -769,52 +750,23 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 
 <!-- ============ HERO ============ -->
 <div class="hero">
-  <div class="falls" aria-hidden="true">
-    <span class="stream" style="--x:45.3%;--w:3.7px;--d:8.1s;--o:0.59;--dl:-4.3s"></span>
-    <span class="stream" style="--x:58.6%;--w:2.2px;--d:6.1s;--o:0.68;--dl:-6.7s"></span>
-    <span class="stream" style="--x:10.2%;--w:2.7px;--d:4.0s;--o:0.68;--dl:-5.9s"></span>
-    <span class="stream" style="--x:5.1%;--w:5.4px;--d:8.3s;--o:0.68;--dl:-5.2s"></span>
-    <span class="stream" style="--x:16.4%;--w:1.6px;--d:6.2s;--o:0.37;--dl:-1.6s"></span>
-    <span class="stream" style="--x:24.7%;--w:1.6px;--d:5.9s;--o:0.58;--dl:-7.2s"></span>
-    <span class="stream" style="--x:51.9%;--w:4.1px;--d:6.0s;--o:0.68;--dl:-3.9s"></span>
-    <span class="stream" style="--x:28.3%;--w:5.5px;--d:8.5s;--o:0.68;--dl:-6.0s"></span>
-    <span class="stream" style="--x:31.9%;--w:2.4px;--d:5.0s;--o:0.38;--dl:-6.5s"></span>
-    <span class="stream" style="--x:40.2%;--w:4.9px;--d:5.5s;--o:0.68;--dl:-7.2s"></span>
-    <span class="stream" style="--x:1.1%;--w:2.3px;--d:8.1s;--o:0.59;--dl:-8.3s"></span>
-    <span class="stream" style="--x:39.9%;--w:1.8px;--d:6.7s;--o:0.68;--dl:-2.3s"></span>
-    <span class="stream" style="--x:9.5%;--w:2.8px;--d:8.3s;--o:0.68;--dl:-1.0s"></span>
-    <span class="stream" style="--x:25.1%;--w:1.9px;--d:3.9s;--o:0.68;--dl:-1.5s"></span>
-    <span class="stream" style="--x:55.8%;--w:3.3px;--d:4.5s;--o:0.68;--dl:-1.1s"></span>
-    <span class="stream" style="--x:64.1%;--w:2.0px;--d:5.7s;--o:0.45;--dl:-2.3s"></span>
-    <span class="stream" style="--x:96.2%;--w:4.7px;--d:5.1s;--o:0.68;--dl:-1.8s"></span>
-    <span class="stream" style="--x:39.6%;--w:4.9px;--d:6.7s;--o:0.39;--dl:-8.4s"></span>
-    <span class="stream" style="--x:21.9%;--w:2.5px;--d:7.4s;--o:0.52;--dl:-2.5s"></span>
-    <span class="stream" style="--x:8.2%;--w:1.9px;--d:6.5s;--o:0.47;--dl:-5.1s"></span>
-    <span class="stream" style="--x:37.4%;--w:3.3px;--d:8.3s;--o:0.60;--dl:-4.9s"></span>
-    <span class="stream" style="--x:85.9%;--w:2.2px;--d:4.4s;--o:0.68;--dl:-7.0s"></span>
-    <span class="stream" style="--x:25.5%;--w:2.3px;--d:7.2s;--o:0.68;--dl:-1.7s"></span>
-    <span class="stream" style="--x:94.1%;--w:5.0px;--d:6.6s;--o:0.57;--dl:-0.9s"></span>
-    <span class="stream" style="--x:4.8%;--w:5.4px;--d:4.8s;--o:0.68;--dl:-2.2s"></span>
-    <span class="stream" style="--x:81.7%;--w:3.9px;--d:5.0s;--o:0.43;--dl:-6.1s"></span>
-    <div class="mist"></div>
-    <span class="drop" style="--x:89.9%;--s:5.8px;--d:6.8s;--h:164px;--dl:-6.1s"></span>
-    <span class="drop" style="--x:10.8%;--s:6.6px;--d:8.0s;--h:195px;--dl:-7.2s"></span>
-    <span class="drop" style="--x:40.5%;--s:4.6px;--d:5.0s;--h:166px;--dl:-0.6s"></span>
-    <span class="drop" style="--x:11.9%;--s:3.8px;--d:5.2s;--h:131px;--dl:-0.5s"></span>
-    <span class="drop" style="--x:6.0%;--s:3.6px;--d:5.0s;--h:134px;--dl:-0.2s"></span>
-    <span class="drop" style="--x:82.9%;--s:5.5px;--d:5.2s;--h:120px;--dl:-3.1s"></span>
-    <span class="drop" style="--x:38.0%;--s:3.5px;--d:8.3s;--h:209px;--dl:-4.2s"></span>
-    <span class="drop" style="--x:48.6%;--s:3.3px;--d:5.0s;--h:131px;--dl:-2.4s"></span>
-    <span class="drop" style="--x:78.9%;--s:3.6px;--d:4.6s;--h:204px;--dl:-4.8s"></span>
-    <span class="drop" style="--x:18.9%;--s:5.2px;--d:4.6s;--h:153px;--dl:-8.8s"></span>
-    <span class="drop" style="--x:82.0%;--s:5.8px;--d:5.7s;--h:134px;--dl:-1.5s"></span>
-    <span class="drop" style="--x:73.9%;--s:5.1px;--d:8.0s;--h:130px;--dl:-2.0s"></span>
-    <span class="drop" style="--x:77.4%;--s:6.9px;--d:8.3s;--h:187px;--dl:-7.4s"></span>
-    <span class="drop" style="--x:71.1%;--s:3.9px;--d:6.8s;--h:133px;--dl:-0.3s"></span>
-    <span class="ring" style="--w:240px;--d:6.0s;--dl:0s"></span>
-    <span class="ring" style="--w:300px;--d:7.5s;--dl:-2.5s"></span>
-    <span class="ring" style="--w:380px;--d:9.0s;--dl:-5.0s"></span>
-  </div>
+  <div class="falls" aria-hidden="true">    <div class="mist"></div>
+    <span class="mote" style="--x:89.9%;--s:10.6px;--d:20.8s;--dl:-1.8s;--dx:13px;--h:447px"></span>
+    <span class="mote" style="--x:52.4%;--s:4.9px;--d:13.1s;--dl:-9.3s;--dx:-39px;--h:457px"></span>
+    <span class="mote" style="--x:4.4%;--s:4.6px;--d:18.8s;--dl:-8.8s;--dx:2px;--h:540px"></span>
+    <span class="mote" style="--x:36.1%;--s:4.4px;--d:19.6s;--dl:-12.4s;--dx:22px;--h:506px"></span>
+    <span class="mote" style="--x:94.2%;--s:6.5px;--d:19.4s;--dl:-7.7s;--dx:10px;--h:518px"></span>
+    <span class="mote" style="--x:31.9%;--s:4.6px;--d:16.2s;--dl:-15.1s;--dx:13px;--h:454px"></span>
+    <span class="mote" style="--x:63.0%;--s:5.3px;--d:13.0s;--dl:-6.8s;--dx:44px;--h:379px"></span>
+    <span class="mote" style="--x:12.9%;--s:4.7px;--d:11.4s;--dl:-5.8s;--dx:10px;--h:566px"></span>
+    <span class="mote" style="--x:33.4%;--s:6.6px;--d:14.2s;--dl:-6.4s;--dx:39px;--h:485px"></span>
+    <span class="mote" style="--x:26.5%;--s:4.7px;--d:19.6s;--dl:-14.9s;--dx:46px;--h:391px"></span>
+    <span class="mote" style="--x:53.8%;--s:10.4px;--d:17.5s;--dl:-19.9s;--dx:-47px;--h:613px"></span>
+    <span class="mote" style="--x:7.3%;--s:6.9px;--d:11.3s;--dl:-17.0s;--dx:26px;--h:612px"></span>
+    <span class="mote" style="--x:78.5%;--s:10.6px;--d:16.9s;--dl:-20.8s;--dx:35px;--h:424px"></span>
+    <span class="mote" style="--x:94.6%;--s:6.6px;--d:13.1s;--dl:-1.6s;--dx:-5px;--h:379px"></span>
+    <span class="mote" style="--x:90.7%;--s:10.7px;--d:13.4s;--dl:-2.2s;--dx:4px;--h:371px"></span>
+    <span class="mote" style="--x:53.6%;--s:9.7px;--d:13.8s;--dl:-8.9s;--dx:56px;--h:453px"></span>  </div>
   <div class="wrap">
     <div>
       <p class="eyebrow">Massage Center and Spa · Abu Dhabi</p>
