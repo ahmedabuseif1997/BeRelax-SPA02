@@ -1,10 +1,11 @@
 # BE RELAX — Massage Center and Spa
 
-Website for **BE RELAX**, a massage centre and spa in Dubai, UAE.
+The website for **BE RELAX Massage Center and Spa**, Abu Dhabi.
 
-The site is currently a **single-file HTML sample**: everything — layout, styling
-and the illustrated placeholder artwork — lives inside `index.html`. There is no
-build step, no framework and nothing to install. Open the file and it works.
+The whole site is a **single file**: `index.html`. Layout, styling, text and
+animations all live inside it. There is no build step, no framework and nothing
+to install — the only other things in the project are the pictures and video
+clips in `assets/`.
 
 ---
 
@@ -12,8 +13,8 @@ build step, no framework and nothing to install. Open the file and it works.
 
 **The simple way:** double-click `index.html` and it opens in your browser.
 
-**The slightly better way** (recommended, because it behaves exactly like the live
-site) — run this from the project folder, then visit <http://localhost:8000>:
+**The better way** — this behaves exactly like the live site. Run this from the
+project folder, then visit <http://localhost:8000>:
 
 ```bash
 python3 -m http.server 8000
@@ -27,143 +28,148 @@ Press `Ctrl + C` in the terminal to stop it.
 
 ```
 BeRelax-SPA02/
-├── index.html            The entire website — layout, styles and text
-├── README.md             This file
+├── index.html          The entire website — layout, styles, text and animations
+├── README.md           This file
 └── assets/
-    ├── logo/             The BE RELAX logo (black + white versions)
-    ├── photos/           Hero, About and gallery photography
-    ├── team/             Therapist portraits for the Our Team section
-    └── videos/           The promotional video clip
+    ├── logo/           2 files   the BE RELAX logo, black and white versions
+    ├── photos/         3 files   the spa photographs
+    ├── team/          19 files   the therapist portraits
+    └── videos/         2 files   the two vertical tour clips
 ```
+
+Every folder has its own README explaining what is in it and how to replace a
+file. Start at [`assets/README.md`](assets/README.md) for the full index.
 
 ---
 
-## Where to put your images and video
+## What's on the page
 
-Each folder has its own short README with the exact file names, sizes and formats
-to use. **The file names must match exactly** — the page looks for specific paths.
+Top to bottom:
 
-| Folder | What goes in it | Instructions |
-|---|---|---|
-| `assets/logo/` | `be-relax-logo.png`, `be-relax-logo-white.png`, `favicon.png` | [assets/logo/README.md](assets/logo/README.md) |
-| `assets/photos/` | `hero.jpg`, `about-01.jpg`, `about-02.jpg`, `gallery-01.jpg`–`gallery-06.jpg` | [assets/photos/README.md](assets/photos/README.md) |
-| `assets/team/` | `team-01.jpg` – `team-06.jpg` | [assets/team/README.md](assets/team/README.md) |
-| `assets/videos/` | `spa-tour.mp4`, `spa-tour-poster.jpg` | [assets/videos/README.md](assets/videos/README.md) |
+| Section | What it is |
+|---|---|
+| **Hero** | Headline, booking buttons and the candlelit pool photo, over an **animated waterfall** background — streams, droplets, mist and ripples drawn in CSS |
+| **Trust strip** | Four short reassurances: licensed, expert therapists, hygiene, open late |
+| **About** | "Rest is not a luxury" — the philosophy, a tick-list of what's included, and a photo |
+| **Treatments** | Nine signature treatments, each with a description, duration and price |
+| **Meet Our Therapists** | The 19 portraits, each captioned *Certified Therapist* |
+| **Gallery** | The three spa photographs; clicking one opens it larger |
+| **Step Inside** | The two portrait video clips, shown side by side as vertical reels |
+| **What People Say** | Three five-star guest reviews |
+| **Book Your Escape** | Address, phone numbers, opening hours, and a booking form |
+| **Footer** | Logo, quick links, visiting details and social icons |
 
-Nothing breaks while a folder is empty. Every image slot shows a soft mint
-illustration until the real file is uploaded, then swaps over automatically.
+Small touches throughout: a sticky header, a gold scroll-progress bar at the very
+top, sections that fade in as you scroll, hero figures that count up, a floating
+WhatsApp button, and a mobile menu. The layout adapts to phones on its own.
+
+The booking form does not email anyone — it **opens WhatsApp with the guest's
+details already typed in**, ready to send to 052 510 8633.
 
 ---
 
-## Editing the site content
+## Contact details on the site
 
-All text lives in `index.html`. Open it in any text editor, use **Find**
-(`Ctrl + F` / `Cmd + F`) to jump to what you want, change the words between the
-tags, and save. The comment markers in capitals — like `<!-- ===== TEAM ===== -->` — mark the
-start of each section.
+These appear in the top bar, the Contact section and the footer, and are already
+correct:
 
-> **Before going live:** the phone number, WhatsApp number, address and opening
-> hours currently in the file are **placeholder values**. They are examples only
-> and must all be replaced with the real BE RELAX details.
+| | |
+|---|---|
+| **Address** | 250 Al Meena Street, Al Zahiyah, E14, Abu Dhabi, United Arab Emirates |
+| **Call or WhatsApp** | 052 510 8633 |
+| **Mobile** | 056 342 9399 |
+| **Landline** | 02 557 6533 |
+| **Opening hours** | Every day, 10:00 – 23:00 |
 
-### Phone number
+There is **no email address** anywhere on the site — guests reach you by phone or
+WhatsApp only.
 
-Search for `tel:`. The number appears twice on each link and both must match:
+If a number ever changes, open `index.html` and use **Find** (`Ctrl + F` /
+`Cmd + F`) to search for the old number. Each phone link holds the number twice —
+once in the `tel:` or `wa.me` part that actually dials, written with the `+971`
+country code and no spaces, and once as the text visitors read. **Change both.**
+
+---
+
+## Editing the text
+
+All wording lives in `index.html`. Open it in any text editor, use **Find** to
+jump to the words you want, change the text between the tags, and save.
+
+The capitalised comment markers show where each section starts:
 
 ```html
-<a href="tel:+971XXXXXXXXX">+971 XX XXX XXXX</a>
+<!-- ============ TEAM ============ -->
 ```
-
-- The part after `tel:` is what the phone dials — digits only, no spaces, with the
-  `+971` country code.
-- The part between `>` and `</a>` is what visitors read — format it however you
-  like.
-
-### WhatsApp number
-
-Search for `wa.me`. Use the full international number with **no** `+`, spaces or
-dashes:
-
-```html
-<a href="https://wa.me/971XXXXXXXXX">
-```
-
-### Address
-
-Search for `<!-- ===== CONTACT ===== -->` (or for the word `Dubai`) and replace the
-placeholder address lines with the real street, area and emirate. If a Google Maps
-link or embedded map is present, update that too so it points at the real
-location.
-
-### Opening hours
-
-Search for the word `Opening` (hours appear in three places: the top bar, the Contact block and the footer). Edit the days and times in the
-list. Remember to update them for Ramadan and public holidays.
-
-### Services and prices
-
-Search for `<!-- ===== SERVICES ===== -->`. Each treatment is one block containing a name, a
-short description and a price. To change one, edit the text in place. To add
-another, copy an existing block from `<` to the matching closing tag, paste it
-directly below, and change the wording.
-
-Keep prices in the same format throughout (for example `AED 250`) so the list
-stays tidy.
-
-### Team members
-
-Search for `<!-- ===== TEAM ===== -->`. Each therapist has a name, a specialty and the
-languages they speak. Edit that text here; the **photo** for each person comes
-from `assets/team/` — see that folder's README.
 
 ---
 
 ## Colour palette
 
-The whole site is themed with a light mint green palette, defined once at the top
-of the `<style>` block in `index.html` as CSS custom properties. Change a value
-there and it updates everywhere it is used.
+The whole site is themed from a set of colours defined once at the top of the
+`<style>` block in `index.html`, in the two `:root` groups. Change a value there
+and it updates everywhere that colour is used.
 
-| Variable | Hex | Typical use |
+The palette is warm — cream, teak, candlelight gold, with a teal accent.
+
+| Variable | Value | Used for |
 |---|---|---|
-| `--mint-50` | `#F4FBF8` | Page background — the lightest tint |
-| `--mint-100` | `#E9F7F0` | Alternating section backgrounds, cards |
-| `--mint-200` | `#D3EFE3` | Borders, dividers, soft fills |
-| `--mint-300` | `#B2E1CD` | Placeholder artwork, hover tints |
-| `--mint-400` | `#84CFB3` | Icons, decorative details |
-| `--mint-500` | `#57B896` | Primary accent — buttons, links |
-| `--mint-600` | `#3E9D7C` | Button hover state |
-| `--mint-700` | `#2F7C63` | Headings on light backgrounds |
-| `--mint-800` | `#245F4D` | Strong text, deep accents |
-| `--mint-900` | `#174236` | Footer background, darkest text |
-| `--sand` | `#C6A46B` | Gold accent — highlights, prices, fine rules |
+| `--mint-50` | `#FBF6EF` | Page background, and form fields |
+| `--mint-100` | `#F5EDE1` | Soft fills — icon tiles, note pills |
+| `--mint-200` | `#EDE0CE` | Placeholder artwork, review avatar circles |
+| `--mint-300` | `#DCC8AC` | Hairlines, ornaments, outline-button borders |
+| `--mint-400` | `#C9AE8B` | Border of a form field you are typing in |
+| `--mint-500` | `#5FB8AC` | Teal accent — tick marks, the bar across a treatment card |
+| `--mint-600` | `#3E9A8E` | Teal accent — small captions, italic words in the headline |
+| `--mint-700` | `#2A6E66` | Deep teal — prices, hero figures |
+| `--mint-800` | `#2A2724` | Dark brown — nav links, the trust strip background |
+| `--mint-900` | `#1B1A17` | Near-black — top bar, footer, video frames |
+| `--ink` | `#26241F` | Body text |
+| `--muted` | `#6E675D` | Secondary and intro text |
+| `--line` | `#E6D8C4` | Borders and dividers |
+| `--sand` | `#C08A43` | Gold accent, set on the review star row (the same gold as `--gold-1`) |
+| `--oat` | `#F2E9DC` | Background of alternating sections |
+| `--gold-1` | `#C08A43` | Gold — section ornaments, the review stars, the underline under the current menu link, the scroll-progress bar |
+| `--gold-2` | `#F0C283` | Lighter gold, for the shine in gold gradients |
+| `--gold-3` | `#A0703A` | Deeper gold — the small uppercase labels above headings |
 
-To adjust the theme, edit only these values rather than hunting for colours
-throughout the file.
+> The `--mint-*` names are historical, from an earlier green version of the site.
+> The names stayed; the values are the warm palette above.
+
+Three more colours — `--clay`, `--ivory` and `--glass` — are defined in the same
+block but are not currently used anywhere.
 
 ---
 
 ## Brand rules
 
-- The logo is used **exactly as supplied**. Never recolour, crop, stretch or
-  redraw it. Only two versions exist: black (for light backgrounds) and white
-  (for the dark footer).
-- The full name is **BE RELAX**, with the tagline **MASSAGE CENTER AND SPA**.
-- Keep imagery calm and natural — stones, water, bamboo, leaves, orchids,
-  candles, wood — so it sits comfortably with the mint palette.
+- The logo is used **exactly as supplied** — never recoloured, cropped, redrawn
+  or re-exported. See [`assets/logo/README.md`](assets/logo/README.md).
+- The name is **BE RELAX**, with the line **Massage Center and Spa**.
+- Keep imagery calm and natural — warm wood, water, candlelight, steam, stone,
+  greenery — so it sits comfortably with the palette above.
 
 ---
 
-## Pre-launch checklist
+## Before you go live
 
-- [ ] Real logo files uploaded to `assets/logo/`
-- [ ] Real phone number in every `tel:` link
-- [ ] Real WhatsApp number in every `wa.me` link
-- [ ] Real address, and map link pointing at the right place
-- [ ] Real opening hours
-- [ ] Real service names and prices
-- [ ] Real team names, specialties and languages
-- [ ] Team photos uploaded, with each person's consent
-- [ ] Hero, About and gallery photos uploaded
-- [ ] Video uploaded (compressed) or swapped for a YouTube embed
-- [ ] Checked on a phone as well as a laptop
+Two things on the page are still samples and need your real content:
+
+- [ ] **The treatment prices.** The nine treatments in the Treatments section
+      carry example rates (AED 120 – AED 450). Replace them with your real prices
+      in `index.html`, and delete the grey note underneath that reads *"Sample
+      pricing — replace with your real rates."*
+- [ ] **The three guest reviews.** The names and quotes in the "What People Say"
+      section are written examples, not real guests. Swap in three real Google
+      reviews, and delete the grey note underneath that reads *"Sample reviews —
+      swap in your real Google reviews before publishing."*
+
+Everything else — the address, all three phone numbers, the opening hours, the
+logo, the photographs, the portraits and the video clips — is real and in place.
+
+Two smaller loose ends you may also want to settle: the **Instagram and Facebook
+icons** in the footer do not yet point at your profiles, and the **booking form**
+currently hands the guest's details to WhatsApp rather than to a booking system.
+
+Worth doing either way: open the finished page on a phone as well as a laptop
+before you share the link.

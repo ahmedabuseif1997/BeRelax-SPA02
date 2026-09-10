@@ -1,50 +1,37 @@
 # Website assets
 
-This folder holds **every image, video and logo file the website loads** — the
-logo at the top of the page, the spa photographs, the therapist portraits and the
-tour video.
+Everything the BE RELAX website loads — the logo, the spa photographs, the
+therapist portraits and the two video clips. All of it is already in place and
+live on the page.
 
-You do not need to touch any code to add them. Every picture and video slot on the
-page already shows a hand-drawn mint SVG placeholder, so the site looks complete
-and polished even while it is empty. The moment you upload a real file with the
-right name into the right folder, the page **swaps it in automatically** — no code
-change, no developer, nothing to switch on.
-
-That means you can upload your files a few at a time, in any order, and the site
-keeps looking finished the whole way through.
+Each folder has its own short README with the detail for that folder: what the
+files are, what to send if you replace one, and how to add or remove one.
 
 ## Folder structure
 
 ```
 assets/
-├── logo/      → the BE RELAX logo and the browser-tab icon
-├── photos/    → hero image, About pictures, gallery
-├── team/      → the six therapist portraits
-└── videos/    → the spa tour video and its cover image
+├── logo/      2 files   the BE RELAX logo, black and white versions
+├── photos/    3 files   the spa photographs
+├── team/     19 files   the therapist portraits
+└── videos/    2 files   the two vertical tour clips
 ```
 
-Each folder has its own README with more detail on what to shoot and how to
-prepare it.
+## Every file the site uses
 
-## Every file the site looks for
-
-The names below are the **exact** names the website expects. Upload a file with a
-different name and the page will simply carry on showing the placeholder.
-
-| Folder | Filename | What it is | Recommended size |
+| Folder | File | What it is | Where it appears |
 |---|---|---|---|
-| `assets/logo` | `be-relax-logo.png` | Black logo for the light header | Transparent PNG, min 600px wide |
-| `assets/logo` | `be-relax-logo-white.png` | White logo for the dark footer | Transparent PNG, min 600px wide |
-| `assets/logo` | `favicon.png` | Butterfly mark only, square | 512 × 512 |
-| `assets/photos` | `hero.jpg` | Main hero image | Portrait 4:5 — 1600 × 2000 |
-| `assets/photos` | `about-01.jpg` | About section, left frame | Portrait 3:4 — 1200 × 1600 |
-| `assets/photos` | `about-02.jpg` | About section, right frame | Portrait 3:4 — 1200 × 1600 |
-| `assets/photos` | `gallery-01.jpg` … `gallery-06.jpg` | The six gallery tiles | 1600 × 1200 or larger |
-| `assets/team` | `team-01.jpg` … `team-06.jpg` | The six therapist portraits | Portrait 3:4 — 1200 × 1600 |
-| `assets/videos` | `spa-tour.mp4` | The spa walkthrough video | 1080p H.264/AAC, under 25MB |
-| `assets/videos` | `spa-tour-poster.jpg` | Still frame shown before the video plays | 1920 × 1080 |
+| `logo/` | `be-relax-logo.jpg` | Black logo on white | Header at the top of every page, and the browser-tab icon |
+| `logo/` | `be-relax-logo-white.jpg` | White logo on black | The dark footer |
+| `photos/` | `spa-01.jpg` | Wide interior view | The full-width tile in the Gallery |
+| `photos/` | `spa-02.jpg` | Candlelit pool | The hero image at the top of the page, and the Gallery |
+| `photos/` | `spa-03.jpg` | Massage in progress | The About block, and the Gallery |
+| `team/` | `team-01.jpg` … `team-19.jpg` | 19 therapist portraits | The "Meet Our Therapists" grid, each captioned *Certified Therapist* |
+| `videos/` | `spa-tour-01.mp4` | Portrait clip, about 17 seconds | Left vertical reel in "Step Inside" |
+| `videos/` | `spa-tour-02.mp4` | Portrait clip, about 17 seconds | Right vertical reel in "Step Inside" |
 
-That is **17 files in total** once everything is in place.
+**26 files in total.** Each folder also contains an empty `.gitkeep` file — that
+is a leftover marker, it is not used by the site, and you can ignore it.
 
 ## Upload straight from your browser
 
@@ -56,40 +43,46 @@ drag-and-drop upload page for that folder:
 | Team photos | https://github.com/ahmedabuseif1997/BeRelax-SPA02/upload/claude/optimistic-goldberg-4f598r/assets/team |
 | Videos | https://github.com/ahmedabuseif1997/BeRelax-SPA02/upload/claude/optimistic-goldberg-4f598r/assets/videos |
 | Logo files | https://github.com/ahmedabuseif1997/BeRelax-SPA02/upload/claude/optimistic-goldberg-4f598r/assets/logo |
-| Spa & nature photos | https://github.com/ahmedabuseif1997/BeRelax-SPA02/upload/claude/optimistic-goldberg-4f598r/assets/photos |
+| Spa photos | https://github.com/ahmedabuseif1997/BeRelax-SPA02/upload/claude/optimistic-goldberg-4f598r/assets/photos |
 
 ### How to upload
 
-1. **Open the link** for the folder you want (sign in to GitHub if it asks).
+1. **Open the link** for the folder you want, and sign in to GitHub if it asks.
 2. **Drag your files** onto the page — or click *choose your files* and pick them.
    You can drop several at once.
 3. **Scroll down** to the box at the bottom of the page.
 4. Click the green **"Commit changes"** button.
 
-Give it a minute, then refresh the website — your files will be live.
+Give it a minute, then refresh the website.
 
-> **Names must match the table above exactly.** All lowercase, hyphens instead of
-> spaces, leading zeros kept (`team-01.jpg`, not `Team 1.JPG`), and the right
-> extension (`.jpg`, `.png`, `.mp4`). If the name is even slightly different, the
-> page keeps showing the placeholder. Rename files on your computer *before* you
-> drag them in.
+## Important: a new file only shows up if the name matches
+
+The page asks for each file by its exact path. So a file you upload appears on
+the site in one of two situations:
+
+- **Its name matches a name in the table above**, in which case it replaces that
+  file wherever it appears — no code change needed; or
+- **`index.html` is edited** to point at the new name.
+
+Upload a file under any other name and nothing changes on the page. The file just
+sits in the folder, unused, and the original stays on screen.
+
+Names are case-sensitive. Keep them all lowercase, hyphens instead of spaces,
+leading zeros intact (`team-01.jpg`, not `Team 1.JPG`), and the right extension
+(`.jpg`, `.mp4`). Rename files on your computer *before* you drag them in.
 
 > [!CAUTION]
-> **GitHub rejects any single file over 100MB.** The upload will fail outright —
-> this catches people out with video most often. Compress the video first (see
-> below, and `videos/README.md` for the exact command).
+> **GitHub blocks any single file over 100MB**, and warns above 50MB. This bites
+> with video most often. Compress a clip before uploading — `videos/README.md`
+> has a ready-to-paste command.
 
-## File size tips
+## Keeping files small
 
-Big files do not look any better on a website — they just make it slow to load,
-especially for visitors on mobile data. A few quick rules:
+Large files do not look any better on screen; they just make the page slow,
+especially for visitors on mobile data.
 
-- **Compress JPGs to around 80% quality.** Most photo apps offer this under
-  *Export* or *Save for web*. The difference is invisible on screen; the file is
-  often 5–10× smaller.
-- **Keep photos at most 2400px wide**, even if the original is 4K. A 4K photo
-  straight from a camera can be 8–15MB — resized it is usually a few hundred KB.
-- **Compress the video before uploading.** Aim for 1080p and under 25MB. A phone
-  recording of a couple of minutes can easily be 300MB+, which GitHub will refuse.
-
-A good target is **under 500KB per photo** and **under 25MB for the video**.
+- **Photos:** at most 2400px on the long edge, JPEG quality around 80. Aim for
+  under 500KB each.
+- **Portraits:** portrait orientation, around 1200–1600px on the long edge.
+- **Video:** aim for a few megabytes per clip — the two current clips are about
+  3.5MB each.

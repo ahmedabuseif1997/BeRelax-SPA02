@@ -1,81 +1,79 @@
-# Promotional video
+# Video clips
 
-The short video clip that plays in the video section of the website.
+The two short clips shown in the **Step Inside** section of the website.
 
-## What to upload
+## The two files
 
-| File name | What it is | Required? |
-|---|---|---|
-| `spa-tour.mp4` | The main promotional clip — a tour of the spa | Yes |
-| `spa-tour-poster.jpg` | A single still frame, shown before the video starts playing | Optional but recommended |
+| File | Length | Size | Shape |
+|---|---|---|---|
+| `spa-tour-01.mp4` | about 17 seconds | ~3.3 MB | Portrait 9:16 (576 × 1024) |
+| `spa-tour-02.mp4` | about 17 seconds | ~3.5 MB | Portrait 9:16 (576 × 1024) |
 
-Names must match exactly (lowercase, hyphens).
+Both are **portrait** clips — the tall shape you get filming with a phone held
+upright, the same shape as an Instagram Reel or TikTok.
 
-## Video specifications
+## How they appear on the page
 
-| Setting | Value |
-|---|---|
-| Format | MP4 |
-| Video codec | **H.264** |
-| Audio codec | **AAC** |
-| Resolution | 1920 x 1080 (Full HD) or higher |
-| File size | Ideally **under 25MB** |
-| Length | 30–90 seconds works best |
+The two clips sit **side by side as vertical reels**, each in a tall 9:16 frame,
+with normal play, pause and volume controls. They load muted, so nothing starts
+making noise on its own — a visitor turns the sound on if they want it.
 
-The poster image should be a JPG at the same shape as the video (1920 x 1080).
-If you do not upload one, the browser shows a plain dark frame until playback
-starts.
+On a phone the two reels stack into a single column, one above the other.
 
-## Important: file size limits on GitHub
+Because the frames are 9:16, **portrait footage fits perfectly**. A landscape
+(wide) clip will still play, but it gets cropped hard down the sides to fill the
+tall frame, so film upright wherever possible.
 
-GitHub, where this website is stored, has hard limits:
+## Replacing a clip
 
-- **Over 50MB** — GitHub shows a warning.
-- **Over 100MB** — GitHub **blocks the upload completely**. It will not work.
+Upload the new file under **the same filename** — `spa-tour-01.mp4` or
+`spa-tour-02.mp4` — and it takes the old one's place. Any other name and the page
+will not find it; the frame stays dark.
 
-A phone-recorded 4K video of two or three minutes is easily 300MB or more, so it
-will be rejected. Large videos also make the website slow for visitors on mobile
-data.
+## File size limits on GitHub
 
-You have two options:
+GitHub, where this website is stored, enforces hard limits on any single file:
 
-1. **Compress the video first** (see the command below), or
-2. **Host it on YouTube or Vimeo** and embed it instead (see the last section).
+- **Over 50 MB** — GitHub shows a warning.
+- **Over 100 MB** — GitHub **blocks the upload completely.** It simply will not
+  go through.
 
-## Compressing a large video
+This catches people out with video more than anything else. A few minutes of
+phone footage is easily 300 MB or more, so it must be compressed before you
+upload it. Large videos also make the site slow for visitors on mobile data — the
+two clips here are around 3.5 MB each, which is a good target to aim for.
+
+## Compressing a clip for the web
 
 If you have [ffmpeg](https://ffmpeg.org/download.html) installed, this one command
-converts almost any video into a web-friendly 1080p MP4. Replace `input.mp4` with
-the name of your original file:
+turns almost any recording into a web-friendly portrait clip. Replace
+`input.mp4` with the name of your original file:
 
 ```bash
 ffmpeg -i input.mp4 \
-  -vf "scale=-2:1080" \
+  -vf "scale=720:-2" \
   -c:v libx264 -preset slow -crf 26 \
   -profile:v high -pix_fmt yuv420p \
   -c:a aac -b:a 128k \
   -movflags +faststart \
-  spa-tour.mp4
+  spa-tour-01.mp4
 ```
 
 What the settings do:
 
-- `scale=-2:1080` — resizes down to 1080p, keeping the original shape.
-- `-crf 26` — quality level. **Lower = better quality and bigger file.** Try `23`
-  if the result looks soft, or `30` if the file is still too large.
-- `-movflags +faststart` — lets the video start playing before it has fully
+- `scale=720:-2` — resizes to 720px wide, working out the height automatically so
+  the clip keeps its original shape.
+- `-crf 26` — the quality dial. **Lower means better quality and a bigger file.**
+  Try `23` if the result looks soft, or `30` if the file is still too large.
+- `-movflags +faststart` — lets the clip start playing before it has fully
   downloaded.
+- `-c:v libx264` / `-c:a aac` — the video and audio formats every browser can play.
 
-To grab a poster image from one second into the video:
+Keep clips short. Ten to thirty seconds holds attention and keeps the file small.
 
-```bash
-ffmpeg -i spa-tour.mp4 -ss 00:00:01 -vframes 1 -q:v 3 spa-tour-poster.jpg
-```
+## Adding a third clip
 
-## Using YouTube instead
-
-If the video is too large or too long to compress, upload it to YouTube or Vimeo,
-then in `index.html` replace the whole `<video>...</video>` block with an iframe
-such as `<iframe src="https://www.youtube.com/embed/VIDEO_ID" title="BE RELAX"
-allowfullscreen></iframe>` — where `VIDEO_ID` is the code at the end of your
-YouTube link.
+The section is built for these two. To show a third, upload it here and add one
+more `<div class="reel"> … </div>` block in the `<!-- ============ VIDEO
+============ -->` section of `index.html`, copying the two already there. A file
+uploaded without that edit will sit in the folder unused.

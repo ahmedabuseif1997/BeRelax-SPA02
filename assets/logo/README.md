@@ -1,50 +1,59 @@
 # Logo files
 
-This folder holds the **official BE RELAX logo**. Nothing else belongs in here.
+This folder holds the **BE RELAX logo**. Nothing else belongs in here.
 
-The website looks for these files by name. Until a file exists, the page shows a
-temporary text version of the wordmark. As soon as you upload the real file with
-the correct name, the page swaps to the real logo automatically — no code changes
-needed.
+Both files are your own original artwork, renamed so the website can find them.
+Nothing inside the images has been edited.
 
-## What to upload
+## The two files
 
-| File name | Which version | Where it is used |
+| File | Version | Where it appears on the site |
 |---|---|---|
-| `be-relax-logo.png` | **Black** logo on a transparent (or white) background | The header at the top of every page, over the light mint background |
-| `be-relax-logo-white.png` | **White** logo on a transparent (or black) background | The dark footer at the bottom of the page |
-| `favicon.png` *(optional)* | Just the butterfly mark, square | The small icon in the browser tab |
+| `be-relax-logo.jpg` | Black artwork on a white background | The **header** at the top of every page, and the small **icon in the browser tab** (favicon) |
+| `be-relax-logo-white.jpg` | White artwork on a black background | The **dark footer** at the bottom of the page |
 
-## Naming rules — important
+## How the page displays them
 
-The file names must match **exactly**:
+The two JPEGs have a flat background baked into them, because JPEG cannot store
+transparency. Rather than editing your artwork to remove it, the page works
+around it in its own styling:
 
-- all lowercase
-- hyphens between words, no spaces
-- `.png` extension
+- A **wrapper element crops the view down to the artwork's own bounding box**, so
+  the surrounding empty margin of the JPEG is not shown.
+- **CSS `mix-blend-mode`** hides the flat background — `multiply` in the light
+  header (the white drops away) and `screen` in the dark footer (the black drops
+  away).
 
-`Be-Relax-Logo.PNG`, `be relax logo.png` and `be-relax-logo (1).png` will **not**
-work. The page points at the exact paths above, so a single wrong character means
-the logo will not appear.
+Both effects live in `index.html` and act only on how the picture is *displayed*.
+**The image files themselves are never altered** — they stay exactly as you
+supplied them.
 
-## Recommended file settings
+## Do not alter the artwork
 
-- **Format:** PNG with a transparent background (best quality on both the mint
-  header and the dark footer).
-- **Width:** at least **600px** wide so it stays sharp on large and high-resolution
-  screens.
-- **Favicon:** exactly **512 x 512px**, square, butterfly mark only.
-- Keep each file under roughly 500KB so pages load quickly.
+The logo is used exactly as supplied. Please do **not**:
 
-## Do not alter the logo
+- recolour it — only the two versions above are used, black and white
+- crop it, or cut off any part of the butterfly or the wordmark
+- redraw, trace, "clean up" or re-export it
+- stretch or squash it — width and height always scale together
+- add shadows, outlines, glows or gradients
 
-The logo artwork is used **exactly as supplied**. Please do not:
+## If you ever replace the logo
 
-- recolour it (only the two supplied versions, black and white, are used)
-- crop it or cut off part of the butterfly or wordmark
-- stretch or squash it — always scale width and height together
-- redraw, trace or "clean up" the butterfly
-- add effects such as shadows, outlines or gradients
+Keep **the same two filenames**:
 
-If you need a different size, re-export it from the original artwork rather than
-editing one of these files.
+```
+be-relax-logo.jpg
+be-relax-logo-white.jpg
+```
+
+The page points at those exact paths. Upload a file under any other name and the
+page will not find it — it will quietly fall back to the plain text wordmark
+instead. Rename your new file on your computer *before* uploading it.
+
+Names are case-sensitive and must stay all lowercase with hyphens:
+`Be-Relax-Logo.JPG` and `be relax logo.jpg` will **not** work.
+
+> **Note:** if you replace the artwork with a differently shaped image, the crop
+> and blend settings in `index.html` were measured for the current files and will
+> need adjusting to suit the new one.

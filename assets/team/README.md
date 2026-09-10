@@ -1,66 +1,92 @@
 # Team photos
 
-Photographs of the therapists shown in the **Our Team** section of the website.
+The therapist portraits shown in the **Meet Our Therapists** section of the
+website.
 
-There are six team slots on the page. Each slot shows a soft botanical
-placeholder graphic until you upload the matching photo — so the page always
-looks finished, even with only two or three photos in place.
+There are currently **19 photos** in this folder, `team-01.jpg` through
+`team-19.jpg`, and the page shows all 19 in a grid. Each one is captioned with
+the general title **"Certified Therapist"** — no individual names are published.
 
-## What to upload
+## Naming
 
-Upload the photos with these exact names:
+Every photo follows the same pattern:
 
-| File name | Team slot |
+```
+team-NN.jpg
+```
+
+Where `NN` is a two-digit number with a leading zero — `team-01.jpg`,
+`team-07.jpg`, `team-19.jpg`. All lowercase, hyphen, `.jpg` extension.
+
+`Team 1.JPG`, `team1.jpg` and `team-1.jpg` will **not** work. The page looks for
+each exact filename, and if it does not find one it quietly shows a drawn
+placeholder illustration in that slot instead.
+
+## What makes a good photo
+
+| Setting | Recommendation |
 |---|---|
-| `team-01.jpg` | First therapist |
-| `team-02.jpg` | Second therapist |
-| `team-03.jpg` | Third therapist |
-| `team-04.jpg` | Fourth therapist |
-| `team-05.jpg` | Fifth therapist |
-| `team-06.jpg` | Sixth therapist |
-
-Names must be lowercase with the leading zero (`team-01.jpg`, not `team1.jpg`).
-
-## Photo specifications
-
-| Setting | Value |
-|---|---|
-| Orientation | Portrait (taller than wide) |
-| Aspect ratio | **3:4** |
-| Recommended size | **1200 x 1600 px** |
+| Orientation | **Portrait** (taller than wide) — this suits the frame best |
 | Format | JPG |
-| File size | Under about **500KB** each after compression |
+| Long edge | Around 1200–1600px is plenty |
+| File size | Under about 500KB each |
 
-Photos that are not 3:4 will still work, but the page crops them to fit — so keep
-the face comfortably inside the middle of the frame.
+**How the page crops them:** every portrait is cropped to a **3:4 frame**, and the
+crop is **held near the top of the picture** so faces stay comfortably inside the
+frame rather than being cut off at the forehead. A photo that is a different
+shape still works — it is simply cropped to fit — but leave a little space around
+the head and shoulders so nothing important sits at the very edge.
 
-## Making the row look professional
+For a tidy, professional-looking grid, shoot everyone in the same spot, with the
+same lighting and the same distance from the camera, so heads are roughly the
+same size in every frame.
 
-The six photos sit side by side, so differences between them are very noticeable.
-For a clean, uniform row:
+## Adding a twentieth photo
 
-- Shoot all six in the **same spot**, on the same day if possible.
-- Use the **same background** — a plain wall or the same corner of the spa.
-- Keep the **lighting the same** (soft, even light; avoid harsh overhead lights,
-  mixed daylight and lamp light, or one photo taken with flash).
-- Ask everyone to stand at the **same distance** from the camera so heads are
-  roughly the same size in every frame.
-- Keep uniforms and styling consistent.
+Two steps — the photo alone is not enough.
 
-## Consent
+**1. Upload the photo** into this folder, named exactly:
 
-Before publishing anyone's photo on the website, make sure each therapist has
-agreed to it. Keep a simple written record (a signed note or a message) of their
-permission, and remove a photo promptly if someone later asks you to.
+```
+team-20.jpg
+```
 
-## Editing the names and details
-
-The **photo** comes from this folder. The **text** beside it — therapist name,
-specialty and languages spoken — is edited directly in `index.html`, in the
-section marked:
+**2. Add one more card** to `index.html`. Find the section marked:
 
 ```html
 <!-- ============ TEAM ============ -->
 ```
 
-Find the block for the right person, change the text between the tags, and save.
+Scroll to the last card in that section (the one pointing at `team-19.jpg`) and
+paste this block directly below it, before the closing `</div>`:
+
+```html
+<div class="member">
+  <div class="frame ph" data-src="assets/team/team-20.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+  <span>Certified Therapist</span>
+</div>
+```
+
+Save the file, refresh the page, and the new portrait appears. For a twenty-first
+photo, repeat with `team-21.jpg`, and so on.
+
+## Removing a photo
+
+Also two steps:
+
+1. **Delete the image file** from this folder.
+2. **Delete that photo's card block** from the TEAM section of `index.html` — the
+   whole `<div class="member"> … </div>` that names the file you removed.
+
+If you delete only the file and leave the card in place, the grid keeps that slot
+and shows a drawn placeholder illustration where the person used to be.
+
+The remaining files do **not** need renumbering. A gap in the numbering is
+harmless, because each card names its own file.
+
+## Consent
+
+Before publishing anyone's photo on the website, make sure that person has agreed
+to it. Keep a simple written record of their permission — a signed note or a
+saved message is enough — and remove a photo promptly if someone later asks you
+to.
