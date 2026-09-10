@@ -17,9 +17,9 @@
 :root{
   --mint-50:#FBF6EF;  --mint-100:#F5EDE1; --mint-200:#EDE0CE;
   --mint-300:#DCC8AC; --mint-400:#C9AE8B; --mint-500:#5FB8AC;
-  --mint-600:#3E9A8E; --mint-700:#2A6E66; --mint-800:#4A3220;
-  --mint-900:#2C1F16;
-  --ink:#2C1F16; --muted:#7A6753; --line:#E6D8C4;
+  --mint-600:#3E9A8E; --mint-700:#2A6E66; --mint-800:#3B352D;
+  --mint-900:#262119;
+  --ink:#2C2620; --muted:#7A6753; --line:#E6D8C4;
   --sand:#C08A43; --white:#fff;
   --shadow-sm:0 1px 3px rgba(58,40,26,.05);
   --shadow-md:0 6px 20px rgba(58,40,26,.07);
@@ -53,14 +53,14 @@ h1,h2,h3,h4{font-family:var(--serif);font-weight:400;line-height:1.15;margin:0;l
   letter-spacing:.14em;text-transform:uppercase;cursor:pointer;border:1px solid transparent;
   transition:.28s cubic-bezier(.4,0,.2,1);white-space:nowrap
 }
-.btn-primary{background:linear-gradient(135deg,#DCA860,#C08A43);color:#2C1F16;box-shadow:none}
+.btn-primary{background:linear-gradient(135deg,#DCA860,#C08A43);color:#2E2419;box-shadow:none}
 .btn-primary:hover{background:linear-gradient(135deg,#E7B972,#C99349);transform:translateY(-2px);box-shadow:0 10px 26px rgba(192,138,67,.34)}
 .btn-ghost{border-color:var(--mint-300);color:var(--mint-800);background:rgba(255,255,255,.72)}
 .btn-ghost:hover{background:#fff;border-color:var(--mint-500);transform:translateY(-2px)}
 
 /* ---------- top bar ---------- */
 .topbar{
-  background:var(--mint-800);color:#F0E4D2;font-size:12.5px;
+  background:var(--mint-900);color:#F0E4D2;font-size:12.5px;
   letter-spacing:.06em;font-weight:300
 }
 .topbar .wrap{display:flex;gap:22px;align-items:center;justify-content:space-between;
@@ -164,7 +164,8 @@ section{padding:118px 0}
 .alt{background:var(--oat)}
 
 /* ---------- trust strip ---------- */
-.strip{background:var(--mint-800);color:#F5EDE1;padding:34px 0}
+.strip{background:var(--mint-800);color:#F5EDE1;padding:34px 0;
+  border-block:1px solid rgba(192,138,67,.34)}
 .strip .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:26px}
 .strip .it{display:flex;gap:14px;align-items:flex-start}
 .strip svg{width:26px;height:26px;color:var(--mint-300);flex:none;margin-top:3px}
@@ -211,13 +212,15 @@ section{padding:118px 0}
   letter-spacing:normal;text-transform:none;font-weight:500}
 
 /* ---------- team ---------- */
-.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.grid-4{display:flex;flex-wrap:wrap;justify-content:center;gap:26px}
+.grid-4 .member{flex:0 1 calc((100% - 3 * 26px) / 4);min-width:0}
 .member{text-align:center}
 .member .frame{
   border-radius:var(--r);aspect-ratio:3/4;margin-bottom:18px;
   transition:.32s cubic-bezier(.4,0,.2,1)
 }
 .member:hover .frame{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+.member .frame img{object-position:50% 14%}
 .member h3{font-size:21px;margin-bottom:4px}
 .member span{display:block}
 .member span{font-size:11px;letter-spacing:.17em;text-transform:uppercase;color:var(--mint-600)}
@@ -298,7 +301,8 @@ form{
 .form-note{font-size:12.5px;color:var(--muted);text-align:center;margin:14px 0 0;font-weight:300}
 
 /* ---------- footer ---------- */
-footer{background:var(--mint-900);color:#C7B49A;padding:66px 0 0;font-weight:300}
+footer{background:var(--mint-900);color:#C7B49A;padding:66px 0 0;font-weight:300;
+  border-top:1px solid rgba(192,138,67,.34)}
 .f-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1.2fr;gap:42px;padding-bottom:46px}
 footer h4{color:#fff;font-size:12px;letter-spacing:.18em;text-transform:uppercase;
   font-family:var(--sans);font-weight:500;margin-bottom:18px}
@@ -342,7 +346,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   .hero-art{max-width:440px;margin:0 auto;width:100%}
   .badge{left:0}
   .grid-3{grid-template-columns:repeat(2,1fr)}
-  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-4 .member{flex-basis:calc((100% - 26px) / 2)}
   .strip .wrap{grid-template-columns:repeat(2,1fr)}
   .f-grid{grid-template-columns:1fr 1fr;gap:34px}
   .gallery{grid-template-columns:repeat(2,1fr)}
@@ -361,7 +365,8 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   .reels{grid-template-columns:1fr;max-width:360px}
   section{padding:64px 0}
   .wrap{padding-inline:18px}
-  .grid-3,.grid-4,.strip .wrap,.f-grid,.gallery,.row-2{grid-template-columns:1fr}
+  .grid-3,.strip .wrap,.f-grid,.gallery,.row-2{grid-template-columns:1fr}
+  .grid-4 .member{flex-basis:100%}
   .gallery{grid-auto-rows:220px}
   .gallery .g-tall,.gallery .g-wide{grid-row:auto;grid-column:auto}
   .hero-stats{gap:26px}
@@ -601,8 +606,8 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   </g>
   <g fill="#8A6742"><ellipse cx="200" cy="384" rx="86" ry="26" opacity=".92"/></g>
   <g fill="#6B4A2F"><ellipse cx="200" cy="336" rx="66" ry="21" opacity=".9"/></g>
-  <g fill="#4A3220"><ellipse cx="200" cy="296" rx="48" ry="16" opacity=".9"/></g>
-  <g fill="#2C1F16"><ellipse cx="200" cy="264" rx="32" ry="11" opacity=".85"/></g>
+  <g fill="#5C4B36"><ellipse cx="200" cy="296" rx="48" ry="16" opacity=".9"/></g>
+  <g fill="#3B352D"><ellipse cx="200" cy="264" rx="32" ry="11" opacity=".85"/></g>
   <g fill="#A98461" opacity=".8"><ellipse cx="200" cy="240" rx="19" ry="7"/></g>
   <g stroke="#4E7048" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".55">
     <path d="M318 300c0-40 14-72 34-96"/><path d="M340 268c-16 4-26 16-28 32"/><path d="M348 232c-14 6-20 18-18 32"/>
