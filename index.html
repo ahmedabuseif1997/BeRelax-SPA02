@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BE RELAX — Massage Center and Spa | Dubai</title>
+<meta name="description" content="BE RELAX Massage Center and Spa — deep tissue, Swedish, hot stone, aromatherapy, Thai massage, Moroccan and Turkish bath. A warm candlelit sanctuary in Dubai.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   BE RELAX — Massage Center and Spa
+   Warm candlelit luxury palette: cream, teak, candle gold, pool teal.
+   ============================================================ */
+:root{
+  --mint-50:#FBF6EF;  --mint-100:#F5EDE1; --mint-200:#EDE0CE;
+  --mint-300:#DCC8AC; --mint-400:#C9AE8B; --mint-500:#5FB8AC;
+  --mint-600:#3E9A8E; --mint-700:#2A6E66; --mint-800:#4A3220;
+  --mint-900:#2C1F16;
+  --ink:#2C1F16; --muted:#7A6753; --line:#E6D8C4;
+  --sand:#C08A43; --white:#fff;
+  --shadow-sm:0 1px 3px rgba(58,40,26,.05);
+  --shadow-md:0 6px 20px rgba(58,40,26,.07);
+  --shadow-lg:0 18px 44px rgba(58,40,26,.10);
+  --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  --sans:"Jost",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --r:8px; --wrap:1200px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; font-family:var(--sans); color:var(--ink);
+  background:var(--mint-50); font-size:16px; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:400;line-height:1.15;margin:0;letter-spacing:.01em}
+.wrap{max-width:var(--wrap);margin:0 auto;padding-inline:24px}
+.eyebrow{
+  font-size:11px;letter-spacing:.34em;text-transform:uppercase;
+  color:var(--mint-600);font-weight:500;margin:0 0 14px
+}
+.lead{color:var(--muted);font-size:17px;font-weight:300}
+.center{text-align:center}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:9px;justify-content:center;
+  padding:14px 30px;border-radius:999px;font-size:13px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;cursor:pointer;border:1px solid transparent;
+  transition:.28s cubic-bezier(.4,0,.2,1);white-space:nowrap
+}
+.btn-primary{background:linear-gradient(135deg,#DCA860,#C08A43);color:#2C1F16;box-shadow:none}
+.btn-primary:hover{background:linear-gradient(135deg,#E7B972,#C99349);transform:translateY(-2px);box-shadow:0 10px 26px rgba(192,138,67,.34)}
+.btn-ghost{border-color:var(--mint-300);color:var(--mint-800);background:rgba(255,255,255,.72)}
+.btn-ghost:hover{background:#fff;border-color:var(--mint-500);transform:translateY(-2px)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  background:var(--mint-800);color:#F0E4D2;font-size:12.5px;
+  letter-spacing:.06em;font-weight:300
+}
+.topbar .wrap{display:flex;gap:22px;align-items:center;justify-content:space-between;
+  min-height:42px;flex-wrap:wrap;padding-block:7px}
+.topbar a:hover{color:#fff}
+.topbar .tb-group{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.topbar svg{width:14px;height:14px;flex:none;opacity:.85}
+.tb-item{display:inline-flex;align-items:center;gap:7px}
+
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:60;background:rgba(251,246,239,.88);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--line);transition:.3s
+}
+header.scrolled{background:rgba(255,255,255,.96);box-shadow:var(--shadow-sm)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:82px}
+
+/* logo lockup — swaps to the real PNG the moment it is uploaded */
+.logo{display:flex;align-items:center;gap:13px;flex:none}
+.logo img{height:52px;width:auto;object-fit:contain}
+.logo .mark{width:44px;height:44px;flex:none;color:var(--mint-800)}
+.logo .word{line-height:1}
+.logo .word b{
+  display:block;font-family:var(--serif);font-size:26px;font-weight:500;
+  letter-spacing:.06em;color:var(--ink)
+}
+.logo .word span{
+  display:block;font-size:8.5px;letter-spacing:.235em;text-transform:uppercase;
+  color:var(--muted);margin-top:3px;font-weight:400
+}
+.logo-fallback{display:flex;align-items:center;gap:13px}
+.logo-img{display:none}
+.logo.has-file .logo-img{display:block}
+.logo.has-file .logo-fallback{display:none}
+
+.menu{display:flex;gap:26px;align-items:center;margin:0 auto}
+.menu a{
+  font-size:12.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--mint-800);font-weight:400;position:relative;padding:6px 0;white-space:nowrap
+}
+.menu a::after{
+  content:"";position:absolute;left:0;bottom:0;height:1px;width:0;
+  background:var(--mint-600);transition:.3s
+}
+.menu a:hover::after{width:100%}
+.nav-cta{display:flex;gap:12px;align-items:center;flex:none}
+.burger{display:none;background:none;border:0;padding:8px;cursor:pointer;color:var(--mint-800)}
+.burger svg{width:26px;height:26px}
+
+/* ---------- hero ---------- */
+.hero{position:relative;overflow:hidden;padding:96px 0 88px}
+.hero::before{
+  content:"";position:absolute;inset:0;z-index:0;
+  background:
+    radial-gradient(56% 46% at 80% 22%,rgba(224,168,87,.20),transparent 64%),
+    radial-gradient(46% 42% at 10% 84%,rgba(237,224,206,.8),transparent 62%),
+    linear-gradient(168deg,#FBF6EF 0%,#F5EDE1 52%,#EFE2CF 100%)
+}
+.hero .wrap{position:relative;z-index:1;display:grid;
+  grid-template-columns:1.12fr .88fr;gap:56px;align-items:center}
+.hero h1{font-size:clamp(40px,5vw,64px);letter-spacing:-.005em;margin-bottom:22px;text-wrap:balance}
+.hero h1 em{font-style:italic;color:var(--mint-600)}
+.hero p.lead{font-size:18.5px;max-width:30em;margin:0 0 34px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:38px}
+.hero-stats{display:flex;gap:38px;flex-wrap:wrap;
+  border-top:1px solid var(--line);padding-top:26px}
+.hero-stats b{display:block;font-family:var(--serif);font-size:32px;
+  color:var(--mint-700);font-weight:500;line-height:1}
+.hero-stats span{font-size:11px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--muted);margin-top:5px;display:block}
+
+/* hero visual: photo slot with SVG art underneath */
+.hero-art{position:relative}
+.frame{
+  position:relative;border-radius:200px 200px var(--r) var(--r);
+  overflow:hidden;box-shadow:var(--shadow-lg);aspect-ratio:4/5;
+  background:linear-gradient(160deg,var(--mint-200),var(--mint-100))
+}
+.frame img{width:100%;height:100%;object-fit:cover;display:none}
+.frame.has-file img{display:block}
+.frame.has-file .art{display:none}
+.art{position:absolute;inset:0;width:100%;height:100%}
+.badge{
+  position:absolute;left:-22px;bottom:44px;background:#fff;border-radius:16px;
+  padding:16px 22px;box-shadow:var(--shadow-md);display:flex;gap:13px;align-items:center;
+  border:1px solid var(--line)
+}
+.badge svg{width:30px;height:30px;color:var(--mint-600);flex:none}
+.badge b{display:block;font-family:var(--serif);font-size:19px;font-weight:500}
+.badge span{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- section shell ---------- */
+section{padding:118px 0}
+.sec-head{max-width:660px;margin:0 auto 66px;text-align:center}
+.sec-head h2{font-size:clamp(32px,4.4vw,48px);margin-bottom:16px}
+.sec-head p{margin:0}
+.alt{background:var(--oat)}
+
+/* ---------- trust strip ---------- */
+.strip{background:var(--mint-800);color:#F5EDE1;padding:34px 0}
+.strip .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:26px}
+.strip .it{display:flex;gap:14px;align-items:flex-start}
+.strip svg{width:26px;height:26px;color:var(--mint-300);flex:none;margin-top:3px}
+.strip b{display:block;font-family:var(--serif);font-size:19px;font-weight:500;margin-bottom:2px}
+.strip span{font-size:13px;color:#C7B49A;font-weight:300;line-height:1.5}
+
+/* ---------- about ---------- */
+.about{display:grid;grid-template-columns:.95fr 1.05fr;gap:66px;align-items:center}
+.about h2{font-size:clamp(31px,4.2vw,46px);margin-bottom:20px}
+.about p{color:var(--muted);font-weight:300;margin:0 0 18px}
+.tick{list-style:none;padding:0;margin:26px 0 32px;display:grid;gap:13px}
+.tick li{display:flex;gap:12px;align-items:flex-start;font-size:15px;color:var(--ink)}
+.tick svg{width:20px;height:20px;color:var(--mint-500);flex:none;margin-top:3px}
+.about-art{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.about-art .frame{border-radius:var(--r);aspect-ratio:3/4}
+.about-art .frame:first-child{border-radius:160px 160px var(--r) var(--r);margin-top:34px}
+
+/* ---------- services ---------- */
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.card{
+  background:#fff;border:1px solid var(--line);border-radius:var(--r);
+  padding:34px 30px;transition:.32s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden
+}
+.card::after{
+  content:"";position:absolute;left:0;top:0;height:2px;width:0;
+  background:var(--mint-500);transition:.4s
+}
+.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:var(--mint-300)}
+.card:hover::after{width:100%}
+.card .ico{
+  width:54px;height:54px;border-radius:50%;display:grid;place-items:center;
+  background:var(--mint-100);color:var(--mint-600);margin-bottom:20px;transition:.32s
+}
+.card:hover .ico{background:var(--mint-500);color:#fff}
+.card .ico svg{width:29px;height:29px}
+.card h3{font-size:23px;margin-bottom:10px}
+.card p{color:var(--muted);font-size:14.5px;font-weight:300;margin:0 0 18px}
+.card .meta{
+  display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid var(--line);padding-top:15px;font-size:12px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted)
+}
+.card .meta b{color:var(--mint-700);font-family:var(--serif);font-size:19px;
+  letter-spacing:normal;text-transform:none;font-weight:500}
+
+/* ---------- team ---------- */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.member{text-align:center}
+.member .frame{
+  border-radius:var(--r);aspect-ratio:3/4;margin-bottom:18px;
+  transition:.32s cubic-bezier(.4,0,.2,1)
+}
+.member:hover .frame{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+.member h3{font-size:21px;margin-bottom:4px}
+.member span{font-size:11px;letter-spacing:.17em;text-transform:uppercase;color:var(--mint-600)}
+.member .langs{font-size:13px;color:var(--muted);font-weight:300;margin-top:7px}
+.ph-note{
+  display:inline-flex;align-items:center;gap:8px;background:var(--mint-100);
+  border:1px dashed var(--mint-300);color:var(--mint-700);border-radius:999px;
+  padding:9px 18px;font-size:12.5px;margin-top:34px
+}
+.ph-note svg{width:16px;height:16px;flex:none}
+.ph-note code{
+  background:#fff;border-radius:5px;padding:1px 7px;font-size:12px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--mint-800)
+}
+
+/* ---------- gallery ---------- */
+.gallery{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:200px;gap:16px}
+.gallery .frame{border-radius:var(--r);aspect-ratio:auto;height:100%}
+.gallery .g-tall{grid-row:span 2}
+.gallery .g-wide{grid-column:span 2}
+
+/* ---------- video ---------- */
+.video-wrap{
+  border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-lg);
+  background:var(--mint-800);position:relative;aspect-ratio:16/9
+}
+.video-wrap video{width:100%;height:100%;object-fit:cover;display:block}
+.video-empty{
+  position:absolute;inset:0;display:grid;place-content:center;justify-items:center;
+  gap:16px;text-align:center;color:#F0E4D2;padding:32px;
+  background:
+    radial-gradient(60% 60% at 50% 40%,rgba(95,184,172,.34),transparent 70%),
+    linear-gradient(160deg,#4A3220,#2C1F16)
+}
+.video-empty svg{width:54px;height:54px;opacity:.65}
+.video-empty b{font-family:var(--serif);font-size:25px;font-weight:500}
+.video-empty p{margin:0;font-size:14px;font-weight:300;color:#C7B49A;max-width:34em}
+
+/* ---------- testimonials ---------- */
+.quote{
+  background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:34px 30px
+}
+.stars{display:flex;gap:3px;margin-bottom:16px;color:var(--sand)}
+.stars svg{width:17px;height:17px}
+.quote p{font-family:var(--serif);font-size:19px;line-height:1.55;color:var(--ink);margin:0 0 22px}
+.who{display:flex;align-items:center;gap:13px;border-top:1px solid var(--line);padding-top:18px}
+.who .av{
+  width:42px;height:42px;border-radius:50%;background:var(--mint-200);color:var(--mint-700);
+  display:grid;place-items:center;font-weight:500;font-size:15px;flex:none
+}
+.who b{display:block;font-size:14.5px;font-weight:500}
+.who span{font-size:12px;color:var(--muted)}
+
+/* ---------- contact ---------- */
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.info{display:grid;gap:22px;margin:30px 0 0}
+.info .it{display:flex;gap:16px;align-items:flex-start}
+.info .ico{
+  width:46px;height:46px;border-radius:12px;background:var(--mint-100);
+  color:var(--mint-600);display:grid;place-items:center;flex:none
+}
+.info .ico svg{width:21px;height:21px}
+.info b{display:block;font-size:12px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:3px;font-weight:500}
+.info span,.info a{font-size:16px;color:var(--ink)}
+.info a:hover{color:var(--mint-600)}
+form{
+  background:#fff;border:1px solid var(--line);border-radius:var(--r);
+  padding:36px 32px;box-shadow:var(--shadow-sm)
+}
+.field{margin-bottom:18px}
+.field label{
+  display:block;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:7px;font-weight:500
+}
+.field input,.field select,.field textarea{
+  width:100%;padding:13px 15px;border:1px solid var(--line);border-radius:11px;
+  font-family:var(--sans);font-size:15px;color:var(--ink);background:var(--mint-50);
+  transition:.25s;-webkit-appearance:none;appearance:none
+}
+.field select{
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237A6753' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;background-size:17px;padding-right:42px
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--mint-400);background:#fff;box-shadow:0 0 0 4px rgba(143,211,200,.2)
+}
+.field textarea{resize:vertical;min-height:100px}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-note{font-size:12.5px;color:var(--muted);text-align:center;margin:14px 0 0;font-weight:300}
+
+/* ---------- footer ---------- */
+footer{background:var(--mint-900);color:#C7B49A;padding:66px 0 0;font-weight:300}
+.f-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1.2fr;gap:42px;padding-bottom:46px}
+footer h4{color:#fff;font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  font-family:var(--sans);font-weight:500;margin-bottom:18px}
+footer a:hover{color:#fff}
+footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.5px}
+.f-logo .word b{color:#fff}
+.f-logo .word span{color:#B49B7C}
+.f-logo .mark{color:#fff}
+.f-about{font-size:14.5px;line-height:1.7;margin:18px 0 22px;max-width:32em}
+.social{display:flex;gap:11px}
+.social a{
+  width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.18);
+  display:grid;place-items:center;transition:.28s
+}
+.social a:hover{background:var(--mint-500);border-color:var(--mint-500);color:#fff;transform:translateY(-3px)}
+.social svg{width:17px;height:17px}
+.f-bottom{
+  border-top:1px solid rgba(255,255,255,.12);padding:24px 0;display:flex;
+  justify-content:space-between;gap:18px;flex-wrap:wrap;font-size:13px
+}
+
+/* ---------- whatsapp fab ---------- */
+.fab{
+  position:fixed;right:22px;bottom:22px;z-index:80;width:58px;height:58px;
+  border-radius:50%;background:#25D366;color:#fff;display:grid;place-items:center;
+  box-shadow:0 10px 28px rgba(37,211,102,.42);transition:.3s
+}
+.fab:hover{transform:scale(1.09) translateY(-2px)}
+.fab svg{width:30px;height:30px}
+
+/* ---------- reveal ---------- */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s cubic-bezier(.4,0,.2,1)}
+.rv.in{opacity:1;transform:none}
+
+/* ---------- responsive ---------- */
+@media(max-width:1000px){
+  .hero .wrap,.about,.contact{grid-template-columns:1fr;gap:44px}
+  .hero{padding:64px 0}
+  .hero-art{max-width:440px;margin:0 auto;width:100%}
+  .badge{left:0}
+  .grid-3{grid-template-columns:repeat(2,1fr)}
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .strip .wrap{grid-template-columns:repeat(2,1fr)}
+  .f-grid{grid-template-columns:1fr 1fr;gap:34px}
+  .gallery{grid-template-columns:repeat(2,1fr)}
+  .menu{
+    position:fixed;inset:0 0 auto;top:0;background:#fff;flex-direction:column;
+    justify-content:center;min-height:100vh;gap:26px;transform:translateX(100%);
+    transition:transform .38s cubic-bezier(.4,0,.2,1);margin:0;z-index:70
+  }
+  .menu.open{transform:none}
+  .menu a{font-size:16px}
+  .burger{display:block;z-index:75}
+  .nav-cta .btn-ghost{display:none}
+}
+@media(max-width:620px){
+  section{padding:64px 0}
+  .wrap{padding-inline:18px}
+  .grid-3,.grid-4,.strip .wrap,.f-grid,.gallery,.row-2{grid-template-columns:1fr}
+  .gallery{grid-auto-rows:220px}
+  .gallery .g-tall,.gallery .g-wide{grid-row:auto;grid-column:auto}
+  .hero-stats{gap:26px}
+  .about-art .frame:first-child{margin-top:0}
+  form{padding:28px 22px}
+  .logo .word b{font-size:22px}
+  .logo img{height:44px}
+}
+
+/* ============================================================
+   LUXURY LAYER + LIVING WATERFALL BACKGROUND
+   ============================================================ */
+:root{
+  --gold-1:#C08A43; --gold-2:#F0C283; --gold-3:#A0703A;
+  --oat:#F2E9DC; --clay:#E6D8C4;
+  --glass:rgba(255,255,255,.62);
+  --ivory:#FDFAF5;
+}
+
+/* --- scroll progress --- */
+.progress{
+  position:fixed;top:0;left:0;height:2px;width:0;z-index:99;
+  background:linear-gradient(90deg,var(--gold-2),var(--gold-1),var(--mint-500));
+  transition:width .12s linear
+}
+
+/* --- gold ornament under section titles --- */
+.orn{display:flex;align-items:center;justify-content:center;gap:11px;margin:18px 0 0}
+.orn i{display:block;height:1px;width:44px;background:var(--mint-300)}
+.orn i+i{display:block}
+.orn svg{width:13px;height:13px;color:var(--gold-1);flex:none;opacity:.8}
+.eyebrow{color:var(--gold-3)}
+
+/* --- luxury buttons: gold shimmer sweep --- */
+.btn-primary{position:relative;overflow:hidden}
+.btn-primary::before{
+  content:"";position:absolute;top:0;left:-120%;width:60%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.42),transparent);
+  transition:left .7s cubic-bezier(.4,0,.2,1)
+}
+.btn-primary:hover::before{left:130%}
+.btn-gold{
+  background:linear-gradient(135deg,var(--gold-2),var(--gold-1));
+  color:#3A2A14;box-shadow:0 8px 24px rgba(192,138,67,.36)
+}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(192,138,67,.46)}
+
+/* --- luxury cards: hairline gold edge on hover --- */
+.card{background:#fff;padding:38px 34px}
+.card::before{
+  content:"";position:absolute;inset:0;border-radius:var(--r);padding:1px;
+  background:linear-gradient(140deg,var(--mint-300),transparent 50%,var(--mint-300));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;opacity:0;transition:opacity .35s;pointer-events:none
+}
+.card:hover::before{opacity:1}
+.card .meta b{color:var(--mint-700)}
+.hero-stats b{color:var(--mint-700);font-weight:400}
+.badge{background:rgba(255,255,255,.86);backdrop-filter:blur(12px);border-color:var(--line)}
+.quote{background:#fff;padding:38px 34px}
+.stars svg{color:var(--gold-1)}
+
+/* ============ THE WATERFALL ============ */
+.falls{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+
+/* far cliff haze */
+.falls::before{
+  content:"";position:absolute;inset:0;
+  background:
+    linear-gradient(180deg,rgba(95,184,172,.17),rgba(143,211,200,.07) 40%,transparent 68%),
+    radial-gradient(50% 56% at 74% 0%,rgba(62,154,142,.16),transparent 64%)
+}
+/* the falling curtain reads as one sheet of water behind the ribbons */
+.falls::after{
+  content:"";position:absolute;left:0;right:0;top:0;height:78%;
+  background:repeating-linear-gradient(90deg,
+    transparent 0 47px,rgba(255,255,255,.10) 47px 49px,transparent 49px 96px);
+  animation:sheet 11s linear infinite;opacity:.35;filter:blur(1.2px)
+}
+@keyframes sheet{from{transform:translateY(-12%)}to{transform:translateY(12%)}}
+
+/* falling ribbons of water */
+.stream{
+  position:absolute;top:-55%;left:var(--x);width:var(--w);height:62%;
+  border-radius:999px;opacity:var(--o);
+  background:linear-gradient(to bottom,
+    transparent,rgba(255,255,255,.98) 18%,rgba(95,184,172,.85) 55%,rgba(42,110,102,.45) 80%,transparent);
+  box-shadow:0 0 6px rgba(255,255,255,.55);
+  animation:fall var(--d) linear infinite var(--dl);
+  will-change:transform
+}
+@keyframes fall{
+  0%{transform:translateY(0) scaleY(.85);opacity:0}
+  12%{opacity:var(--o)}
+  88%{opacity:var(--o)}
+  100%{transform:translateY(285%) scaleY(1.15);opacity:0}
+}
+
+/* spray/mist gathering at the base */
+.mist{
+  position:absolute;left:-6%;right:-6%;bottom:-4%;height:46%;
+  background:radial-gradient(64% 100% at 50% 100%,rgba(255,255,255,.96),rgba(237,224,206,.5) 45%,transparent 75%);
+  filter:blur(18px);animation:mist 8s ease-in-out infinite alternate
+}
+@keyframes mist{
+  from{opacity:.42;transform:translateY(10px) scale(1)}
+  to  {opacity:.9;transform:translateY(-8px) scale(1.07)}
+}
+
+/* rising droplets */
+.drop{
+  position:absolute;bottom:6%;left:var(--x);width:var(--s);height:var(--s);
+  border-radius:50%;background:rgba(255,255,255,.9);opacity:0;
+  animation:rise var(--d) ease-in infinite var(--dl);will-change:transform
+}
+@keyframes rise{
+  0%{transform:translateY(0) scale(.4);opacity:0}
+  18%{opacity:.85}
+  100%{transform:translateY(calc(-1 * var(--h))) scale(1);opacity:0}
+}
+
+/* still pool rings at the foot of the falls */
+.ring{
+  position:absolute;left:50%;bottom:5%;width:var(--w);height:calc(var(--w) * .26);
+  margin-left:calc(var(--w) / -2);border:1.5px solid rgba(255,255,255,.95);
+  border-radius:50%;opacity:0;animation:ring var(--d) ease-out infinite var(--dl)
+}
+@keyframes ring{
+  0%{transform:scale(.25);opacity:0}
+  22%{opacity:.75}
+  100%{transform:scale(1.6);opacity:0}
+}
+
+/* drifting leaves across the whole page */
+.leafdrift{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.lf{
+  position:absolute;top:-8%;left:var(--x);width:var(--s);height:var(--s);
+  color:var(--mint-500);opacity:0;animation:drift var(--d) linear infinite var(--dl)
+}
+@keyframes drift{
+  0%{transform:translateY(-10vh) rotate(0);opacity:0}
+  10%{opacity:.34}
+  90%{opacity:.22}
+  100%{transform:translateY(112vh) translateX(var(--sx)) rotate(420deg);opacity:0}
+}
+
+/* --- hero art gets a gentle mouse parallax + gold frame --- */
+.hero-art{transition:transform .5s cubic-bezier(.4,0,.2,1);will-change:transform}
+.hero-art .frame{box-shadow:var(--shadow-lg)}
+
+/* --- scrollspy --- */
+.menu a.active{color:var(--gold-3)}
+.menu a.active::after{width:100%;background:var(--gold-1)}
+
+/* --- gallery lightbox --- */
+.gallery .frame{cursor:zoom-in}
+.lightbox{
+  position:fixed;inset:0;z-index:120;display:none;place-items:center;padding:32px;
+  background:rgba(44,31,22,.86);backdrop-filter:blur(8px);opacity:0;transition:opacity .3s
+}
+.lightbox.on{display:grid;opacity:1}
+.lightbox .box{
+  max-width:min(920px,92vw);max-height:86vh;width:100%;aspect-ratio:4/3;
+  border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-lg);
+  background:var(--mint-100);transform:scale(.94);transition:transform .35s cubic-bezier(.4,0,.2,1)
+}
+.lightbox.on .box{transform:scale(1)}
+.lightbox .box img,.lightbox .box svg{width:100%;height:100%;object-fit:cover;display:block}
+.lightbox .close{
+  position:absolute;top:20px;right:22px;width:44px;height:44px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;
+  display:grid;place-items:center;cursor:pointer;transition:.25s
+}
+.lightbox .close:hover{background:rgba(255,255,255,.22);transform:rotate(90deg)}
+.lightbox .close svg{width:22px;height:22px}
+
+/* --- respect reduced motion --- */
+@media(prefers-reduced-motion:reduce){
+  .stream,.mist,.drop,.ring,.lf{animation:none}
+  .leafdrift,.drop,.ring{display:none}
+  .stream{opacity:.28}
+  .rv{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============ ICON + ART SPRITE ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+  <linearGradient id="gMint" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#F7F0E5"/><stop offset="100%" stop-color="#DCC8AC"/>
+  </linearGradient>
+  <linearGradient id="gDeep" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#9BDACF"/><stop offset="100%" stop-color="#3E9A8E"/>
+  </linearGradient>
+  <linearGradient id="gSoft" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#FDF8F1"/><stop offset="100%" stop-color="#E9DAC3"/>
+  </linearGradient>
+</defs>
+
+<!-- ---- line icons (stroke) ---- -->
+<symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.4 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.4 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 1.9"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10.4C20 15.6 12 22 12 22s-8-6.4-8-11.6a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10.2" r="2.9"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="m3 7 8.1 5.6a1.6 1.6 0 0 0 1.8 0L21 7"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.2"/><path d="m8.2 12.2 2.6 2.6 5-5.4"/></symbol>
+<symbol id="i-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C13 4 17 4.5 21 3c.8 5.4-.6 12.4-5.6 15.1a7.4 7.4 0 0 1-4.4.9Z"/><path d="M4 21c1.4-4.3 4.2-8 8.5-10.4"/></symbol>
+<symbol id="i-stone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="18.4" rx="7.6" ry="2.7"/><ellipse cx="12" cy="12.6" rx="5.8" ry="2.3"/><ellipse cx="12" cy="7.4" rx="4" ry="1.9"/></symbol>
+<symbol id="i-drop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8c3.4 4 6.4 7.3 6.4 11a6.4 6.4 0 1 1-12.8 0c0-3.7 3-7 6.4-11Z"/><path d="M9.2 14.6a2.9 2.9 0 0 0 2.9 2.9"/></symbol>
+<symbol id="i-flower" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.6"/><path d="M12 9.4c0-2.4-1-4.4-2.6-4.4S6.8 6.6 7.9 8.7M12 9.4c0-2.4 1-4.4 2.6-4.4s2.6 1.6 1.5 3.7M9.4 12c-2.4 0-4.4 1-4.4 2.6s2 2.4 4 1.7M14.6 12c2.4 0 4.4 1 4.4 2.6s-2 2.4-4 1.7M12 14.6c-1.3 1.9-1.7 4-.4 4.9s3.1-.4 3.7-2.4"/></symbol>
+<symbol id="i-hands" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 13.5V5.8a1.6 1.6 0 0 1 3.2 0v5.4"/><path d="M11.7 11.2V4.4a1.6 1.6 0 1 1 3.2 0v6.8"/><path d="M14.9 11.6V6.9a1.6 1.6 0 0 1 3.2 0v7.6a6.5 6.5 0 0 1-6.5 6.5h-.9a5.3 5.3 0 0 1-4-1.8l-3-3.4a1.7 1.7 0 0 1 2.4-2.3l2.4 2.1"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.2M12 19.4v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.4 12h2.2M19.4 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.6 4.6 5.8v5.4c0 4.6 3.1 8.9 7.4 10.2 4.3-1.3 7.4-5.6 7.4-10.2V5.8Z"/><path d="m8.8 12 2.3 2.3 4.1-4.4"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.6 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.4l6.5-.9Z"/></symbol>
+<symbol id="i-wa" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.8-.9-2-1s-.5-.1-.7.1-.8 1-1 1.2-.4.2-.7.1a8.2 8.2 0 0 1-2.4-1.5 9 9 0 0 1-1.7-2.1c-.2-.3 0-.5.1-.6l.5-.6a2 2 0 0 0 .3-.5.6.6 0 0 0 0-.6L9 6.9c-.2-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.8.4A3.4 3.4 0 0 0 5.8 9.3a5.9 5.9 0 0 0 1.3 3.2 13.5 13.5 0 0 0 5.2 4.6c2.4 1 2.4.7 2.9.6a3.1 3.1 0 0 0 2-1.4 2.5 2.5 0 0 0 .2-1.4c-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2"/></symbol>
+<symbol id="i-ig" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="5.2"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-fb" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.5 2.9h-2.3v7A10 10 0 0 0 22 12"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.4"/><path d="M10.2 8.6 15.4 12l-5.2 3.4Z"/></symbol>
+<symbol id="i-cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 8.4h3l1.5-2.3h6.8l1.5 2.3h3a1.6 1.6 0 0 1 1.6 1.6v7.4a1.6 1.6 0 0 1-1.6 1.6H3.6A1.6 1.6 0 0 1 2 17.4V10a1.6 1.6 0 0 1 1.6-1.6Z"/><circle cx="12" cy="13.4" r="3.4"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M12 11.4v5M12 7.9v.2"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+
+<!-- ---- BUTTERFLY MARK (fallback wordmark only — replaced by the real logo file) ---- -->
+<symbol id="m-butterfly" viewBox="0 0 100 100"><g fill="currentColor"><path d="M48 14c-14 9-25 23-28 38-2 12 2 23 11 29 2 1 4 0 4-3-1-13 2-26 7-38 4-9 8-17 11-23 2-4-2-6-5-3Z"/><path d="M46 56c-13 4-24 13-29 25-3 7-2 14 3 18 2 2 5 1 6-2 4-11 11-20 19-28 4-4 7-8 9-11 2-3-4-4-8-2Z"/><path d="M60 30c6-5 14-8 21-6 4 1 5 6 2 9-6 5-13 8-19 12-2 2-5 0-5-3 0-4 0-8 1-12Z"/><path d="M60 52c7 0 14 3 19 8 3 3 1 8-4 7-7-1-13-4-18-8-2-2-1-5 1-6 1-1 1-1 2-1Z"/></g></symbol>
+
+<!-- ---- NATURE ART SCENES (photo placeholders, natural objects only) ---- -->
+<symbol id="a-stones" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice">
+  <rect width="400" height="500" fill="url(#gMint)"/>
+  <g opacity=".5" fill="none" stroke="#5FB8AC" stroke-width="1.4">
+    <ellipse cx="200" cy="404" rx="150" ry="34"/><ellipse cx="200" cy="404" rx="112" ry="25"/><ellipse cx="200" cy="404" rx="74" ry="17"/>
+  </g>
+  <g fill="#8A6742"><ellipse cx="200" cy="384" rx="86" ry="26" opacity=".92"/></g>
+  <g fill="#6B4A2F"><ellipse cx="200" cy="336" rx="66" ry="21" opacity=".9"/></g>
+  <g fill="#4A3220"><ellipse cx="200" cy="296" rx="48" ry="16" opacity=".9"/></g>
+  <g fill="#2C1F16"><ellipse cx="200" cy="264" rx="32" ry="11" opacity=".85"/></g>
+  <g fill="#A98461" opacity=".8"><ellipse cx="200" cy="240" rx="19" ry="7"/></g>
+  <g stroke="#4E7048" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".55">
+    <path d="M318 300c0-40 14-72 34-96"/><path d="M340 268c-16 4-26 16-28 32"/><path d="M348 232c-14 6-20 18-18 32"/>
+  </g>
+  <g fill="#C9AE8B" opacity=".45"><ellipse cx="70" cy="446" rx="44" ry="13"/><ellipse cx="330" cy="452" rx="38" ry="11"/></g>
+</symbol>
+
+<symbol id="a-bamboo" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice">
+  <rect width="400" height="500" fill="url(#gSoft)"/>
+  <g stroke="#4E7048" stroke-width="15" stroke-linecap="round" opacity=".8">
+    <path d="M96 500V54"/><path d="M196 500V22"/><path d="M296 500V86"/>
+  </g>
+  <g stroke="#FBF6EF" stroke-width="4">
+    <path d="M86 130h20M86 226h20M86 322h20M86 418h20"/>
+    <path d="M186 96h20M186 192h20M186 288h20M186 384h20M186 464h20"/>
+    <path d="M286 164h20M286 260h20M286 356h20M286 452h20"/>
+  </g>
+  <g fill="#6E8C5A" opacity=".85">
+    <path d="M104 148c34-6 58-24 66-48-30 2-56 20-66 48Z"/>
+    <path d="M188 112c-32-8-58-2-76 18 28 12 58 8 76-18Z"/>
+    <path d="M204 210c34-6 58-24 66-48-30 2-56 20-66 48Z"/>
+    <path d="M288 182c-32-8-58-2-76 18 28 12 58 8 76-18Z"/>
+    <path d="M304 300c34-6 58-24 66-48-30 2-56 20-66 48Z"/>
+  </g>
+</symbol>
+
+<symbol id="a-water" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice">
+  <rect width="400" height="500" fill="url(#gDeep)"/>
+  <g fill="none" stroke="#FDFAF5" stroke-width="2" opacity=".85">
+    <circle cx="200" cy="250" r="26"/><circle cx="200" cy="250" r="58"/><circle cx="200" cy="250" r="94"/>
+    <circle cx="200" cy="250" r="134"/><circle cx="200" cy="250" r="178"/><circle cx="200" cy="250" r="226"/>
+  </g>
+  <g fill="none" stroke="#2A6E66" stroke-width="1.6" opacity=".28">
+    <circle cx="200" cy="250" r="40"/><circle cx="200" cy="250" r="76"/><circle cx="200" cy="250" r="114"/><circle cx="200" cy="250" r="156"/>
+  </g>
+  <circle cx="200" cy="250" r="13" fill="#FDFAF5" opacity=".95"/>
+  <path d="M200 176c9 12 16 21 16 29a16 16 0 0 1-32 0c0-8 7-17 16-29Z" fill="#fff" opacity=".9"/>
+</symbol>
+
+<symbol id="a-leaf" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice">
+  <rect width="400" height="500" fill="url(#gMint)"/>
+  <g fill="#4E7048" opacity=".9">
+    <path d="M200 468c-4-88-2-166 8-232-42 16-78 8-104-24 34-24 72-24 112 0-14-42-8-80 18-114 26 34 32 72 18 114 40-24 78-24 112 0-26 32-62 40-104 24 10 66 12 144 8 232Z"/>
+  </g>
+  <g stroke="#FBF6EF" stroke-width="2.6" fill="none" opacity=".75">
+    <path d="M198 440c0-100 2-176 10-238"/><path d="M204 262c22-8 44-20 60-36M204 300c-20-10-40-20-54-36M208 214c14-20 20-44 16-68"/>
+  </g>
+  <g fill="#C9AE8B" opacity=".55"><circle cx="70" cy="90" r="26"/><circle cx="330" cy="430" r="34"/></g>
+</symbol>
+
+<symbol id="a-lotus" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice">
+  <rect width="400" height="500" fill="url(#gSoft)"/>
+  <g opacity=".45" fill="none" stroke="#5FB8AC" stroke-width="1.6">
+    <ellipse cx="200" cy="376" rx="164" ry="36"/><ellipse cx="200" cy="376" rx="118" ry="26"/>
+  </g>
+  <g fill="#E3D0B4">
+    <path d="M200 348c-30-24-46-56-46-92 30 12 46 44 46 92Z"/>
+    <path d="M200 348c30-24 46-56 46-92-30 12-46 44-46 92Z"/>
+    <path d="M200 350c-52-10-86-36-102-74 40-4 78 22 102 74Z" opacity=".85"/>
+    <path d="M200 350c52-10 86-36 102-74-40-4-78 22-102 74Z" opacity=".85"/>
+    <path d="M200 352c-62 6-108-6-136-38 44-18 92-2 136 38Z" opacity=".7"/>
+    <path d="M200 352c62 6 108-6 136-38-44-18-92-2-136 38Z" opacity=".7"/>
+  </g>
+  <path d="M200 350c-14-26-16-52-6-78 16 22 20 48 6 78Z" fill="#4E7048"/>
+  <g fill="#C9AE8B" opacity=".5"><ellipse cx="88" cy="418" rx="56" ry="15"/><ellipse cx="312" cy="428" rx="48" ry="13"/></g>
+</symbol>
+
+<symbol id="a-fern" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice">
+  <rect width="400" height="500" fill="url(#gDeep)"/>
+  <g stroke="#33502F" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8">
+    <path d="M200 500C200 320 184 190 130 90"/>
+  </g>
+  <g fill="#4E7048" opacity=".85">
+    <path d="M196 430c-40 4-68-8-84-36 32-10 62 2 84 36Z"/><path d="M198 430c40 4 68-8 84-36-32-10-62 2-84 36Z"/>
+    <path d="M190 356c-36 4-62-8-76-34 30-8 56 4 76 34Z"/><path d="M192 356c36 4 62-8 76-34-30-8-56 4-76 34Z"/>
+    <path d="M182 284c-32 4-54-6-66-30 26-6 48 4 66 30Z"/><path d="M184 284c32 4 54-6 66-30-26-6-48 4-66 30Z"/>
+    <path d="M170 214c-26 4-44-4-54-24 22-4 40 2 54 24Z"/><path d="M172 214c26 4 44-4 54-24-22-4-40 2-54 24Z"/>
+    <path d="M154 148c-20 2-34-4-42-20 18-2 32 2 42 20Z"/><path d="M156 148c20 2 34-4 42-20-18-2-32 2-42 20Z"/>
+  </g>
+  <path d="M130 90c-16-10-24-26-20-44 18 8 26 26 20 44Z" fill="#6E8C5A"/>
+</symbol>
+
+<symbol id="a-portrait" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice">
+  <rect width="400" height="500" fill="url(#gMint)"/>
+  <g fill="#DCC8AC" opacity=".45">
+    <path d="M0 500c40-90 96-146 168-168-24 62-80 118-168 168Z"/>
+    <path d="M400 500c-40-90-96-146-168-168 24 62 80 118 168 168Z"/>
+  </g>
+  <g stroke="#C9AE8B" stroke-width="2.2" fill="none" opacity=".5" stroke-linecap="round">
+    <path d="M84 470c0-52 14-96 42-132"/><path d="M316 470c0-52-14-96-42-132"/>
+  </g>
+  <g transform="translate(200 216)" fill="none" stroke="#A0703A" stroke-width="2.4" opacity=".55" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-32-20h9l4.5-7h21l4.5 7h9a5 5 0 0 1 5 5v22a5 5 0 0 1-5 5h-48a5 5 0 0 1-5-5v-22a5 5 0 0 1 5-5Z"/>
+    <circle cx="0" cy="-3" r="10"/>
+  </g>
+  <text x="200" y="290" text-anchor="middle" font-family="Jost,sans-serif" font-size="15" letter-spacing="3.4" fill="#A0703A" opacity=".68">TEAM PHOTO</text>
+</symbol>
+</svg>
+
+<div class="progress" id="progress"></div>
+<div class="leafdrift" aria-hidden="true">
+  <svg class="lf" style="--x:5.6%;--s:14px;--d:19.6s;--dl:-19.4s;--sx:82px"><use href="#i-leaf"/></svg>
+  <svg class="lf" style="--x:44.6%;--s:19px;--d:29.8s;--dl:-26.7s;--sx:-24px"><use href="#i-leaf"/></svg>
+  <svg class="lf" style="--x:23.5%;--s:13px;--d:18.8s;--dl:-5.7s;--sx:22px"><use href="#i-leaf"/></svg>
+  <svg class="lf" style="--x:86.7%;--s:19px;--d:22.7s;--dl:-18.3s;--sx:54px"><use href="#i-leaf"/></svg>
+  <svg class="lf" style="--x:10.9%;--s:17px;--d:28.7s;--dl:-21.9s;--sx:45px"><use href="#i-leaf"/></svg>
+  <svg class="lf" style="--x:47.5%;--s:13px;--d:27.0s;--dl:-9.3s;--sx:54px"><use href="#i-leaf"/></svg>
+  <svg class="lf" style="--x:93.4%;--s:15px;--d:21.6s;--dl:-26.5s;--sx:40px"><use href="#i-leaf"/></svg>
+  <svg class="lf" style="--x:18.8%;--s:12px;--d:18.1s;--dl:-25.3s;--sx:55px"><use href="#i-leaf"/></svg>
+  <svg class="lf" style="--x:16.6%;--s:18px;--d:29.7s;--dl:-18.4s;--sx:-27px"><use href="#i-leaf"/></svg>
+</div>
+
+<!-- ============ TOP BAR ============ -->
+<div class="topbar">
+  <div class="wrap">
+    <div class="tb-group">
+      <span class="tb-item"><svg><use href="#i-clock"/></svg> Open daily · 10:00 – 23:00</span>
+      <span class="tb-item"><svg><use href="#i-pin"/></svg> Dubai, United Arab Emirates</span>
+    </div>
+    <div class="tb-group">
+      <a class="tb-item" href="tel:+971000000000"><svg><use href="#i-phone"/></svg> +971 00 000 0000</a>
+      <a class="tb-item" href="mailto:hello@berelaxspa.ae"><svg><use href="#i-mail"/></svg> hello@berelaxspa.ae</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header id="top">
+  <div class="wrap nav">
+    <a href="#top" class="logo" id="logo" aria-label="BE RELAX — Massage Center and Spa">
+      <!-- Real logo file. Drop assets/logo/be-relax-logo.png in and it appears automatically. -->
+      <img class="logo-img" src="assets/logo/be-relax-logo.png" alt="BE RELAX — Massage Center and Spa">
+      <!-- Temporary wordmark shown only while the logo file is missing -->
+      <span class="logo-fallback">
+        <svg class="mark" aria-hidden="true"><use href="#m-butterfly"/></svg>
+        <span class="word"><b>BE RELAX</b><span>Massage Center and Spa</span></span>
+      </span>
+    </a>
+
+    <nav class="menu" id="menu">
+      <a href="#about">About</a>
+      <a href="#services">Services</a>
+      <a href="#team">Our Team</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#reviews">Reviews</a>
+      <a href="#contact">Contact</a>
+    </nav>
+
+    <div class="nav-cta">
+      <a href="tel:+971000000000" class="btn btn-ghost">Call Us</a>
+      <a href="#contact" class="btn btn-primary">Book Now</a>
+      <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
+        <svg><use href="#i-menu" id="burger-icon"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<div class="hero">
+  <div class="falls" aria-hidden="true">
+    <span class="stream" style="--x:45.3%;--w:3.7px;--d:8.1s;--o:0.59;--dl:-4.3s"></span>
+    <span class="stream" style="--x:58.6%;--w:2.2px;--d:6.1s;--o:0.68;--dl:-6.7s"></span>
+    <span class="stream" style="--x:10.2%;--w:2.7px;--d:4.0s;--o:0.68;--dl:-5.9s"></span>
+    <span class="stream" style="--x:5.1%;--w:5.4px;--d:8.3s;--o:0.68;--dl:-5.2s"></span>
+    <span class="stream" style="--x:16.4%;--w:1.6px;--d:6.2s;--o:0.37;--dl:-1.6s"></span>
+    <span class="stream" style="--x:24.7%;--w:1.6px;--d:5.9s;--o:0.58;--dl:-7.2s"></span>
+    <span class="stream" style="--x:51.9%;--w:4.1px;--d:6.0s;--o:0.68;--dl:-3.9s"></span>
+    <span class="stream" style="--x:28.3%;--w:5.5px;--d:8.5s;--o:0.68;--dl:-6.0s"></span>
+    <span class="stream" style="--x:31.9%;--w:2.4px;--d:5.0s;--o:0.38;--dl:-6.5s"></span>
+    <span class="stream" style="--x:40.2%;--w:4.9px;--d:5.5s;--o:0.68;--dl:-7.2s"></span>
+    <span class="stream" style="--x:1.1%;--w:2.3px;--d:8.1s;--o:0.59;--dl:-8.3s"></span>
+    <span class="stream" style="--x:39.9%;--w:1.8px;--d:6.7s;--o:0.68;--dl:-2.3s"></span>
+    <span class="stream" style="--x:9.5%;--w:2.8px;--d:8.3s;--o:0.68;--dl:-1.0s"></span>
+    <span class="stream" style="--x:25.1%;--w:1.9px;--d:3.9s;--o:0.68;--dl:-1.5s"></span>
+    <span class="stream" style="--x:55.8%;--w:3.3px;--d:4.5s;--o:0.68;--dl:-1.1s"></span>
+    <span class="stream" style="--x:64.1%;--w:2.0px;--d:5.7s;--o:0.45;--dl:-2.3s"></span>
+    <span class="stream" style="--x:96.2%;--w:4.7px;--d:5.1s;--o:0.68;--dl:-1.8s"></span>
+    <span class="stream" style="--x:39.6%;--w:4.9px;--d:6.7s;--o:0.39;--dl:-8.4s"></span>
+    <span class="stream" style="--x:21.9%;--w:2.5px;--d:7.4s;--o:0.52;--dl:-2.5s"></span>
+    <span class="stream" style="--x:8.2%;--w:1.9px;--d:6.5s;--o:0.47;--dl:-5.1s"></span>
+    <span class="stream" style="--x:37.4%;--w:3.3px;--d:8.3s;--o:0.60;--dl:-4.9s"></span>
+    <span class="stream" style="--x:85.9%;--w:2.2px;--d:4.4s;--o:0.68;--dl:-7.0s"></span>
+    <span class="stream" style="--x:25.5%;--w:2.3px;--d:7.2s;--o:0.68;--dl:-1.7s"></span>
+    <span class="stream" style="--x:94.1%;--w:5.0px;--d:6.6s;--o:0.57;--dl:-0.9s"></span>
+    <span class="stream" style="--x:4.8%;--w:5.4px;--d:4.8s;--o:0.68;--dl:-2.2s"></span>
+    <span class="stream" style="--x:81.7%;--w:3.9px;--d:5.0s;--o:0.43;--dl:-6.1s"></span>
+    <div class="mist"></div>
+    <span class="drop" style="--x:89.9%;--s:5.8px;--d:6.8s;--h:164px;--dl:-6.1s"></span>
+    <span class="drop" style="--x:10.8%;--s:6.6px;--d:8.0s;--h:195px;--dl:-7.2s"></span>
+    <span class="drop" style="--x:40.5%;--s:4.6px;--d:5.0s;--h:166px;--dl:-0.6s"></span>
+    <span class="drop" style="--x:11.9%;--s:3.8px;--d:5.2s;--h:131px;--dl:-0.5s"></span>
+    <span class="drop" style="--x:6.0%;--s:3.6px;--d:5.0s;--h:134px;--dl:-0.2s"></span>
+    <span class="drop" style="--x:82.9%;--s:5.5px;--d:5.2s;--h:120px;--dl:-3.1s"></span>
+    <span class="drop" style="--x:38.0%;--s:3.5px;--d:8.3s;--h:209px;--dl:-4.2s"></span>
+    <span class="drop" style="--x:48.6%;--s:3.3px;--d:5.0s;--h:131px;--dl:-2.4s"></span>
+    <span class="drop" style="--x:78.9%;--s:3.6px;--d:4.6s;--h:204px;--dl:-4.8s"></span>
+    <span class="drop" style="--x:18.9%;--s:5.2px;--d:4.6s;--h:153px;--dl:-8.8s"></span>
+    <span class="drop" style="--x:82.0%;--s:5.8px;--d:5.7s;--h:134px;--dl:-1.5s"></span>
+    <span class="drop" style="--x:73.9%;--s:5.1px;--d:8.0s;--h:130px;--dl:-2.0s"></span>
+    <span class="drop" style="--x:77.4%;--s:6.9px;--d:8.3s;--h:187px;--dl:-7.4s"></span>
+    <span class="drop" style="--x:71.1%;--s:3.9px;--d:6.8s;--h:133px;--dl:-0.3s"></span>
+    <span class="ring" style="--w:240px;--d:6.0s;--dl:0s"></span>
+    <span class="ring" style="--w:300px;--d:7.5s;--dl:-2.5s"></span>
+    <span class="ring" style="--w:380px;--d:9.0s;--dl:-5.0s"></span>
+  </div>
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">Massage Center and Spa · Dubai</p>
+      <h1>Where the city fades<br>and you <em>simply breathe</em>.</h1>
+      <p class="lead">
+        A candlelit sanctuary of warm teak, steam and slow hands.
+        Our certified therapists tailor every treatment to your body — so you
+        leave lighter than you arrived.
+      </p>
+      <div class="hero-cta">
+        <a href="#contact" class="btn btn-primary">Book Your Session</a>
+        <a href="#services" class="btn btn-ghost">View Treatments</a>
+      </div>
+      <div class="hero-stats">
+        <div><b>12+</b><span>Signature Treatments</span></div>
+        <div><b>100%</b><span>Certified Therapists</span></div>
+        <div><b>7</b><span>Days a Week</span></div>
+      </div>
+    </div>
+
+    <div class="hero-art">
+      <div class="frame ph" data-src="assets/photos/hero.jpg">
+        <img alt="BE RELAX spa interior">
+        <svg class="art" aria-hidden="true"><use href="#a-stones"/></svg>
+      </div>
+      <div class="badge">
+        <svg><use href="#i-leaf"/></svg>
+        <div><b>Natural Oils Only</b><span>Cold-pressed &amp; organic</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TRUST STRIP ============ -->
+<div class="strip">
+  <div class="wrap">
+    <div class="it"><svg><use href="#i-shield"/></svg><div><b>Licensed Center</b><span>Fully certified and DED-registered</span></div></div>
+    <div class="it"><svg><use href="#i-hands"/></svg><div><b>Expert Therapists</b><span>Trained in Thai, Arabic &amp; Swedish technique</span></div></div>
+    <div class="it"><svg><use href="#i-drop"/></svg><div><b>Spotless Hygiene</b><span>Fresh linen and sterilised tools every session</span></div></div>
+    <div class="it"><svg><use href="#i-sun"/></svg><div><b>Open Late</b><span>Daily until 11:00 pm, walk-ins welcome</span></div></div>
+  </div>
+</div>
+
+<!-- ============ ABOUT ============ -->
+<section id="about">
+  <div class="wrap about rv">
+    <div class="about-art">
+      <div class="frame ph" data-src="assets/photos/about-01.jpg"><img alt="Treatment room"><svg class="art"><use href="#a-bamboo"/></svg></div>
+      <div class="frame ph" data-src="assets/photos/about-02.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-lotus"/></svg></div>
+    </div>
+    <div>
+      <p class="eyebrow">Our Philosophy</p>
+      <h2>Rest is not a luxury.<br>It is maintenance.</h2>
+      <p>
+        BE RELAX was built around one simple idea — that a massage should do more
+        than pass an hour. Every room is kept warm and low-lit, every oil is chosen
+        for your skin, and every therapist listens before they begin.
+      </p>
+      <p>
+        From deep tissue work that releases months of desk tension, to an authentic
+        Moroccan bath that leaves your skin new, we treat the whole body rather than
+        a single knot.
+      </p>
+      <ul class="tick">
+        <li><svg><use href="#i-check"/></svg><span>Consultation before every first session</span></li>
+        <li><svg><use href="#i-check"/></svg><span>Private rooms with individual temperature control</span></li>
+        <li><svg><use href="#i-check"/></svg><span>Ladies&rsquo; therapists available on request</span></li>
+        <li><svg><use href="#i-check"/></svg><span>Complimentary herbal tea and shower after treatment</span></li>
+      </ul>
+      <a href="#services" class="btn btn-primary">Explore Treatments</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SERVICES ============ -->
+<section id="services" class="alt">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">The Menu</p>
+      <h2>Signature Treatments</h2>
+      <div class="orn"><i></i><svg><use href="#i-leaf"/></svg><i></i></div>
+      <p class="lead">Choose a single therapy or combine two into a longer ritual. Every price includes shower, robe and herbal tea.</p>
+    </div>
+
+    <div class="grid-3 rv">
+      <article class="card">
+        <div class="ico"><svg><use href="#i-hands"/></svg></div>
+        <h3>Deep Tissue</h3>
+        <p>Firm, slow pressure through the deeper muscle layers to break down long-held tension in the back, neck and shoulders.</p>
+        <div class="meta"><span>60 / 90 min</span><b>AED 250</b></div>
+      </article>
+
+      <article class="card">
+        <div class="ico"><svg><use href="#i-leaf"/></svg></div>
+        <h3>Swedish Relaxation</h3>
+        <p>Long, flowing strokes with warm oil. The classic full-body massage for circulation, calm and complete switch-off.</p>
+        <div class="meta"><span>60 / 90 min</span><b>AED 220</b></div>
+      </article>
+
+      <article class="card">
+        <div class="ico"><svg><use href="#i-stone"/></svg></div>
+        <h3>Hot Stone Therapy</h3>
+        <p>Smooth basalt stones heated to body temperature glide over the spine, melting stiffness without heavy pressure.</p>
+        <div class="meta"><span>75 min</span><b>AED 320</b></div>
+      </article>
+
+      <article class="card">
+        <div class="ico"><svg><use href="#i-drop"/></svg></div>
+        <h3>Moroccan Bath</h3>
+        <p>Traditional hammam ritual — black soap, steam and a full kessa exfoliation that leaves the skin visibly brighter.</p>
+        <div class="meta"><span>45 min</span><b>AED 200</b></div>
+      </article>
+
+      <article class="card">
+        <div class="ico"><svg><use href="#i-sun"/></svg></div>
+        <h3>Turkish Bath</h3>
+        <p>Steam, warm marble and a rich foam massage. Deeply cleansing and the perfect opener before any oil treatment.</p>
+        <div class="meta"><span>45 min</span><b>AED 220</b></div>
+      </article>
+
+      <article class="card">
+        <div class="ico"><svg><use href="#i-flower"/></svg></div>
+        <h3>Aromatherapy</h3>
+        <p>Choose your blend — lavender, eucalyptus or sweet orange — and let the oils work on the nervous system as much as the muscles.</p>
+        <div class="meta"><span>60 min</span><b>AED 260</b></div>
+      </article>
+
+      <article class="card">
+        <div class="ico"><svg><use href="#i-leaf"/></svg></div>
+        <h3>Traditional Thai</h3>
+        <p>Assisted stretching and rhythmic compression on a floor mat. No oil, fully clothed, and remarkable for flexibility.</p>
+        <div class="meta"><span>60 / 90 min</span><b>AED 280</b></div>
+      </article>
+
+      <article class="card">
+        <div class="ico"><svg><use href="#i-hands"/></svg></div>
+        <h3>Four Hands</h3>
+        <p>Two therapists working in perfect mirrored rhythm. The fastest route to total relaxation when time is short.</p>
+        <div class="meta"><span>60 min</span><b>AED 450</b></div>
+      </article>
+
+      <article class="card">
+        <div class="ico"><svg><use href="#i-drop"/></svg></div>
+        <h3>Jacuzzi &amp; Steam</h3>
+        <p>Warm hydro-jets and eucalyptus steam to open the body before treatment — or simply to finish the day slowly.</p>
+        <div class="meta"><span>30 min</span><b>AED 120</b></div>
+      </article>
+    </div>
+
+    <p class="center"><span class="ph-note"><svg><use href="#i-info"/></svg>
+      Sample pricing — replace with your real rates in <code>index.html</code> before going live.</span></p>
+  </div>
+</section>
+
+<!-- ============ TEAM ============ -->
+<section id="team">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">The Hands Behind BE RELAX</p>
+      <h2>Meet Our Therapists</h2>
+      <div class="orn"><i></i><svg><use href="#i-leaf"/></svg><i></i></div>
+      <p class="lead">Certified, experienced and genuinely warm. Request your preferred therapist when you book.</p>
+    </div>
+
+    <div class="grid-4 rv">
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-01.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <h3>Lina</h3><span>Deep Tissue &amp; Sports</span>
+        <p class="langs">English · Arabic</p>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-02.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <h3>Maya</h3><span>Thai &amp; Stretching</span>
+        <p class="langs">English · Thai</p>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-03.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <h3>Sofia</h3><span>Aromatherapy &amp; Swedish</span>
+        <p class="langs">English · Russian</p>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-04.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <h3>Nadia</h3><span>Moroccan Bath Specialist</span>
+        <p class="langs">Arabic · French</p>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-05.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <h3>Elena</h3><span>Hot Stone &amp; Relaxation</span>
+        <p class="langs">English · Russian</p>
+      </div>
+      <div class="member">
+        <div class="frame ph" data-src="assets/team/team-06.jpg"><img alt="Therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <h3>Aisha</h3><span>Four Hands &amp; Reflexology</span>
+        <p class="langs">English · Arabic</p>
+      </div>
+    </div>
+
+    <p class="center"><span class="ph-note"><svg><use href="#i-cam"/></svg>
+      Upload team photos as <code>team-01.jpg</code> … <code>team-06.jpg</code> to <code>assets/team/</code></span></p>
+  </div>
+</section>
+
+<!-- ============ GALLERY ============ -->
+<section id="gallery" class="alt">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Inside BE RELAX</p>
+      <h2>A Calmer Kind of Space</h2>
+      <div class="orn"><i></i><svg><use href="#i-leaf"/></svg><i></i></div>
+      <p class="lead">Warm teak, still water and low candlelight — the room does half the work before we even begin.</p>
+    </div>
+
+    <div class="gallery rv">
+      <div class="frame ph g-tall" data-src="assets/photos/gallery-01.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-water"/></svg></div>
+      <div class="frame ph g-wide" data-src="assets/photos/gallery-02.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-leaf"/></svg></div>
+      <div class="frame ph" data-src="assets/photos/gallery-03.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-fern"/></svg></div>
+      <div class="frame ph" data-src="assets/photos/gallery-04.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-lotus"/></svg></div>
+      <div class="frame ph" data-src="assets/photos/gallery-05.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-stones"/></svg></div>
+      <div class="frame ph g-wide" data-src="assets/photos/gallery-06.jpg"><img alt="Spa detail"><svg class="art"><use href="#a-bamboo"/></svg></div>
+    </div>
+
+    <p class="center"><span class="ph-note"><svg><use href="#i-cam"/></svg>
+      Upload gallery images to <code>assets/photos/</code></span></p>
+  </div>
+</section>
+
+<!-- ============ VIDEO ============ -->
+<section id="video">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Take a Look</p>
+      <h2>Step Inside</h2>
+      <div class="orn"><i></i><svg><use href="#i-leaf"/></svg><i></i></div>
+      <p class="lead">A short walk through the center — the rooms, the steam and the quiet.</p>
+    </div>
+
+    <div class="video-wrap rv">
+      <video id="spa-video" controls playsinline preload="none"
+             poster="assets/videos/spa-tour-poster.jpg" style="display:none">
+        <source src="assets/videos/spa-tour.mp4" type="video/mp4">
+      </video>
+      <div class="video-empty" id="video-empty">
+        <svg><use href="#i-play"/></svg>
+        <b>Your spa tour video goes here</b>
+        <p>Upload <code style="color:#DCF1E8">spa-tour.mp4</code> to <code style="color:#DCF1E8">assets/videos/</code> and this player switches on automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REVIEWS ============ -->
+<section id="reviews" class="alt">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Guest Words</p>
+      <h2>What People Say</h2>
+      <div class="orn"><i></i><svg><use href="#i-leaf"/></svg><i></i></div>
+    </div>
+    <div class="grid-3 rv">
+      <div class="quote">
+        <div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div>
+        <p>&ldquo;I came in with a shoulder I could barely lift and walked out moving freely. She actually listened to where the pain was.&rdquo;</p>
+        <div class="who"><div class="av">R</div><div><b>Rania K.</b><span>Deep Tissue · 90 min</span></div></div>
+      </div>
+      <div class="quote">
+        <div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div>
+        <p>&ldquo;The Moroccan bath here is the real thing. Spotlessly clean, properly hot, and my skin felt incredible for days after.&rdquo;</p>
+        <div class="who"><div class="av">M</div><div><b>Mariam A.</b><span>Moroccan Bath</span></div></div>
+      </div>
+      <div class="quote">
+        <div class="stars"><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg><svg><use href="#i-star"/></svg></div>
+        <p>&ldquo;Booked the four hands massage on a whim before a flight. Easily the most relaxed I have ever been in Dubai.&rdquo;</p>
+        <div class="who"><div class="av">S</div><div><b>Sara H.</b><span>Four Hands · 60 min</span></div></div>
+      </div>
+    </div>
+    <p class="center"><span class="ph-note"><svg><use href="#i-info"/></svg>
+      Sample reviews — swap in your real Google reviews before publishing.</span></p>
+  </div>
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section id="contact">
+  <div class="wrap contact rv">
+    <div>
+      <p class="eyebrow">Reservations</p>
+      <h2 style="font-size:clamp(31px,4.2vw,46px);margin-bottom:16px">Book Your Escape</h2>
+      <p class="lead" style="margin:0">
+        Call, message on WhatsApp, or send the form and we will confirm your
+        time within a few minutes during opening hours.
+      </p>
+
+      <div class="info">
+        <div class="it"><div class="ico"><svg><use href="#i-pin"/></svg></div>
+          <div><b>Visit Us</b><span>Street address, Dubai, United Arab Emirates</span></div></div>
+        <div class="it"><div class="ico"><svg><use href="#i-phone"/></svg></div>
+          <div><b>Call or WhatsApp</b><a href="tel:+971000000000">+971 00 000 0000</a></div></div>
+        <div class="it"><div class="ico"><svg><use href="#i-mail"/></svg></div>
+          <div><b>Email</b><a href="mailto:hello@berelaxspa.ae">hello@berelaxspa.ae</a></div></div>
+        <div class="it"><div class="ico"><svg><use href="#i-clock"/></svg></div>
+          <div><b>Opening Hours</b><span>Every day · 10:00 – 23:00</span></div></div>
+      </div>
+    </div>
+
+    <form id="booking" novalidate>
+      <div class="row-2">
+        <div class="field"><label for="f-name">Full Name</label><input id="f-name" name="name" type="text" placeholder="Your name" required></div>
+        <div class="field"><label for="f-phone">Phone</label><input id="f-phone" name="phone" type="tel" placeholder="+971 …" required></div>
+      </div>
+      <div class="field"><label for="f-service">Treatment</label>
+        <select id="f-service" name="service">
+          <option>Deep Tissue</option><option>Swedish Relaxation</option>
+          <option>Hot Stone Therapy</option><option>Moroccan Bath</option>
+          <option>Turkish Bath</option><option>Aromatherapy</option>
+          <option>Traditional Thai</option><option>Four Hands</option>
+          <option>Jacuzzi &amp; Steam</option><option>Not sure — please advise</option>
+        </select>
+      </div>
+      <div class="row-2">
+        <div class="field"><label for="f-date">Preferred Date</label><input id="f-date" name="date" type="date"></div>
+        <div class="field"><label for="f-time">Preferred Time</label><input id="f-time" name="time" type="time"></div>
+      </div>
+      <div class="field"><label for="f-msg">Anything We Should Know?</label>
+        <textarea id="f-msg" name="message" placeholder="Injuries, pressure preference, preferred therapist…"></textarea></div>
+      <button type="submit" class="btn btn-primary" style="width:100%">Request Booking</button>
+      <p class="form-note">This sample form opens WhatsApp with your details pre-filled. Connect it to your booking system when you go live.</p>
+    </form>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <div class="logo f-logo" id="logo-footer">
+          <img class="logo-img" src="assets/logo/be-relax-logo-white.png" alt="BE RELAX — Massage Center and Spa">
+          <span class="logo-fallback">
+            <svg class="mark"><use href="#m-butterfly"/></svg>
+            <span class="word"><b>BE RELAX</b><span>Massage Center and Spa</span></span>
+          </span>
+        </div>
+        <p class="f-about">
+          A candlelit sanctuary in Dubai. Certified therapists, natural oils
+          and treatments shaped around your body — not a fixed script.
+        </p>
+        <div class="social">
+          <a href="#" aria-label="Instagram"><svg><use href="#i-ig"/></svg></a>
+          <a href="#" aria-label="Facebook"><svg><use href="#i-fb"/></svg></a>
+          <a href="#" aria-label="WhatsApp"><svg><use href="#i-wa"/></svg></a>
+        </div>
+      </div>
+      <div><h4>Explore</h4><ul>
+        <li><a href="#about">About Us</a></li><li><a href="#services">Treatments</a></li>
+        <li><a href="#team">Our Team</a></li><li><a href="#gallery">Gallery</a></li>
+      </ul></div>
+      <div><h4>Popular</h4><ul>
+        <li><a href="#services">Deep Tissue</a></li><li><a href="#services">Moroccan Bath</a></li>
+        <li><a href="#services">Hot Stone</a></li><li><a href="#services">Four Hands</a></li>
+      </ul></div>
+      <div><h4>Visit</h4><ul>
+        <li>Street address, Dubai, UAE</li>
+        <li><a href="tel:+971000000000">+971 00 000 0000</a></li>
+        <li><a href="mailto:hello@berelaxspa.ae">hello@berelaxspa.ae</a></li>
+        <li>Daily · 10:00 – 23:00</li>
+      </ul></div>
+    </div>
+    <div class="f-bottom">
+      <span>&copy; <span id="yr">2026</span> BE RELAX Massage Center and Spa. All rights reserved.</span>
+      <span>Dubai, United Arab Emirates</span>
+    </div>
+  </div>
+</footer>
+
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Enlarged image">
+  <button class="close" id="lb-close" aria-label="Close"><svg><use href="#i-x"/></svg></button>
+  <div class="box" id="lb-box"></div>
+</div>
+
+<a class="fab" href="https://wa.me/971000000000" target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+  <svg><use href="#i-wa"/></svg>
+</a>
+
+<script>
+(function(){
+  "use strict";
+
+  /* --- year --- */
+  document.getElementById("yr").textContent = new Date().getFullYear();
+
+  /* --- sticky header --- */
+  var hdr = document.querySelector("header");
+  addEventListener("scroll", function(){
+    hdr.classList.toggle("scrolled", scrollY > 12);
+  }, {passive:true});
+
+  /* --- mobile menu --- */
+  var burger = document.getElementById("burger"),
+      menu   = document.getElementById("menu"),
+      icon   = document.getElementById("burger-icon");
+  function setMenu(open){
+    menu.classList.toggle("open", open);
+    burger.setAttribute("aria-expanded", open ? "true" : "false");
+    icon.setAttribute("href", open ? "#i-x" : "#i-menu");
+    document.body.style.overflow = open ? "hidden" : "";
+  }
+  burger.addEventListener("click", function(){ setMenu(!menu.classList.contains("open")); });
+  menu.addEventListener("click", function(e){ if(e.target.tagName === "A") setMenu(false); });
+
+  /* --- logo: use the real file the moment it exists, else keep the wordmark --- */
+  document.querySelectorAll(".logo").forEach(function(box){
+    var img = box.querySelector(".logo-img");
+    if(!img) return;
+    var probe = new Image();
+    probe.onload  = function(){ box.classList.add("has-file"); };
+    probe.src = img.getAttribute("src");
+  });
+
+  /* --- photo slots: swap SVG art for the real photo once uploaded --- */
+  document.querySelectorAll(".frame.ph").forEach(function(frame){
+    var src = frame.dataset.src, img = frame.querySelector("img");
+    if(!src || !img) return;
+    var probe = new Image();
+    probe.onload = function(){ img.src = src; frame.classList.add("has-file"); };
+    probe.src = src;
+  });
+
+  /* --- video: reveal the player only if the file is really there --- */
+  (function(){
+    var v = document.getElementById("spa-video"),
+        empty = document.getElementById("video-empty");
+    fetch("assets/videos/spa-tour.mp4", {method:"HEAD"})
+      .then(function(r){
+        if(!r.ok) return;
+        v.style.display = "block";
+        empty.style.display = "none";
+      })
+      .catch(function(){ /* file not uploaded yet — keep the placeholder */ });
+  })();
+
+  /* --- reveal on scroll --- */
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){ en.target.classList.add("in"); io.unobserve(en.target); }
+    });
+  }, {threshold:.12, rootMargin:"0px 0px -40px"});
+  document.querySelectorAll(".rv").forEach(function(el){ io.observe(el); });
+
+
+  /* --- scroll progress bar --- */
+  var bar = document.getElementById("progress");
+  function drawBar(){
+    var h = document.documentElement.scrollHeight - innerHeight;
+    bar.style.width = (h > 0 ? (scrollY / h) * 100 : 0) + "%";
+  }
+  addEventListener("scroll", drawBar, {passive:true});
+  addEventListener("resize", drawBar);
+  drawBar();
+
+  /* --- count the hero stats up when they scroll into view --- */
+  var statBox = document.querySelector(".hero-stats");
+  if(statBox){
+    var counted = false;
+    var cio = new IntersectionObserver(function(en){
+      if(!en[0].isIntersecting || counted) return;
+      counted = true;
+      statBox.querySelectorAll("b").forEach(function(el){
+        var raw = el.textContent.trim();
+        var num = parseInt(raw, 10);
+        if(isNaN(num)) return;
+        var suffix = raw.replace(/^\d+/, ""), t0 = null, dur = 1300;
+        function step(t){
+          if(t0 === null) t0 = t;
+          var k = Math.min((t - t0) / dur, 1);
+          k = 1 - Math.pow(1 - k, 3);                 /* ease-out cubic */
+          el.textContent = Math.round(num * k) + suffix;
+          if(k < 1) requestAnimationFrame(step);
+        }
+        el.textContent = "0" + suffix;
+        requestAnimationFrame(step);
+      });
+    }, {threshold:.5});
+    cio.observe(statBox);
+  }
+
+  /* --- gentle mouse parallax on the hero image --- */
+  var heroBox = document.querySelector(".hero"),
+      heroArt = document.querySelector(".hero-art");
+  if(heroBox && heroArt && matchMedia("(hover:hover)").matches){
+    heroBox.addEventListener("mousemove", function(e){
+      var r = heroBox.getBoundingClientRect(),
+          dx = (e.clientX - r.left) / r.width  - .5,
+          dy = (e.clientY - r.top)  / r.height - .5;
+      heroArt.style.transform = "translate3d(" + (dx * -16) + "px," + (dy * -14) + "px,0)";
+    });
+    heroBox.addEventListener("mouseleave", function(){
+      heroArt.style.transform = "";
+    });
+  }
+
+  /* --- highlight the nav link for the section you are reading --- */
+  var links = {};
+  document.querySelectorAll(".menu a").forEach(function(a){
+    var id = a.getAttribute("href");
+    if(id && id.charAt(0) === "#") links[id.slice(1)] = a;
+  });
+  var spy = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      var a = links[en.target.id];
+      if(a && en.isIntersecting){
+        Object.keys(links).forEach(function(k){ links[k].classList.remove("active"); });
+        a.classList.add("active");
+      }
+    });
+  }, {rootMargin:"-45% 0px -50% 0px"});
+  Object.keys(links).forEach(function(id){
+    var sec = document.getElementById(id);
+    if(sec) spy.observe(sec);
+  });
+
+  /* --- gallery lightbox --- */
+  var lb = document.getElementById("lightbox"),
+      lbBox = document.getElementById("lb-box");
+  function openLb(frame){
+    lbBox.innerHTML = "";
+    var img = frame.querySelector("img");
+    if(frame.classList.contains("has-file") && img && img.src){
+      var big = new Image();
+      big.src = img.src; big.alt = img.alt || "";
+      lbBox.appendChild(big);
+    } else {
+      lbBox.appendChild(frame.querySelector(".art").cloneNode(true));
+    }
+    lb.classList.add("on");
+    document.body.style.overflow = "hidden";
+  }
+  function closeLb(){
+    lb.classList.remove("on");
+    document.body.style.overflow = "";
+    lbBox.innerHTML = "";
+  }
+  document.querySelectorAll(".gallery .frame").forEach(function(f){
+    f.addEventListener("click", function(){ openLb(f); });
+  });
+  document.getElementById("lb-close").addEventListener("click", closeLb);
+  lb.addEventListener("click", function(e){ if(e.target === lb) closeLb(); });
+  addEventListener("keydown", function(e){ if(e.key === "Escape" && lb.classList.contains("on")) closeLb(); });
+
+  /* --- booking form → WhatsApp --- */
+  var WHATSAPP = "971000000000";           /* <-- put your real number here */
+  document.getElementById("booking").addEventListener("submit", function(e){
+    e.preventDefault();
+    var f = e.target;
+    if(!f.elements.name.value.trim() || !f.elements.phone.value.trim()){
+      alert("Please add your name and phone number so we can confirm your booking.");
+      return;
+    }
+    var txt =
+      "New booking request — BE RELAX\n\n" +
+      "Name: "      + f.elements.name.value    + "\n" +
+      "Phone: "     + f.elements.phone.value   + "\n" +
+      "Treatment: " + f.elements.service.value + "\n" +
+      "Date: "      + (f.elements.date.value || "flexible") + "\n" +
+      "Time: "      + (f.elements.time.value || "flexible") + "\n" +
+      (f.elements.message.value ? "Notes: " + f.elements.message.value : "");
+    open("https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(txt), "_blank");
+  });
+})();
+</script>
+</body>
+</html>
