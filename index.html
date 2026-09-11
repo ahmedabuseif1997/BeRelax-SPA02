@@ -72,10 +72,10 @@ h1,h2,h3,h4{font-family:var(--serif);font-weight:400;line-height:1.15;margin:0;l
 
 /* ---------- header ---------- */
 header{
-  position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);
-  backdrop-filter:blur(14px);border-bottom:1px solid var(--line);transition:.3s
+  position:sticky;top:0;z-index:60;background:#fff;
+  border-bottom:1px solid var(--line);transition:.3s
 }
-header.scrolled{background:rgba(255,255,255,.98);box-shadow:var(--shadow-sm)}
+header.scrolled{box-shadow:var(--shadow-sm)}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:92px}
 
 /* logo lockup — swaps to the real PNG the moment it is uploaded */
@@ -83,8 +83,8 @@ header.scrolled{background:rgba(255,255,255,.98);box-shadow:var(--shadow-sm)}
 /* The logo files are used byte-for-byte as supplied. The wrapper simply crops
    to the artwork's own bounding box, and mix-blend-mode drops the flat JPEG
    background — neither touches the mark itself. */
-.logo-img-wrap{position:relative;overflow:hidden;height:64px;aspect-ratio:948/465;flex:none;display:none}
-.logo-img-wrap img{position:absolute;width:129.96%;max-width:none;left:-15.08%;top:-78.49%;
+.logo-img-wrap{position:relative;overflow:hidden;height:64px;aspect-ratio:948/465;flex:none;display:block}
+.logo-img-wrap img{position:absolute;width:129.96%;height:auto;max-width:none;left:-15.08%;top:-78.49%;
   mix-blend-mode:multiply}
 .logo .mark{width:44px;height:44px;flex:none;color:var(--mint-800)}
 .logo .word{line-height:1}
@@ -96,9 +96,6 @@ header.scrolled{background:rgba(255,255,255,.98);box-shadow:var(--shadow-sm)}
   display:block;font-size:8.5px;letter-spacing:.235em;text-transform:uppercase;
   color:var(--muted);margin-top:3px;font-weight:400
 }
-.logo-fallback{display:flex;align-items:center;gap:13px}
-.logo.has-file .logo-img-wrap{display:block}
-.logo.has-file .logo-fallback{display:none}
 
 .menu{display:flex;gap:26px;align-items:center;margin:0 auto}
 .menu a{
@@ -143,9 +140,7 @@ header.scrolled{background:rgba(255,255,255,.98);box-shadow:var(--shadow-sm)}
   overflow:hidden;box-shadow:var(--shadow-lg);aspect-ratio:4/3;
   background:linear-gradient(160deg,var(--mint-200),var(--mint-100))
 }
-.frame img{width:100%;height:100%;object-fit:cover;display:none}
-.frame.has-file img{display:block}
-.frame.has-file .art{display:none}
+.frame img{width:100%;height:100%;object-fit:cover;display:block}
 .art{position:absolute;inset:0;width:100%;height:100%}
 .badge{
   position:absolute;left:-22px;bottom:44px;background:#fff;border-radius:16px;
@@ -319,7 +314,7 @@ footer h4{color:#fff;font-size:12px;letter-spacing:.18em;text-transform:uppercas
 footer a:hover{color:#fff}
 footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.5px}
 .f-logo .logo-img-wrap{aspect-ratio:717/352;height:58px}
-.f-logo .logo-img-wrap img{width:102.93%;left:-1.67%;top:-53.41%;mix-blend-mode:screen}
+.f-logo .logo-img-wrap img{width:102.93%;height:auto;left:-1.67%;top:-53.41%;mix-blend-mode:screen}
 .f-logo .word b{color:#fff}
 .f-logo .word span{color:#B49B7C}
 .f-logo .mark{color:#fff}
@@ -343,6 +338,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   box-shadow:0 10px 28px rgba(37,211,102,.42);transition:.3s
 }
 .fab:hover{transform:scale(1.09) translateY(-2px)}
+body.nav-open .fab{opacity:0;pointer-events:none}
 .fab svg{width:30px;height:30px}
 
 /* ---------- reveal ---------- */
@@ -368,6 +364,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   .menu{visibility:hidden}
   .menu.open{transform:none;visibility:visible}
   .menu a{font-size:16px}
+  .logo{position:relative;z-index:75}
   .burger{display:block;z-index:75}
   .nav-cta .btn-ghost{display:none}
 }
@@ -775,14 +772,9 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 <header id="top">
   <div class="wrap nav">
     <a href="#top" class="logo" id="logo" aria-label="BE RELAX — Massage Center and Spa">
-      <!-- Real logo file. Drop assets/logo/be-relax-logo.png in and it appears automatically. -->
       <span class="logo-img-wrap"><img class="logo-img" src="assets/logo/be-relax-logo.jpg"
-            alt="BE RELAX — Massage Center and Spa"></span>
-      <!-- Temporary wordmark shown only while the logo file is missing -->
-      <span class="logo-fallback">
-        <svg class="mark" aria-hidden="true"><use href="#m-butterfly"/></svg>
-        <span class="word"><b>BE RELAX</b><span>Massage Center and Spa</span></span>
-      </span>
+            alt="BE RELAX — Massage Center and Spa" width="1232" height="1232"
+            fetchpriority="high" decoding="async"></span>
     </a>
 
     <nav class="menu" id="menu">
@@ -844,9 +836,9 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
     </div>
 
     <div class="hero-art">
-      <div class="frame ph" data-src="assets/photos/spa-02.jpg">
-        <img alt="Candlelit pool and waterfall at BE RELAX">
-        <svg class="art" aria-hidden="true"><use href="#a-stones"/></svg>
+      <div class="frame">
+        <img src="assets/photos/spa-02.jpg" alt="Candlelit pool and waterfall at BE RELAX"
+             width="1672" height="941" fetchpriority="high" decoding="async">
       </div>
       <div class="badge">
         <svg><use href="#i-leaf"/></svg>
@@ -870,7 +862,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 <section id="about">
   <div class="wrap about rv">
     <div class="about-art">
-      <div class="frame ph" data-src="assets/photos/spa-03.jpg"><img alt="Massage in progress at BE RELAX"><svg class="art"><use href="#a-bamboo"/></svg></div>
+      <div class="frame"><img src="assets/photos/spa-03.jpg" alt="Massage in progress at BE RELAX" width="1376" height="768" decoding="async" loading="lazy"></div>
     </div>
     <div>
       <p class="eyebrow">Our Philosophy</p>
@@ -1032,79 +1024,79 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 
     <div class="grid-4 rv">
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-01.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-01.jpg" alt="BE RELAX therapist" width="882" height="1600" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-02.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-02.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-03.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-03.jpg" alt="BE RELAX therapist" width="737" height="1600" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-04.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-04.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-05.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-05.jpg" alt="BE RELAX therapist" width="900" height="1599" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-06.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-06.jpg" alt="BE RELAX therapist" width="894" height="1600" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-07.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-07.jpg" alt="BE RELAX therapist" width="894" height="1600" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-08.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-08.jpg" alt="BE RELAX therapist" width="1072" height="1467" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-09.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-09.jpg" alt="BE RELAX therapist" width="1083" height="1453" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-10.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-10.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-11.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-11.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-12.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-12.jpg" alt="BE RELAX therapist" width="1023" height="1537" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-13.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-13.jpg" alt="BE RELAX therapist" width="900" height="1599" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-14.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-14.jpg" alt="BE RELAX therapist" width="1066" height="1476" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-15.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-15.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-16.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-16.jpg" alt="BE RELAX therapist" width="1121" height="1403" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-17.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-17.jpg" alt="BE RELAX therapist" width="900" height="1599" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-18.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-18.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame ph" data-src="assets/team/team-19.jpg"><img alt="BE RELAX therapist"><svg class="art"><use href="#a-portrait"/></svg></div>
+        <div class="frame"><img src="assets/team/team-19.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
         <span>Certified Therapist</span>
       </div>
     </div>
@@ -1122,9 +1114,9 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
     </div>
 
     <div class="gallery rv">
-      <div class="frame ph g-full" data-src="assets/photos/spa-01.jpg"><img alt="Treatment room and pool"><svg class="art"><use href="#a-water"/></svg></div>
-      <div class="frame ph" data-src="assets/photos/spa-02.jpg"><img alt="Candlelit pool"><svg class="art"><use href="#a-lotus"/></svg></div>
-      <div class="frame ph" data-src="assets/photos/spa-03.jpg"><img alt="Massage room"><svg class="art"><use href="#a-fern"/></svg></div>
+      <div class="frame g-full"><img src="assets/photos/spa-01.jpg" alt="Treatment room and pool" width="1983" height="793" decoding="async" loading="lazy"></div>
+      <div class="frame"><img src="assets/photos/spa-02.jpg" alt="Candlelit pool" width="1672" height="941" decoding="async" loading="lazy"></div>
+      <div class="frame"><img src="assets/photos/spa-03.jpg" alt="Massage room" width="1376" height="768" decoding="async" loading="lazy"></div>
     </div>
 
   </div>
@@ -1269,11 +1261,8 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
       <div>
         <div class="logo f-logo" id="logo-footer">
           <span class="logo-img-wrap"><img class="logo-img" src="assets/logo/be-relax-logo-white.jpg"
-                alt="BE RELAX — Massage Center and Spa"></span>
-          <span class="logo-fallback">
-            <svg class="mark"><use href="#m-butterfly"/></svg>
-            <span class="word"><b>BE RELAX</b><span>Massage Center and Spa</span></span>
-          </span>
+                alt="BE RELAX — Massage Center and Spa" width="738" height="738"
+                loading="lazy" decoding="async"></span>
         </div>
         <p class="f-about">
           A candlelit sanctuary in Abu Dhabi. Certified therapists, natural oils
@@ -1342,27 +1331,10 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
     burger.setAttribute("aria-expanded", open ? "true" : "false");
     icon.setAttribute("href", open ? "#i-x" : "#i-menu");
     document.body.style.overflow = open ? "hidden" : "";
+    document.body.classList.toggle("nav-open", open);
   }
   burger.addEventListener("click", function(){ setMenu(!menu.classList.contains("open")); });
   menu.addEventListener("click", function(e){ if(e.target.tagName === "A") setMenu(false); });
-
-  /* --- logo: use the real file the moment it exists, else keep the wordmark --- */
-  document.querySelectorAll(".logo").forEach(function(box){
-    var img = box.querySelector(".logo-img");
-    if(!img) return;
-    var probe = new Image();
-    probe.onload  = function(){ box.classList.add("has-file"); };
-    probe.src = img.getAttribute("src");
-  });
-
-  /* --- photo slots: swap SVG art for the real photo once uploaded --- */
-  document.querySelectorAll(".frame.ph").forEach(function(frame){
-    var src = frame.dataset.src, img = frame.querySelector("img");
-    if(!src || !img) return;
-    var probe = new Image();
-    probe.onload = function(){ img.src = src; frame.classList.add("has-file"); };
-    probe.src = src;
-  });
 
   /* --- reveal on scroll --- */
   var io = new IntersectionObserver(function(entries){
@@ -1450,13 +1422,11 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   function openLb(frame){
     lbBox.innerHTML = "";
     var img = frame.querySelector("img");
-    if(frame.classList.contains("has-file") && img && img.src){
-      var big = new Image();
-      big.src = img.src; big.alt = img.alt || "";
-      lbBox.appendChild(big);
-    } else {
-      lbBox.appendChild(frame.querySelector(".art").cloneNode(true));
-    }
+    if(!img) return;
+    var big = new Image();
+    big.src = img.currentSrc || img.src;
+    big.alt = img.alt || "";
+    lbBox.appendChild(big);
     lb.classList.add("on");
     document.body.style.overflow = "hidden";
   }
