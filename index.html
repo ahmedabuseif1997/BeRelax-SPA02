@@ -578,15 +578,6 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 @media(max-width:420px){ .tab{padding:12px 24px;letter-spacing:.12em} }
 
 
-/* printed price cards - hidden until the images are uploaded */
-.menu-cards{display:none;grid-template-columns:1fr 1fr;gap:24px;max-width:740px;margin:46px auto 0}
-.menu-cards.on{display:grid}
-.menu-cards .frame{aspect-ratio:4/5;cursor:zoom-in}
-.menu-cards-note{
-  text-align:center;font-size:12px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--muted);margin:0 0 16px
-}
-@media(max-width:620px){ .menu-cards{grid-template-columns:1fr;max-width:360px} }
 
 </style>
 </head>
@@ -1005,12 +996,6 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
         </article>
         </div>
       </div>
-    </div>
-
-    <p class="menu-cards-note" id="menu-cards-note" hidden>Our printed menu — tap to enlarge</p>
-    <div class="menu-cards" id="menu-cards">
-      <div class="frame ph" data-src="assets/photos/menu-asian.jpg"><img alt="BE RELAX Asian menu and prices"><svg class="art"><use href="#a-lotus"/></svg></div>
-      <div class="frame ph" data-src="assets/photos/menu-arabic.jpg"><img alt="BE RELAX Arabic menu and prices"><svg class="art"><use href="#a-fern"/></svg></div>
     </div>
 
     <div class="extras rv">
@@ -1462,25 +1447,13 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
     document.body.style.overflow = "";
     lbBox.innerHTML = "";
   }
-  document.querySelectorAll(".gallery .frame, .menu-cards .frame").forEach(function(f){
+  document.querySelectorAll(".gallery .frame").forEach(function(f){
     f.addEventListener("click", function(){ openLb(f); });
   });
   document.getElementById("lb-close").addEventListener("click", closeLb);
   lb.addEventListener("click", function(e){ if(e.target === lb) closeLb(); });
   addEventListener("keydown", function(e){ if(e.key === "Escape" && lb.classList.contains("on")) closeLb(); });
 
-
-  /* --- show the printed menu cards only when they have been uploaded --- */
-  (function(){
-    var box = document.getElementById("menu-cards"),
-        note = document.getElementById("menu-cards-note");
-    if(!box) return;
-    box.querySelectorAll(".frame.ph").forEach(function(f){
-      var probe = new Image();
-      probe.onload = function(){ box.classList.add("on"); note.hidden = false; };
-      probe.src = f.dataset.src;
-    });
-  })();
 
   /* --- Asian / Arabic price menu --- */
   var tabs = [].slice.call(document.querySelectorAll('.tab[role="tab"]'));
