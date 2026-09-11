@@ -216,6 +216,21 @@ section{padding:118px 0}
 }
 .member:hover .frame{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
 .member .frame img{object-position:50% 14%}
+.member .frame{cursor:zoom-in}
+.member .frame::after{
+  content:"";position:absolute;inset:0;background:rgba(38,36,31,.26);
+  opacity:0;transition:opacity .28s;pointer-events:none
+}
+.member .frame .peek{
+  position:absolute;left:50%;top:50%;translate:-50% -50%;z-index:2;
+  width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(255,255,255,.92);color:var(--mint-700);
+  opacity:0;scale:.8;transition:opacity .28s, scale .28s;pointer-events:none
+}
+.member .frame .peek svg{width:21px;height:21px}
+.member:hover .frame::after,.member .frame:focus-visible::after{opacity:1}
+.member:hover .frame .peek,.member .frame:focus-visible .peek{opacity:1;scale:1}
+.member .frame:active{transform:scale(.97)}
 .member h3{font-size:21px;margin-bottom:4px}
 .member span{display:block}
 .member span{font-size:11px;letter-spacing:.17em;text-transform:uppercase;color:var(--mint-600)}
@@ -559,11 +574,26 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 .tab:focus-visible{outline:2px solid var(--mint-500);outline-offset:3px}
 .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px}
 .price-list{list-style:none;margin:18px 0 0;padding:0}
-.price-list li{
-  display:flex;justify-content:space-between;align-items:baseline;gap:14px;
-  padding:11px 0;border-bottom:1px dotted var(--line)
+.price-list li{border-bottom:1px dotted var(--line)}
+.price-list li:last-child{border-bottom:0}
+.book-row{
+  display:flex;align-items:center;gap:14px;width:100%;padding:12px 8px;
+  background:none;border:0;border-radius:8px;cursor:pointer;text-align:left;
+  font-family:var(--sans);transition:background .2s
 }
-.price-list li:last-child{border-bottom:0;padding-bottom:0}
+.book-row:hover{background:var(--cream-50,#FBF6EF)}
+.book-row:active{transform:scale(.985)}
+.book-row:focus-visible{outline:2px solid var(--mint-500);outline-offset:2px}
+.book-row .amt{margin-left:auto}
+.bk{
+  display:inline-flex;align-items:center;gap:6px;flex:none;
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;
+  color:var(--gold-3);border:1px solid rgba(192,138,67,.4);border-radius:999px;
+  padding:6px 11px;transition:.22s
+}
+.bk svg{width:13px;height:13px}
+.book-row:hover .bk{background:linear-gradient(135deg,#DCA860,#C08A43);color:#2E2419;border-color:transparent}
+@media(max-width:420px){ .bk{padding:6px 9px} .book-row{gap:10px;padding-inline:4px} }
 .price-list .dur{
   font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)
 }
@@ -623,6 +653,7 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 <symbol id="i-fb" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.5 2.9h-2.3v7A10 10 0 0 0 22 12"/></symbol>
 <symbol id="i-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 8.8H3v6.4h3.5L11 19Z"/><path d="m16.5 9.5 5 5M21.5 9.5l-5 5"/></symbol>
 <symbol id="i-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6.5 8.8H3v6.4h3.5L11 19Z"/><path d="M15.4 8.6a4.8 4.8 0 0 1 0 6.8M18.2 5.8a8.8 8.8 0 0 1 0 12.4"/></symbol>
+<symbol id="i-zoom" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.6"/><path d="m15.4 15.4 4.2 4.2M10.5 7.9v5.2M7.9 10.5h5.2"/></symbol>
 <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.4"/><path d="M10.2 8.6 15.4 12l-5.2 3.4Z"/></symbol>
 <symbol id="i-cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 8.4h3l1.5-2.3h6.8l1.5 2.3h3a1.6 1.6 0 0 1 1.6 1.6v7.4a1.6 1.6 0 0 1-1.6 1.6H3.6A1.6 1.6 0 0 1 2 17.4V10a1.6 1.6 0 0 1 1.6-1.6Z"/><circle cx="12" cy="13.4" r="3.4"/></symbol>
 <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"/><path d="M12 11.4v5M12 7.9v.2"/></symbol>
@@ -911,10 +942,26 @@ body.nav-open .fab{opacity:0;pointer-events:none}
           <h3>Normal Massage</h3>
           <p>A full-body massage with steady, even pressure — the house classic.</p>
           <ul class="price-list">
-            <li><span class="dur">45 min</span><span class="amt">170</span></li>
-            <li><span class="dur">60 min</span><span class="amt">200</span></li>
-            <li><span class="dur">90 min</span><span class="amt">300</span></li>
-            <li><span class="dur">120 min</span><span class="amt">400</span></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Normal Massage" data-dur="45 min" data-price="170">
+                <span class="dur">45 min</span><span class="amt">170</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Normal Massage" data-dur="60 min" data-price="200">
+                <span class="dur">60 min</span><span class="amt">200</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Normal Massage" data-dur="90 min" data-price="300">
+                <span class="dur">90 min</span><span class="amt">300</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Normal Massage" data-dur="120 min" data-price="400">
+                <span class="dur">120 min</span><span class="amt">400</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
           </ul>
         </article>
         <article class="card">
@@ -922,10 +969,26 @@ body.nav-open .fab{opacity:0;pointer-events:none}
           <h3>Hot Oil / Balm Massage</h3>
           <p>Warm oil or herbal balm worked into the muscles to loosen deep tension.</p>
           <ul class="price-list">
-            <li><span class="dur">45 min</span><span class="amt">200</span></li>
-            <li><span class="dur">60 min</span><span class="amt">250</span></li>
-            <li><span class="dur">90 min</span><span class="amt">350</span></li>
-            <li><span class="dur">120 min</span><span class="amt">450</span></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Hot Oil / Balm Massage" data-dur="45 min" data-price="200">
+                <span class="dur">45 min</span><span class="amt">200</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Hot Oil / Balm Massage" data-dur="60 min" data-price="250">
+                <span class="dur">60 min</span><span class="amt">250</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Hot Oil / Balm Massage" data-dur="90 min" data-price="350">
+                <span class="dur">90 min</span><span class="amt">350</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Hot Oil / Balm Massage" data-dur="120 min" data-price="450">
+                <span class="dur">120 min</span><span class="amt">450</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
           </ul>
         </article>
         <article class="card">
@@ -933,10 +996,26 @@ body.nav-open .fab{opacity:0;pointer-events:none}
           <h3>Morocco Bath or Jacuzzi</h3>
           <p>Traditional hammam scrub and steam, or warm hydro-jets in the jacuzzi.</p>
           <ul class="price-list">
-            <li><span class="dur">45 min</span><span class="amt">250</span></li>
-            <li><span class="dur">60 min</span><span class="amt">300</span></li>
-            <li><span class="dur">90 min</span><span class="amt">440</span></li>
-            <li><span class="dur">120 min</span><span class="amt">550</span></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Morocco Bath or Jacuzzi" data-dur="45 min" data-price="250">
+                <span class="dur">45 min</span><span class="amt">250</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Morocco Bath or Jacuzzi" data-dur="60 min" data-price="300">
+                <span class="dur">60 min</span><span class="amt">300</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Morocco Bath or Jacuzzi" data-dur="90 min" data-price="440">
+                <span class="dur">90 min</span><span class="amt">440</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Morocco Bath or Jacuzzi" data-dur="120 min" data-price="550">
+                <span class="dur">120 min</span><span class="amt">550</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
           </ul>
         </article>
         <article class="card">
@@ -944,10 +1023,26 @@ body.nav-open .fab{opacity:0;pointer-events:none}
           <h3>Massage with Shaving</h3>
           <p>A full massage together with bikini and underarm shaving.</p>
           <ul class="price-list">
-            <li><span class="dur">45 min</span><span class="amt">200</span></li>
-            <li><span class="dur">60 min</span><span class="amt">250</span></li>
-            <li><span class="dur">90 min</span><span class="amt">350</span></li>
-            <li><span class="dur">120 min</span><span class="amt">450</span></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Massage with Shaving" data-dur="45 min" data-price="200">
+                <span class="dur">45 min</span><span class="amt">200</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Massage with Shaving" data-dur="60 min" data-price="250">
+                <span class="dur">60 min</span><span class="amt">250</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Massage with Shaving" data-dur="90 min" data-price="350">
+                <span class="dur">90 min</span><span class="amt">350</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Asian" data-treat="Massage with Shaving" data-dur="120 min" data-price="450">
+                <span class="dur">120 min</span><span class="amt">450</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
           </ul>
         </article>
         </div>
@@ -959,10 +1054,26 @@ body.nav-open .fab{opacity:0;pointer-events:none}
           <h3>Normal Massage</h3>
           <p>A full-body massage with steady, even pressure — the house classic.</p>
           <ul class="price-list">
-            <li><span class="dur">45 min</span><span class="amt">200</span></li>
-            <li><span class="dur">60 min</span><span class="amt">250</span></li>
-            <li><span class="dur">90 min</span><span class="amt">350</span></li>
-            <li><span class="dur">120 min</span><span class="amt">450</span></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Normal Massage" data-dur="45 min" data-price="200">
+                <span class="dur">45 min</span><span class="amt">200</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Normal Massage" data-dur="60 min" data-price="250">
+                <span class="dur">60 min</span><span class="amt">250</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Normal Massage" data-dur="90 min" data-price="350">
+                <span class="dur">90 min</span><span class="amt">350</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Normal Massage" data-dur="120 min" data-price="450">
+                <span class="dur">120 min</span><span class="amt">450</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
           </ul>
         </article>
         <article class="card">
@@ -970,10 +1081,26 @@ body.nav-open .fab{opacity:0;pointer-events:none}
           <h3>Hot Oil / Balm Massage</h3>
           <p>Warm oil or herbal balm worked into the muscles to loosen deep tension.</p>
           <ul class="price-list">
-            <li><span class="dur">45 min</span><span class="amt">250</span></li>
-            <li><span class="dur">60 min</span><span class="amt">300</span></li>
-            <li><span class="dur">90 min</span><span class="amt">400</span></li>
-            <li><span class="dur">120 min</span><span class="amt">500</span></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Hot Oil / Balm Massage" data-dur="45 min" data-price="250">
+                <span class="dur">45 min</span><span class="amt">250</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Hot Oil / Balm Massage" data-dur="60 min" data-price="300">
+                <span class="dur">60 min</span><span class="amt">300</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Hot Oil / Balm Massage" data-dur="90 min" data-price="400">
+                <span class="dur">90 min</span><span class="amt">400</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Hot Oil / Balm Massage" data-dur="120 min" data-price="500">
+                <span class="dur">120 min</span><span class="amt">500</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
           </ul>
         </article>
         <article class="card">
@@ -981,10 +1108,26 @@ body.nav-open .fab{opacity:0;pointer-events:none}
           <h3>Morocco Bath or Jacuzzi</h3>
           <p>Traditional hammam scrub and steam, or warm hydro-jets in the jacuzzi.</p>
           <ul class="price-list">
-            <li><span class="dur">45 min</span><span class="amt">330</span></li>
-            <li><span class="dur">60 min</span><span class="amt">380</span></li>
-            <li><span class="dur">90 min</span><span class="amt">520</span></li>
-            <li><span class="dur">120 min</span><span class="amt">620</span></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Morocco Bath or Jacuzzi" data-dur="45 min" data-price="330">
+                <span class="dur">45 min</span><span class="amt">330</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Morocco Bath or Jacuzzi" data-dur="60 min" data-price="380">
+                <span class="dur">60 min</span><span class="amt">380</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Morocco Bath or Jacuzzi" data-dur="90 min" data-price="520">
+                <span class="dur">90 min</span><span class="amt">520</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Morocco Bath or Jacuzzi" data-dur="120 min" data-price="620">
+                <span class="dur">120 min</span><span class="amt">620</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
           </ul>
         </article>
         <article class="card">
@@ -992,10 +1135,26 @@ body.nav-open .fab{opacity:0;pointer-events:none}
           <h3>Massage with Shaving</h3>
           <p>A full massage together with bikini and underarm shaving.</p>
           <ul class="price-list">
-            <li><span class="dur">45 min</span><span class="amt">300</span></li>
-            <li><span class="dur">60 min</span><span class="amt">350</span></li>
-            <li><span class="dur">90 min</span><span class="amt">450</span></li>
-            <li><span class="dur">120 min</span><span class="amt">550</span></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Massage with Shaving" data-dur="45 min" data-price="300">
+                <span class="dur">45 min</span><span class="amt">300</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Massage with Shaving" data-dur="60 min" data-price="350">
+                <span class="dur">60 min</span><span class="amt">350</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Massage with Shaving" data-dur="90 min" data-price="450">
+                <span class="dur">90 min</span><span class="amt">450</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
+            <li><button type="button" class="book-row"
+                data-menu="Arabic" data-treat="Massage with Shaving" data-dur="120 min" data-price="550">
+                <span class="dur">120 min</span><span class="amt">550</span>
+                <span class="bk"><svg><use href="#i-wa"/></svg>Book</span>
+              </button></li>
           </ul>
         </article>
         </div>
@@ -1024,79 +1183,79 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 
     <div class="grid-4 rv">
       <div class="member">
-        <div class="frame"><img src="assets/team/team-01.jpg" alt="BE RELAX therapist" width="882" height="1600" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-01.jpg" alt="BE RELAX therapist" width="882" height="1600" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-02.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-02.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-03.jpg" alt="BE RELAX therapist" width="737" height="1600" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-03.jpg" alt="BE RELAX therapist" width="737" height="1600" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-04.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-04.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-05.jpg" alt="BE RELAX therapist" width="900" height="1599" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-05.jpg" alt="BE RELAX therapist" width="900" height="1599" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-06.jpg" alt="BE RELAX therapist" width="894" height="1600" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-06.jpg" alt="BE RELAX therapist" width="894" height="1600" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-07.jpg" alt="BE RELAX therapist" width="894" height="1600" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-07.jpg" alt="BE RELAX therapist" width="894" height="1600" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-08.jpg" alt="BE RELAX therapist" width="1072" height="1467" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-08.jpg" alt="BE RELAX therapist" width="1072" height="1467" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-09.jpg" alt="BE RELAX therapist" width="1083" height="1453" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-09.jpg" alt="BE RELAX therapist" width="1083" height="1453" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-10.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-10.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-11.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-11.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-12.jpg" alt="BE RELAX therapist" width="1023" height="1537" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-12.jpg" alt="BE RELAX therapist" width="1023" height="1537" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-13.jpg" alt="BE RELAX therapist" width="900" height="1599" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-13.jpg" alt="BE RELAX therapist" width="900" height="1599" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-14.jpg" alt="BE RELAX therapist" width="1066" height="1476" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-14.jpg" alt="BE RELAX therapist" width="1066" height="1476" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-15.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-15.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-16.jpg" alt="BE RELAX therapist" width="1121" height="1403" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-16.jpg" alt="BE RELAX therapist" width="1121" height="1403" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-17.jpg" alt="BE RELAX therapist" width="900" height="1599" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-17.jpg" alt="BE RELAX therapist" width="900" height="1599" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-18.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-18.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
       <div class="member">
-        <div class="frame"><img src="assets/team/team-19.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"></div>
+        <div class="frame" role="button" tabindex="0" aria-label="Enlarge therapist photo"><img src="assets/team/team-19.jpg" alt="BE RELAX therapist" width="1086" height="1448" decoding="async" loading="lazy"><span class="peek"><svg><use href="#i-zoom"/></svg></span></div>
         <span>Certified Therapist</span>
       </div>
     </div>
@@ -1313,6 +1472,10 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 (function(){
   "use strict";
 
+  /* --- always open at the top; browsers otherwise restore the last scroll --- */
+  if("scrollRestoration" in history) history.scrollRestoration = "manual";
+  addEventListener("load", function(){ if(!location.hash) scrollTo(0, 0); });
+
   /* --- year --- */
   document.getElementById("yr").textContent = new Date().getFullYear();
 
@@ -1341,7 +1504,7 @@ body.nav-open .fab{opacity:0;pointer-events:none}
     entries.forEach(function(en){
       if(en.isIntersecting){ en.target.classList.add("in"); io.unobserve(en.target); }
     });
-  }, {threshold:.12, rootMargin:"0px 0px -40px"});
+  }, {threshold:0, rootMargin:"0px 0px -60px 0px"});
   document.querySelectorAll(".rv").forEach(function(el){ io.observe(el); });
 
 
@@ -1435,8 +1598,11 @@ body.nav-open .fab{opacity:0;pointer-events:none}
     document.body.style.overflow = "";
     lbBox.innerHTML = "";
   }
-  document.querySelectorAll(".gallery .frame").forEach(function(f){
+  document.querySelectorAll(".gallery .frame, .member .frame").forEach(function(f){
     f.addEventListener("click", function(){ openLb(f); });
+    f.addEventListener("keydown", function(e){
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openLb(f); }
+    });
   });
   document.getElementById("lb-close").addEventListener("click", closeLb);
   lb.addEventListener("click", function(e){ if(e.target === lb) closeLb(); });
@@ -1499,8 +1665,23 @@ body.nav-open .fab{opacity:0;pointer-events:none}
     });
   });
 
+  var WHATSAPP = "971525108633";          /* <-- your WhatsApp number */
+
+  /* --- a price row books that exact treatment over WhatsApp --- */
+  document.querySelectorAll(".book-row").forEach(function(row){
+    row.addEventListener("click", function(){
+      var d = row.dataset;
+      var txt =
+        "Hello BE RELAX, I would like to book:\n\n" +
+        "Treatment: " + d.menu + " · " + d.treat + "\n" +
+        "Duration: "  + d.dur + "\n" +
+        "Price: AED " + d.price + "\n\n" +
+        "Please confirm availability.";
+      open("https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(txt), "_blank");
+    });
+  });
+
   /* --- booking form → WhatsApp --- */
-  var WHATSAPP = "971525108633";           /* <-- put your real number here */
   document.getElementById("booking").addEventListener("submit", function(e){
     e.preventDefault();
     var f = e.target;
