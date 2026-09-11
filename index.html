@@ -536,6 +536,47 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   html{scroll-behavior:auto}
 }
 
+
+/* ---------- price menu ---------- */
+.tabs{display:flex;gap:10px;justify-content:center;margin-bottom:42px}
+.tab{
+  padding:13px 36px;border-radius:999px;border:1px solid var(--line);background:#fff;
+  font-family:var(--sans);font-size:12.5px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--muted);cursor:pointer;transition:.28s cubic-bezier(.4,0,.2,1)
+}
+.tab:hover{border-color:var(--mint-300);color:var(--ink)}
+.tab[aria-selected="true"]{
+  background:linear-gradient(135deg,#DCA860,#C08A43);color:#2E2419;
+  border-color:transparent;box-shadow:0 8px 22px rgba(192,138,67,.26)
+}
+.tab:focus-visible{outline:2px solid var(--mint-500);outline-offset:3px}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.price-list{list-style:none;margin:18px 0 0;padding:0}
+.price-list li{
+  display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+  padding:11px 0;border-bottom:1px dotted var(--line)
+}
+.price-list li:last-child{border-bottom:0;padding-bottom:0}
+.price-list .dur{
+  font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)
+}
+.price-list .amt{
+  font-family:var(--serif);font-size:22px;font-weight:500;color:var(--mint-700);
+  font-variant-numeric:tabular-nums;line-height:1
+}
+.price-list .amt::after{
+  content:" AED";font-family:var(--sans);font-size:10px;letter-spacing:.14em;
+  color:var(--muted);font-weight:400
+}
+.extras{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:38px}
+.extra{
+  display:inline-flex;align-items:center;gap:10px;background:#fff;
+  border:1px solid var(--line);border-radius:999px;padding:13px 24px;font-size:14.5px
+}
+.extra svg{width:17px;height:17px;color:var(--gold-1);flex:none}
+@media(max-width:900px){ .menu-grid{grid-template-columns:1fr} }
+@media(max-width:420px){ .tab{padding:12px 24px;letter-spacing:.12em} }
+
 </style>
 </head>
 <body>
@@ -706,7 +747,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
 <div class="topbar">
   <div class="wrap">
     <div class="tb-group">
-      <span class="tb-item"><svg><use href="#i-clock"/></svg> Open daily · 10:00 – 23:00</span>
+      <span class="tb-item"><svg><use href="#i-clock"/></svg> Open daily · 11:00 am – 2:00 am</span>
       <span class="tb-item"><svg><use href="#i-pin"/></svg> 250 Al Meena St, Al Zahiyah, Abu Dhabi</span>
     </div>
     <div class="tb-group">
@@ -807,7 +848,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
     <div class="it"><svg><use href="#i-shield"/></svg><div><b>Licensed Center</b><span>Fully certified and DED-registered</span></div></div>
     <div class="it"><svg><use href="#i-hands"/></svg><div><b>Expert Therapists</b><span>Trained in Thai, Arabic &amp; Swedish technique</span></div></div>
     <div class="it"><svg><use href="#i-drop"/></svg><div><b>Spotless Hygiene</b><span>Fresh linen and sterilised tools every session</span></div></div>
-    <div class="it"><svg><use href="#i-sun"/></svg><div><b>Open Late</b><span>Daily until 11:00 pm, walk-ins welcome</span></div></div>
+    <div class="it"><svg><use href="#i-sun"/></svg><div><b>Open Late</b><span>Every day until 2:00 am, walk-ins welcome</span></div></div>
   </div>
 </div>
 
@@ -846,78 +887,122 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   <div class="wrap">
     <div class="sec-head rv">
       <p class="eyebrow">The Menu</p>
-      <h2>Signature Treatments</h2>
+      <h2>Treatments &amp; Prices</h2>
       <div class="orn"><i></i><svg><use href="#i-leaf"/></svg><i></i></div>
-      <p class="lead">Choose a single therapy or combine two into a longer ritual. Every price includes shower, robe and herbal tea.</p>
+      <p class="lead">Two menus, Asian and Arabic. All prices in UAE dirhams.</p>
     </div>
 
-    <div class="grid-3 rv">
-      <article class="card">
-        <div class="ico"><svg><use href="#i-hands"/></svg></div>
-        <h3>Deep Tissue</h3>
-        <p>Firm, slow pressure through the deeper muscle layers to break down long-held tension in the back, neck and shoulders.</p>
-        <div class="meta"><span>60 / 90 min</span><b>AED 250</b></div>
-      </article>
-
-      <article class="card">
-        <div class="ico"><svg><use href="#i-leaf"/></svg></div>
-        <h3>Swedish Relaxation</h3>
-        <p>Long, flowing strokes with warm oil. The classic full-body massage for circulation, calm and complete switch-off.</p>
-        <div class="meta"><span>60 / 90 min</span><b>AED 220</b></div>
-      </article>
-
-      <article class="card">
-        <div class="ico"><svg><use href="#i-stone"/></svg></div>
-        <h3>Hot Stone Therapy</h3>
-        <p>Smooth basalt stones heated to body temperature glide over the spine, melting stiffness without heavy pressure.</p>
-        <div class="meta"><span>75 min</span><b>AED 320</b></div>
-      </article>
-
-      <article class="card">
-        <div class="ico"><svg><use href="#i-drop"/></svg></div>
-        <h3>Moroccan Bath</h3>
-        <p>Traditional hammam ritual — black soap, steam and a full kessa exfoliation that leaves the skin visibly brighter.</p>
-        <div class="meta"><span>45 min</span><b>AED 200</b></div>
-      </article>
-
-      <article class="card">
-        <div class="ico"><svg><use href="#i-sun"/></svg></div>
-        <h3>Turkish Bath</h3>
-        <p>Steam, warm marble and a rich foam massage. Deeply cleansing and the perfect opener before any oil treatment.</p>
-        <div class="meta"><span>45 min</span><b>AED 220</b></div>
-      </article>
-
-      <article class="card">
-        <div class="ico"><svg><use href="#i-flower"/></svg></div>
-        <h3>Aromatherapy</h3>
-        <p>Choose your blend — lavender, eucalyptus or sweet orange — and let the oils work on the nervous system as much as the muscles.</p>
-        <div class="meta"><span>60 min</span><b>AED 260</b></div>
-      </article>
-
-      <article class="card">
-        <div class="ico"><svg><use href="#i-leaf"/></svg></div>
-        <h3>Traditional Thai</h3>
-        <p>Assisted stretching and rhythmic compression on a floor mat. No oil, fully clothed, and remarkable for flexibility.</p>
-        <div class="meta"><span>60 / 90 min</span><b>AED 280</b></div>
-      </article>
-
-      <article class="card">
-        <div class="ico"><svg><use href="#i-hands"/></svg></div>
-        <h3>Four Hands</h3>
-        <p>Two therapists working in perfect mirrored rhythm. The fastest route to total relaxation when time is short.</p>
-        <div class="meta"><span>60 min</span><b>AED 450</b></div>
-      </article>
-
-      <article class="card">
-        <div class="ico"><svg><use href="#i-drop"/></svg></div>
-        <h3>Jacuzzi &amp; Steam</h3>
-        <p>Warm hydro-jets and eucalyptus steam to open the body before treatment — or simply to finish the day slowly.</p>
-        <div class="meta"><span>30 min</span><b>AED 120</b></div>
-      </article>
+    <div class="tabs rv" role="tablist" aria-label="Treatment menu">
+      <button class="tab" id="tab-asian"  role="tab" aria-controls="panel-asian"  aria-selected="true">Asian</button>
+      <button class="tab" id="tab-arabic" role="tab" aria-controls="panel-arabic" aria-selected="false">Arabic</button>
     </div>
 
-    <p class="center"><span class="ph-note"><svg><use href="#i-info"/></svg>
-      Sample pricing — replace with your real rates in <code>index.html</code> before going live.</span></p>
+    <div class="rv">
+      <div class="menu-panel" id="panel-asian" role="tabpanel" aria-labelledby="tab-asian">
+        <div class="menu-grid">
+        <article class="card">
+          <div class="ico"><svg><use href="#i-hands"/></svg></div>
+          <h3>Normal Massage</h3>
+          <p>A full-body massage with steady, even pressure — the house classic.</p>
+          <ul class="price-list">
+            <li><span class="dur">45 min</span><span class="amt">170</span></li>
+            <li><span class="dur">60 min</span><span class="amt">200</span></li>
+            <li><span class="dur">90 min</span><span class="amt">300</span></li>
+            <li><span class="dur">120 min</span><span class="amt">400</span></li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="ico"><svg><use href="#i-drop"/></svg></div>
+          <h3>Hot Oil / Balm Massage</h3>
+          <p>Warm oil or herbal balm worked into the muscles to loosen deep tension.</p>
+          <ul class="price-list">
+            <li><span class="dur">45 min</span><span class="amt">200</span></li>
+            <li><span class="dur">60 min</span><span class="amt">250</span></li>
+            <li><span class="dur">90 min</span><span class="amt">350</span></li>
+            <li><span class="dur">120 min</span><span class="amt">450</span></li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="ico"><svg><use href="#i-stone"/></svg></div>
+          <h3>Morocco Bath or Jacuzzi</h3>
+          <p>Traditional hammam scrub and steam, or warm hydro-jets in the jacuzzi.</p>
+          <ul class="price-list">
+            <li><span class="dur">45 min</span><span class="amt">250</span></li>
+            <li><span class="dur">60 min</span><span class="amt">300</span></li>
+            <li><span class="dur">90 min</span><span class="amt">440</span></li>
+            <li><span class="dur">120 min</span><span class="amt">550</span></li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="ico"><svg><use href="#i-flower"/></svg></div>
+          <h3>Massage with Shaving</h3>
+          <p>A full massage together with bikini and underarm shaving.</p>
+          <ul class="price-list">
+            <li><span class="dur">45 min</span><span class="amt">200</span></li>
+            <li><span class="dur">60 min</span><span class="amt">250</span></li>
+            <li><span class="dur">90 min</span><span class="amt">350</span></li>
+            <li><span class="dur">120 min</span><span class="amt">450</span></li>
+          </ul>
+        </article>
+        </div>
+      </div>
+      <div class="menu-panel" id="panel-arabic" role="tabpanel" aria-labelledby="tab-arabic" hidden>
+        <div class="menu-grid">
+        <article class="card">
+          <div class="ico"><svg><use href="#i-hands"/></svg></div>
+          <h3>Normal Massage</h3>
+          <p>A full-body massage with steady, even pressure — the house classic.</p>
+          <ul class="price-list">
+            <li><span class="dur">45 min</span><span class="amt">200</span></li>
+            <li><span class="dur">60 min</span><span class="amt">250</span></li>
+            <li><span class="dur">90 min</span><span class="amt">350</span></li>
+            <li><span class="dur">120 min</span><span class="amt">450</span></li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="ico"><svg><use href="#i-drop"/></svg></div>
+          <h3>Hot Oil / Balm Massage</h3>
+          <p>Warm oil or herbal balm worked into the muscles to loosen deep tension.</p>
+          <ul class="price-list">
+            <li><span class="dur">45 min</span><span class="amt">250</span></li>
+            <li><span class="dur">60 min</span><span class="amt">300</span></li>
+            <li><span class="dur">90 min</span><span class="amt">400</span></li>
+            <li><span class="dur">120 min</span><span class="amt">500</span></li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="ico"><svg><use href="#i-stone"/></svg></div>
+          <h3>Morocco Bath or Jacuzzi</h3>
+          <p>Traditional hammam scrub and steam, or warm hydro-jets in the jacuzzi.</p>
+          <ul class="price-list">
+            <li><span class="dur">45 min</span><span class="amt">330</span></li>
+            <li><span class="dur">60 min</span><span class="amt">380</span></li>
+            <li><span class="dur">90 min</span><span class="amt">520</span></li>
+            <li><span class="dur">120 min</span><span class="amt">620</span></li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="ico"><svg><use href="#i-flower"/></svg></div>
+          <h3>Massage with Shaving</h3>
+          <p>A full massage together with bikini and underarm shaving.</p>
+          <ul class="price-list">
+            <li><span class="dur">45 min</span><span class="amt">300</span></li>
+            <li><span class="dur">60 min</span><span class="amt">350</span></li>
+            <li><span class="dur">90 min</span><span class="amt">450</span></li>
+            <li><span class="dur">120 min</span><span class="amt">550</span></li>
+          </ul>
+        </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="extras rv">
+      <span class="extra"><svg><use href="#i-hands"/></svg>Four Hands Massage</span>
+      <span class="extra"><svg><use href="#i-flower"/></svg>Couple Massage</span>
+      <span class="extra"><svg><use href="#i-leaf"/></svg>Full Body Shaving</span>
+    </div>
+    <p class="center" style="margin-top:16px"><span class="ph-note"><svg><use href="#i-info"/></svg>
+      Prices for these three on request — call or message us.</span></p>
   </div>
 </section>
 
@@ -1110,7 +1195,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
         <div class="it"><div class="ico"><svg><use href="#i-phone"/></svg></div>
           <div><b>Landline</b><a href="tel:+97125576533">02 557 6533</a></div></div>
         <div class="it"><div class="ico"><svg><use href="#i-clock"/></svg></div>
-          <div><b>Opening Hours</b><span>Every day · 10:00 – 23:00</span></div></div>
+          <div><b>Opening Hours</b><span>Every day · 11:00 am – 2:00 am</span></div></div>
       </div>
     </div>
 
@@ -1121,16 +1206,33 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
       </div>
       <div class="field"><label for="f-service">Treatment</label>
         <select id="f-service" name="service">
-          <option>Deep Tissue</option><option>Swedish Relaxation</option>
-          <option>Hot Stone Therapy</option><option>Moroccan Bath</option>
-          <option>Turkish Bath</option><option>Aromatherapy</option>
-          <option>Traditional Thai</option><option>Four Hands</option>
-          <option>Jacuzzi &amp; Steam</option><option>Not sure — please advise</option>
+          <optgroup label="Asian">
+            <option>Asian · Normal Massage</option>
+            <option>Asian · Hot Oil / Balm Massage</option>
+            <option>Asian · Morocco Bath or Jacuzzi</option>
+            <option>Asian · Massage with Shaving</option>
+          </optgroup>
+          <optgroup label="Arabic">
+            <option>Arabic · Normal Massage</option>
+            <option>Arabic · Hot Oil / Balm Massage</option>
+            <option>Arabic · Morocco Bath or Jacuzzi</option>
+            <option>Arabic · Massage with Shaving</option>
+          </optgroup>
+          <optgroup label="Also available">
+            <option>Four Hands Massage</option>
+            <option>Couple Massage</option>
+            <option>Full Body Shaving</option>
+          </optgroup>
+          <option>Not sure — please advise</option>
         </select>
       </div>
       <div class="row-2">
         <div class="field"><label for="f-date">Preferred Date</label><input id="f-date" name="date" type="date"></div>
-        <div class="field"><label for="f-time">Preferred Time</label><input id="f-time" name="time" type="time"></div>
+        <div class="field"><label for="f-duration">Duration</label>
+          <select id="f-duration" name="duration">
+            <option>45 minutes</option><option>60 minutes</option>
+            <option>90 minutes</option><option>120 minutes</option>
+          </select></div>
       </div>
       <div class="field"><label for="f-msg">Anything We Should Know?</label>
         <textarea id="f-msg" name="message" placeholder="Injuries, pressure preference, preferred therapist…"></textarea></div>
@@ -1176,7 +1278,7 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
         <li><a href="https://wa.me/971525108633" target="_blank" rel="noopener">052 510 8633 · WhatsApp</a></li>
         <li><a href="tel:+971563429399">056 342 9399</a></li>
         <li><a href="tel:+97125576533">02 557 6533</a></li>
-        <li>Daily · 10:00 – 23:00</li>
+        <li>Daily · 11:00 am – 2:00 am</li>
       </ul></div>
     </div>
     <div class="f-bottom">
@@ -1348,6 +1450,26 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
   lb.addEventListener("click", function(e){ if(e.target === lb) closeLb(); });
   addEventListener("keydown", function(e){ if(e.key === "Escape" && lb.classList.contains("on")) closeLb(); });
 
+
+  /* --- Asian / Arabic price menu --- */
+  var tabs = [].slice.call(document.querySelectorAll('.tab[role="tab"]'));
+  function selectTab(tab){
+    tabs.forEach(function(t){
+      var on = t === tab;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+    });
+  }
+  tabs.forEach(function(t, i){
+    t.addEventListener("click", function(){ selectTab(t); });
+    t.addEventListener("keydown", function(e){
+      if(e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      e.preventDefault();
+      var next = tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+      next.focus(); selectTab(next);
+    });
+  });
+
   /* --- booking form → WhatsApp --- */
   var WHATSAPP = "971525108633";           /* <-- put your real number here */
   document.getElementById("booking").addEventListener("submit", function(e){
@@ -1362,8 +1484,8 @@ footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.
       "Name: "      + f.elements.name.value    + "\n" +
       "Phone: "     + f.elements.phone.value   + "\n" +
       "Treatment: " + f.elements.service.value + "\n" +
+      "Duration: "  + f.elements.duration.value + "\n" +
       "Date: "      + (f.elements.date.value || "flexible") + "\n" +
-      "Time: "      + (f.elements.time.value || "flexible") + "\n" +
       (f.elements.message.value ? "Notes: " + f.elements.message.value : "");
     open("https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(txt), "_blank");
   });
