@@ -60,17 +60,6 @@ h1,h2,h3,h4{font-family:var(--serif);font-weight:400;line-height:1.15;margin:0;l
 .hero .btn-ghost:hover{background:rgba(253,250,245,.2);border-color:#FDFAF5}
 .btn-ghost:hover{background:#fff;border-color:var(--mint-500);transform:translateY(-2px)}
 
-/* ---------- top bar ---------- */
-.topbar{
-  background:var(--mint-900);color:#F0E4D2;font-size:12.5px;
-  letter-spacing:.06em;font-weight:300
-}
-.topbar .wrap{display:flex;gap:22px;align-items:center;justify-content:space-between;
-  min-height:42px;flex-wrap:wrap;padding-block:7px}
-.topbar a:hover{color:#fff}
-.topbar .tb-group{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
-.topbar svg{width:14px;height:14px;flex:none;opacity:.85}
-.tb-item{display:inline-flex;align-items:center;gap:7px}
 
 /* ---------- header ---------- */
 header{
@@ -617,6 +606,12 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 
 
 
+.maps-cue{
+  display:inline-flex;align-items:center;gap:6px;margin-top:7px;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-3)
+}
+.maps-cue svg{width:13px;height:13px}
+.info a:hover .maps-cue{color:var(--mint-600)}
 </style>
 </head>
 <body>
@@ -786,20 +781,6 @@ body.nav-open .fab{opacity:0;pointer-events:none}
   <svg class="lf" style="--x:16.6%;--s:18px;--d:29.7s;--dl:-18.4s;--sx:-27px"><use href="#i-leaf"/></svg>
 </div>
 
-<!-- ============ TOP BAR ============ -->
-<div class="topbar">
-  <div class="wrap">
-    <div class="tb-group">
-      <span class="tb-item"><svg><use href="#i-clock"/></svg> Open daily · 11:00 am – 2:00 am</span>
-      <span class="tb-item"><svg><use href="#i-pin"/></svg> Al Meena Road · Tower Block A/B, M-Floor · Abu Dhabi</span>
-    </div>
-    <div class="tb-group">
-      <a class="tb-item" href="tel:+971525108633"><svg><use href="#i-phone"/></svg> 052 510 8633</a>
-      <a class="tb-item" href="https://wa.me/971525108633" target="_blank" rel="noopener"><svg><use href="#i-wa"/></svg> WhatsApp</a>
-    </div>
-  </div>
-</div>
-
 <!-- ============ HEADER ============ -->
 <header id="top">
   <div class="wrap nav">
@@ -820,7 +801,7 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 
     <div class="nav-cta">
       <a href="tel:+971525108633" class="btn btn-ghost">Call Us</a>
-      <a href="#contact" class="btn btn-primary">Book Now</a>
+      <a href="https://wa.me/971525108633?text=Hello%20BE%20RELAX%2C%20I%20would%20like%20to%20book%20an%20appointment.%0A%0ATreatment%3A%20%0APreferred%20time%3A%20%0A%0APlease%20let%20me%20know%20what%20is%20available." target="_blank" rel="noopener" class="btn btn-primary">Book Now</a>
       <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
         <svg><use href="#i-menu" id="burger-icon"/></svg>
       </button>
@@ -854,11 +835,10 @@ body.nav-open .fab{opacity:0;pointer-events:none}
     <span class="mote" style="--x:53.6%;--s:9.7px;--d:13.8s;--dl:-8.9s;--dx:56px;--h:453px"></span>  </div>
   <div class="wrap hero-inner">
     <p class="eyebrow">Massage Center and Spa · Abu Dhabi</p>
-    <h1>Where the city fades<br>and you <em>simply breathe</em>.</h1>
+    <h1>Come in tense.<br><em>Leave light.</em></h1>
     <p class="lead">
-      A candlelit sanctuary of warm teak, steam and slow hands.
-      Our certified therapists tailor every treatment to your body — so you
-      leave lighter than you arrived.
+      Massage, Moroccan bath and jacuzzi by certified therapists.
+      Al Zahiyah, Abu Dhabi — open every day until 2 am.
     </p>
     <div class="hero-cta">
       <a href="#contact" class="btn btn-primary">Book Your Session</a>
@@ -1350,7 +1330,7 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 
       <div class="info">
         <div class="it"><div class="ico"><svg><use href="#i-pin"/></svg></div>
-          <div><b>Visit Us</b><span>250 Al Meena Street, Tower Block A/B, M-Floor,<br>Al Zahiyah (Al Mina), E14, Abu Dhabi, UAE</span></div></div>
+          <div><b>Visit Us</b><a href="https://maps.app.goo.gl/uuZxw2Q4snj2SEH47" target="_blank" rel="noopener">250 Al Meena Street, Tower Block A/B, M-Floor,<br>Al Zahiyah (Al Mina), E14, Abu Dhabi<span class="maps-cue"><svg><use href="#i-pin"/></svg>Open in Google Maps</span></a></div></div>
         <div class="it"><div class="ico"><svg><use href="#i-wa"/></svg></div>
           <div><b>Call or WhatsApp</b>
             <a href="https://wa.me/971525108633" target="_blank" rel="noopener">052 510 8633</a></div></div>
@@ -1437,7 +1417,7 @@ body.nav-open .fab{opacity:0;pointer-events:none}
         <li><a href="#services">Four Hands Massage</a></li>
       </ul></div>
       <div><h4>Visit</h4><ul>
-        <li>250 Al Meena Street, Tower Block A/B<br>M-Floor, Al Zahiyah, Abu Dhabi</li>
+        <li><a href="https://maps.app.goo.gl/uuZxw2Q4snj2SEH47" target="_blank" rel="noopener">250 Al Meena Street, Tower Block A/B<br>M-Floor, Al Zahiyah, Abu Dhabi</a></li>
         <li><a href="https://wa.me/971525108633" target="_blank" rel="noopener">052 510 8633 · WhatsApp</a></li>
         <li><a href="tel:+971563429399">056 342 9399</a></li>
         <li><a href="tel:+97125576533">02 557 6533</a></li>
