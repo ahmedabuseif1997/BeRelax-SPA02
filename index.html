@@ -119,7 +119,8 @@ header.scrolled .burger{color:var(--mint-800)}
 .burger svg{width:26px;height:26px}
 
 /* ---------- hero ---------- */
-.hero{position:relative;overflow:hidden;min-height:min(760px,92vh);display:grid;align-items:end}
+.hero{position:relative;overflow:hidden;display:grid;align-items:end;
+  min-height:100vh;min-height:100svh}
 
 .hero-bg{position:absolute;inset:0;z-index:0}
 .hero-bg img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;
@@ -129,24 +130,24 @@ header.scrolled .burger{color:var(--mint-800)}
 .hero-bg::after{
   content:"";position:absolute;inset:0;
   background:
-    linear-gradient(180deg,rgba(24,22,19,.46) 0%,rgba(24,22,19,.12) 18%,
-                    rgba(24,22,19,.10) 40%,rgba(24,22,19,.62) 78%,rgba(24,22,19,.88) 100%),
-    linear-gradient(96deg,rgba(24,22,19,.42) 0%,rgba(24,22,19,.14) 46%,transparent 78%)
+    linear-gradient(180deg,rgba(24,22,19,.42) 0%,rgba(24,22,19,.05) 13%,
+                    rgba(24,22,19,.03) 44%,rgba(24,22,19,.34) 68%,
+                    rgba(24,22,19,.72) 85%,rgba(24,22,19,.90) 100%)
 }
-.hero-inner{position:relative;z-index:2;padding-block:150px 58px;max-width:var(--wrap)}
-.hero h1{font-size:clamp(34px,4.4vw,56px);letter-spacing:-.005em;margin-bottom:16px;
-  text-wrap:balance;color:#FDFAF5;max-width:16em;text-shadow:0 2px 24px rgba(20,18,15,.42)}
-.hero .eyebrow{color:var(--gold-2)}
+.hero-inner{position:relative;z-index:2;padding-block:150px 62px;max-width:var(--wrap)}
+.hero h1{font-size:clamp(29px,3.5vw,46px);letter-spacing:-.005em;margin-bottom:13px;
+  text-wrap:balance;color:#FDFAF5;max-width:15em;text-shadow:0 2px 22px rgba(20,18,15,.55)}
+.hero .eyebrow{color:var(--gold-2);opacity:.82;margin-bottom:10px}
 .hero h1 em{font-style:italic;color:var(--gold-2)}
-.hero p.lead{font-size:17px;max-width:34em;margin:0 0 28px;color:rgba(253,250,245,.9)}
+.hero p.lead{font-size:15.5px;max-width:30em;margin:0 0 24px;color:rgba(253,250,245,.8);line-height:1.6}
 .hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:38px}
 .hero-facts{
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:26px 0 0;
-  padding-top:20px;border-top:1px solid rgba(253,250,245,.24);
-  font-size:13.5px;letter-spacing:.04em;color:rgba(253,250,245,.78);font-weight:300
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:22px 0 0;
+  padding-top:16px;border-top:1px solid rgba(253,250,245,.2);
+  font-size:12.5px;letter-spacing:.04em;color:rgba(253,250,245,.66);font-weight:300
 }
 .hero-facts b{
-  font-family:var(--serif);font-size:18px;font-weight:500;color:#FDFAF5;
+  font-family:var(--serif);font-size:16px;font-weight:500;color:rgba(253,250,245,.92);
   font-variant-numeric:tabular-nums
 }
 .hero-facts i{width:4px;height:4px;border-radius:50%;background:rgba(253,250,245,.4);flex:none}
@@ -377,12 +378,13 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 /* ---------- responsive ---------- */
 @media(max-width:1000px){
   .about,.contact{grid-template-columns:1fr;gap:44px}
-  .hero{min-height:min(640px,86vh)}
-  .hero-inner{padding-block:112px 40px}
+  .hero{min-height:100vh;min-height:100svh}
+  .hero-inner{padding-block:110px 44px}
   /* both calls to action on one row, so more of the photograph survives */
   .hero-cta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
   .hero-cta .btn{padding:13px 10px;font-size:11.5px;letter-spacing:.1em}
-  .hero p.lead{font-size:15.5px;margin-bottom:22px}
+  .hero p.lead{font-size:14.5px;margin-bottom:20px;max-width:26em}
+  .hero .eyebrow{font-size:9.5px;letter-spacing:.18em}
   .hero-facts{font-size:12.5px;gap:9px;margin-top:20px;padding-top:16px}
   .hero-facts b{font-size:16px}
   .hero-bg img{object-position:50% 16%}
