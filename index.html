@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BE RELAX — Massage Center and Spa | Abu Dhabi</title>
 <meta name="description" content="BE RELAX Massage Center and Spa — deep tissue, Swedish, hot stone, aromatherapy, Thai massage, Moroccan and Turkish bath. A warm candlelit sanctuary in Abu Dhabi.">
-<link rel="icon" href="assets/logo/be-relax-logo.jpg">
+<link rel="icon" href="assets/logo/be-relax-logo-dark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -57,16 +57,31 @@ h1,h2,h3,h4{font-family:var(--serif);font-weight:400;line-height:1.15;margin:0;l
 .btn-primary:hover{background:linear-gradient(135deg,#E7B972,#C99349);transform:translateY(-2px);box-shadow:0 10px 26px rgba(192,138,67,.34)}
 .btn-ghost{border-color:var(--mint-300);color:var(--mint-800);background:rgba(255,255,255,.72)}
 .hero .btn-ghost{border-color:rgba(253,250,245,.5);color:#FDFAF5;background:rgba(253,250,245,.10)}
+.nav-cta .btn-ghost{
+  border-color:rgba(253,250,245,.55);color:#FDFAF5;background:rgba(253,250,245,.12);
+  transition:.3s
+}
+.nav-cta .btn-ghost:hover{background:rgba(253,250,245,.24);border-color:#FDFAF5}
+header.scrolled .nav-cta .btn-ghost{
+  border-color:var(--mint-300);color:var(--mint-800);background:rgba(255,255,255,.72)
+}
 .hero .btn-ghost:hover{background:rgba(253,250,245,.2);border-color:#FDFAF5}
 .btn-ghost:hover{background:#fff;border-color:var(--mint-500);transform:translateY(-2px)}
 
 
 /* ---------- header ---------- */
+/* The header sits over the photograph until you scroll, so the hero starts at
+   the very top of the window. Once scrolled it turns solid to stay legible. */
 header{
-  position:sticky;top:0;z-index:60;background:#fff;
-  border-bottom:1px solid var(--line);transition:.3s
+  position:fixed;top:0;left:0;right:0;z-index:60;
+  background:transparent;border-bottom:1px solid transparent;
+  transition:background .35s ease,border-color .35s ease,box-shadow .35s ease
 }
-header.scrolled{box-shadow:var(--shadow-sm)}
+header.scrolled{
+  background:#fff;border-bottom-color:var(--line);box-shadow:var(--shadow-sm)
+}
+/* anchors must clear the fixed header */
+section[id],div[id="video"]{scroll-margin-top:100px}
 .nav{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:92px}
 
 /* logo lockup — swaps to the real PNG the moment it is uploaded */
@@ -74,9 +89,6 @@ header.scrolled{box-shadow:var(--shadow-sm)}
 /* The logo files are used byte-for-byte as supplied. The wrapper simply crops
    to the artwork's own bounding box, and mix-blend-mode drops the flat JPEG
    background — neither touches the mark itself. */
-.logo-img-wrap{position:relative;overflow:hidden;height:64px;aspect-ratio:948/465;flex:none;display:block}
-.logo-img-wrap img{position:absolute;width:129.96%;height:auto;max-width:none;left:-15.08%;top:-78.49%;
-  mix-blend-mode:multiply}
 .logo .mark{width:44px;height:44px;flex:none;color:var(--mint-800)}
 .logo .word{line-height:1}
 .logo .word b{
@@ -91,19 +103,23 @@ header.scrolled{box-shadow:var(--shadow-sm)}
 .menu{display:flex;gap:26px;align-items:center;margin:0 auto}
 .menu a{
   font-size:12.5px;letter-spacing:.15em;text-transform:uppercase;
-  color:var(--mint-800);font-weight:400;position:relative;padding:6px 0;white-space:nowrap
+  color:#FDFAF5;font-weight:400;position:relative;padding:6px 0;white-space:nowrap;
+  text-shadow:0 1px 10px rgba(20,18,15,.5);transition:color .3s,text-shadow .3s
 }
+header.scrolled .menu a{color:var(--mint-800);text-shadow:none}
 .menu a::after{
   content:"";position:absolute;left:0;bottom:0;height:1px;width:0;
   background:var(--mint-600);transition:.3s
 }
 .menu a:hover::after{width:100%}
 .nav-cta{display:flex;gap:12px;align-items:center;flex:none}
-.burger{display:none;background:none;border:0;padding:8px;cursor:pointer;color:var(--mint-800)}
+.burger{display:none;background:none;border:0;padding:8px;cursor:pointer;
+  color:#FDFAF5;transition:color .3s}
+header.scrolled .burger{color:var(--mint-800)}
 .burger svg{width:26px;height:26px}
 
 /* ---------- hero ---------- */
-.hero{position:relative;overflow:hidden;min-height:620px;display:grid;align-items:center}
+.hero{position:relative;overflow:hidden;min-height:min(760px,92vh);display:grid;align-items:end}
 
 .hero-bg{position:absolute;inset:0;z-index:0}
 .hero-bg img{width:100%;height:100%;object-fit:cover;object-position:50% 20%;
@@ -113,23 +129,27 @@ header.scrolled{box-shadow:var(--shadow-sm)}
 .hero-bg::after{
   content:"";position:absolute;inset:0;
   background:
-    linear-gradient(100deg,rgba(24,22,19,.82) 0%,rgba(24,22,19,.58) 34%,
-                    rgba(24,22,19,.22) 62%,rgba(24,22,19,.06) 100%),
-    linear-gradient(180deg,rgba(24,22,19,.30) 0%,transparent 30%,transparent 62%,rgba(24,22,19,.46) 100%)
+    linear-gradient(180deg,rgba(24,22,19,.46) 0%,rgba(24,22,19,.12) 18%,
+                    rgba(24,22,19,.10) 40%,rgba(24,22,19,.62) 78%,rgba(24,22,19,.88) 100%),
+    linear-gradient(96deg,rgba(24,22,19,.42) 0%,rgba(24,22,19,.14) 46%,transparent 78%)
 }
-.hero-inner{position:relative;z-index:2;padding-block:86px;max-width:var(--wrap)}
-.hero h1{font-size:clamp(38px,4.8vw,62px);letter-spacing:-.005em;margin-bottom:22px;
+.hero-inner{position:relative;z-index:2;padding-block:150px 58px;max-width:var(--wrap)}
+.hero h1{font-size:clamp(34px,4.4vw,56px);letter-spacing:-.005em;margin-bottom:16px;
   text-wrap:balance;color:#FDFAF5;max-width:16em;text-shadow:0 2px 24px rgba(20,18,15,.42)}
 .hero .eyebrow{color:var(--gold-2)}
 .hero h1 em{font-style:italic;color:var(--gold-2)}
-.hero p.lead{font-size:18px;max-width:31em;margin:0 0 34px;color:rgba(253,250,245,.9)}
+.hero p.lead{font-size:17px;max-width:34em;margin:0 0 28px;color:rgba(253,250,245,.9)}
 .hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:38px}
-.hero-stats{display:flex;gap:38px;flex-wrap:wrap;
-  border-top:1px solid rgba(253,250,245,.26);padding-top:26px}
-.hero-stats b{display:block;font-family:var(--serif);font-size:32px;
-  color:var(--mint-700);font-weight:500;line-height:1}
-.hero-stats span{font-size:11px;letter-spacing:.17em;text-transform:uppercase;
-  color:rgba(253,250,245,.72);margin-top:5px;display:block}
+.hero-facts{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:26px 0 0;
+  padding-top:20px;border-top:1px solid rgba(253,250,245,.24);
+  font-size:13.5px;letter-spacing:.04em;color:rgba(253,250,245,.78);font-weight:300
+}
+.hero-facts b{
+  font-family:var(--serif);font-size:18px;font-weight:500;color:#FDFAF5;
+  font-variant-numeric:tabular-nums
+}
+.hero-facts i{width:4px;height:4px;border-radius:50%;background:rgba(253,250,245,.4);flex:none}
 
 /* hero visual: photo slot with SVG art underneath */
 .frame{
@@ -317,8 +337,13 @@ footer h4{color:#fff;font-size:12px;letter-spacing:.18em;text-transform:uppercas
   font-family:var(--sans);font-weight:500;margin-bottom:18px}
 footer a:hover{color:#fff}
 footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.5px}
-.f-logo .logo-img-wrap{aspect-ratio:717/352;height:58px}
-.f-logo .logo-img-wrap img{width:102.93%;height:auto;left:-1.67%;top:-53.41%;mix-blend-mode:screen}
+/* header logo: white mark over the photograph, black once the bar turns solid.
+   Both are transparent PNGs cropped to the artwork, so no blending is needed. */
+.logo-mark{height:54px;width:auto;display:block;flex:none}
+.logo-dark{display:none}
+header.scrolled .logo-light{display:none}
+header.scrolled .logo-dark{display:block}
+.f-logo .logo-mark{height:50px}
 .f-logo .word b{color:#fff}
 .f-logo .word span{color:#B49B7C}
 .f-logo .mark{color:#fff}
@@ -352,8 +377,14 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 /* ---------- responsive ---------- */
 @media(max-width:1000px){
   .about,.contact{grid-template-columns:1fr;gap:44px}
-  .hero{min-height:560px}
-  .hero-inner{padding-block:64px}
+  .hero{min-height:min(640px,86vh)}
+  .hero-inner{padding-block:112px 40px}
+  /* both calls to action on one row, so more of the photograph survives */
+  .hero-cta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+  .hero-cta .btn{padding:13px 10px;font-size:11.5px;letter-spacing:.1em}
+  .hero p.lead{font-size:15.5px;margin-bottom:22px}
+  .hero-facts{font-size:12.5px;gap:9px;margin-top:20px;padding-top:16px}
+  .hero-facts b{font-size:16px}
   .hero-bg img{object-position:50% 16%}
   .grid-3{grid-template-columns:repeat(2,1fr)}
   .grid-4 .member{flex-basis:calc((100% - 26px) / 2)}
@@ -380,12 +411,11 @@ body.nav-open .fab{opacity:0;pointer-events:none}
   .grid-4 .member{flex-basis:100%}
   .gallery{grid-auto-rows:220px}
   .gallery .g-tall,.gallery .g-wide{grid-row:auto;grid-column:auto}
-  .hero-stats{gap:26px}
   .about-art .frame:first-child{margin-top:0}
   form{padding:28px 22px}
   .logo .word b{font-size:22px}
-  .logo-img-wrap{height:50px}
-  .f-logo .logo-img-wrap{height:46px}
+  .logo-mark{height:44px}
+  .f-logo .logo-mark{height:42px}
 }
 
 /* ============================================================
@@ -437,7 +467,6 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 }
 .card:hover::before{opacity:1}
 .card .meta b{color:var(--mint-700)}
-.hero-stats b{color:#FDFAF5;font-weight:400}
 .quote{background:#fff;padding:38px 34px}
 .stars svg{color:var(--gold-1)}
 
@@ -785,9 +814,12 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 <header id="top">
   <div class="wrap nav">
     <a href="#top" class="logo" id="logo" aria-label="BE RELAX — Massage Center and Spa">
-      <span class="logo-img-wrap"><img class="logo-img" src="assets/logo/be-relax-logo.jpg"
-            alt="BE RELAX — Massage Center and Spa" width="1232" height="1232"
-            fetchpriority="high" decoding="async"></span>
+      <img class="logo-mark logo-light" src="assets/logo/be-relax-logo-white.png"
+           alt="BE RELAX — Massage Center and Spa" width="719" height="354"
+           fetchpriority="high" decoding="async">
+      <img class="logo-mark logo-dark" src="assets/logo/be-relax-logo-dark.png"
+           alt="" aria-hidden="true" width="950" height="467"
+           fetchpriority="high" decoding="async">
     </a>
 
     <nav class="menu" id="menu">
@@ -841,14 +873,14 @@ body.nav-open .fab{opacity:0;pointer-events:none}
       Al Zahiyah, Abu Dhabi — open every day until 2 am.
     </p>
     <div class="hero-cta">
-      <a href="#contact" class="btn btn-primary">Book Your Session</a>
-      <a href="#services" class="btn btn-ghost">View Treatments</a>
+      <a href="#contact" class="btn btn-primary">Book a Session</a>
+      <a href="#services" class="btn btn-ghost">See Prices</a>
     </div>
-    <div class="hero-stats">
-      <div><b>12+</b><span>Signature Treatments</span></div>
-      <div><b>100%</b><span>Certified Therapists</span></div>
-      <div><b>7</b><span>Days a Week</span></div>
-    </div>
+    <p class="hero-facts">
+      <span><b>12</b> treatments</span><i></i>
+      <span><b>19</b> certified therapists</span><i></i>
+      <span>Open until <b>2 am</b>, daily</span>
+    </p>
   </div>
 </div>
 
@@ -1392,9 +1424,9 @@ body.nav-open .fab{opacity:0;pointer-events:none}
     <div class="f-grid">
       <div>
         <div class="logo f-logo" id="logo-footer">
-          <span class="logo-img-wrap"><img class="logo-img" src="assets/logo/be-relax-logo-white.jpg"
-                alt="BE RELAX — Massage Center and Spa" width="738" height="738"
-                loading="lazy" decoding="async"></span>
+          <img class="logo-mark" src="assets/logo/be-relax-logo-white.png"
+               alt="BE RELAX — Massage Center and Spa" width="719" height="354"
+               loading="lazy" decoding="async">
         </div>
         <p class="f-about">
           A candlelit sanctuary in Abu Dhabi. Certified therapists, natural oils
@@ -1455,7 +1487,7 @@ body.nav-open .fab{opacity:0;pointer-events:none}
   /* --- sticky header --- */
   var hdr = document.querySelector("header");
   addEventListener("scroll", function(){
-    hdr.classList.toggle("scrolled", scrollY > 12);
+    hdr.classList.toggle("scrolled", scrollY > 90);
   }, {passive:true});
 
   /* --- mobile menu --- */
@@ -1492,7 +1524,7 @@ body.nav-open .fab{opacity:0;pointer-events:none}
   drawBar();
 
   /* --- count the hero stats up when they scroll into view --- */
-  var statBox = document.querySelector(".hero-stats");
+  var statBox = document.querySelector(".hero-facts");
   if(statBox){
     var counted = false;
     var cio = new IntersectionObserver(function(en){
