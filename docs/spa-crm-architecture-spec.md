@@ -629,7 +629,12 @@ model Payment {
   amountFils       Int           @map("amount_fils")        // negative for REFUND
   businessDay      DateTime      @map("business_day") @db.Date
   collectedByUserId String       @map("collected_by_user_id") @db.Uuid
+  // When the money changed hands. Reception supplies it, so a check-in can
+  // legitimately back-date it to when the guest actually walked in.
   collectedAt      DateTime      @default(now()) @map("collected_at") @db.Timestamptz(6)
+  // When the row was written. System time, never back-dated — this is the one
+  // the audit trail is checked against (§13.3 invariant 7).
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   externalRef      String?       @map("external_ref")       // card terminal slip number
   reversesPaymentId String?      @map("reverses_payment_id") @db.Uuid
   note             String?
@@ -1094,6 +1099,8 @@ CREATE TRIGGER trg_payments_no_delete BEFORE DELETE ON payments
 ```
 
 > Because `payments` is `BEFORE UPDATE`-blocked, Prisma's `update` and `upsert` on that model will throw. This is intentional. The repository layer exposes `create` only, and the service layer has no code path that tries to update a payment.
+>
+> The guard is strong enough that a **migration** trips over it too. Adding a column is DDL and passes freely, but back-filling that column is an ordinary `UPDATE` and is refused. A migration that needs to back-fill must suspend the trigger for that one statement, inside its own transaction, and restore it immediately — as `20260916210000_payment_created_at` does, with the reasoning written at the call site. Wanting to suspend it for anything larger than back-filling a newly added column is the signal to stop and write a reversing entry instead.
 
 ### 5.5 Handling the constraint violation in application code
 
@@ -1334,6 +1341,8 @@ Four roles. The interesting boundary is **RECEPTIONIST vs MANAGER**: reception m
 | Capability | OWNER | MANAGER | RECEPTIONIST | THERAPIST |
 |---|:--:|:--:|:--:|:--:|
 | View today's booking grid | ✅ | ✅ | ✅ | own only |
+| View the service menu, prices and rooms | ✅ | ✅ | ✅ | ✅ |
+| View the shift roster | ✅ | ✅ | ✅ | own only |
 | Create / reschedule / cancel a reservation | ✅ | ✅ | ✅ | ❌ |
 | Check in (take base payment) | ✅ | ✅ | ✅ | ❌ |
 | Check out (record tip) | ✅ | ✅ | ✅ | ❌ |
@@ -1351,7 +1360,17 @@ Four roles. The interesting boundary is **RECEPTIONIST vs MANAGER**: reception m
 | Manage employees | ✅ | ✅ | ❌ | ❌ |
 | Create / disable users, reset passwords | ✅ | ❌ | ❌ | ❌ |
 | Export guest data / process an erasure request | ✅ | ✅ | ❌ | ❌ |
+| Read an employee record | ✅ | ✅ | ❌ | own only |
 | View `Employee.legalName` | ✅ | ✅ | ❌ | own only |
+
+> **Why reception can read the catalogue and the roster.** An earlier draft put
+> `/services` and `/rooms` at MANAGER+, alongside the reports. That leaves
+> reception unable to quote a price or pick a room — unable to take a booking at
+> all. A price list is not a revenue total, and *totals* are what this matrix
+> exists to defend: what the business earned, what a therapist is owed, what the
+> night added up to. Reading the menu crosses none of it. The same reasoning
+> opens the shift roster, because reception must find a therapist's shift to
+> clock them in, and a shift row carries no money.
 
 ### 6.5 Guard implementation
 
@@ -2717,11 +2736,15 @@ Property tests that run against a seeded database after every migration:
 
 1. For every employee, `SUM(ledger.amount_fils)` equals `SUM(tips WHERE type = 'COLLECTED_BY_BUSINESS' AND not reversed) + SUM(commission accruals) - SUM(payouts)`.
 2. No ledger entry exists for any `DIRECT_CASH` tip.
-3. Every `COLLECTED_BY_BUSINESS` tip has exactly one `payments` row and exactly one `TIP_ACCRUAL` ledger entry.
-4. Every `COMPLETED` reservation has `SUM(payments WHERE kind='BASE') = base_cost_fils`, net of refunds.
+3. Every **live** `COLLECTED_BY_BUSINESS` tip — one with a positive amount — has exactly one `payments` row and exactly one `TIP_ACCRUAL` ledger entry.
+3b. Every reversed tip moved as a whole: the original marked reversed, a negative mirror of equal size, the money sent back where the business had held it, and the liability cancelled by a `REVERSAL` entry.
+4. Every `COMPLETED` reservation has `SUM(payments WHERE kind = 'BASE') = base_cost_fils` — the desk collected the quoted price in full.
+4b. No payment was refunded for more than it was worth: the refunds against any payment never exceed it.
 5. No reservation is `COMPLETED` without a `completed_at`, and none is `IN_PROGRESS` without an `actual_arrival_at`.
 6. No two `SCHEDULED`/`IN_PROGRESS` reservations share a therapist and an overlapping range — asserted by query, independently of the constraint, so a constraint accidentally dropped by a future migration fails CI loudly.
-7. Every row in `payments`, `tips` and `therapist_payout_ledger` has a corresponding `financial_audit_log` entry within 1 second of its creation.
+7. Every row in `payments`, `tips` and `therapist_payout_ledger` has a corresponding `financial_audit_log` entry within 1 second of **`created_at`** — the system timestamp, not `collected_at`, which reception may legitimately back-date on a check-in.
+
+> Invariants 3 and 4 first read "every `COLLECTED_BY_BUSINESS` tip" and "net of refunds". Neither survived a faithful reversal: the first counted the negative mirror row as corruption, and the second bucketed a refunded *tip* against the *base*, so a fully-paid booking read as short. Splitting each into the two things the system actually guarantees — the desk collected in full, and money only goes back out if it came in — made them provable rather than approximately true. An invariant you have to explain away is not an invariant.
 
 Invariant 6 is the canary. If a migration ever drops an exclusion constraint, this is what tells you — on the pull request, not on a Friday night.
 

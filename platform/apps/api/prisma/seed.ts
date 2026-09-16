@@ -840,6 +840,11 @@ async function seedHistory(
         businessDay: dateOnly(arrivalDay),
         collectedByUserId: desk,
         collectedAt: arrival,
+        // The seed fabricates a coherent past, so the row was "written" when the
+        // money changed hands. Leaving createdAt to default to now() would make
+        // every historical payment look like an unaudited write against its own
+        // audit row, which carries the historical timestamp. (§13.3 invariant 7.)
+        createdAt: arrival,
         externalRef: line.method === PaymentMethod.CARD ? `TRM-${intBetween(rng, 10000, 99999)}` : null,
         idempotencyKey: `seed:${r.ref}:base:${i}`,
       });
@@ -896,6 +901,7 @@ async function seedHistory(
         businessDay: dateOnly(completedDay),
         collectedByUserId: desk,
         collectedAt: completedAt,
+        createdAt: completedAt,
         externalRef: method === PaymentMethod.CARD ? `TRM-${intBetween(rng, 10000, 99999)}` : null,
         idempotencyKey: `seed:${r.ref}:tip`,
       });

@@ -129,6 +129,12 @@ describe('financial invariants (§13.3)', () => {
   });
 
   it('3. every COLLECTED_BY_BUSINESS tip has exactly one payment and one TIP_ACCRUAL', async () => {
+    // Positive rows only. A reversal (§9.4) writes a MIRROR tip with a negative
+    // amount, and that mirror is backed by a REFUND payment and a REVERSAL
+    // ledger entry — not a TIP payment and a TIP_ACCRUAL. Counting mirrors here
+    // would report every correctly-performed reversal as corruption. The next
+    // test asserts the mirrors are well formed in their own right, so nothing
+    // goes unchecked.
     const malformed = await query(`
       SELECT t.id AS tip_id, t.amount_fils, r.ref AS reservation,
              (SELECT count(*)::int FROM payments p
@@ -140,6 +146,7 @@ describe('financial invariants (§13.3)', () => {
         FROM tips t
         JOIN reservations r ON r.id = t.reservation_id
        WHERE t.type = 'COLLECTED_BY_BUSINESS'
+         AND t.amount_fils > 0
          AND ( (SELECT count(*) FROM payments p
                  WHERE p.id = t.payment_id AND p.kind = 'TIP'
                    AND p.amount_fils = t.amount_fils) <> 1
@@ -151,21 +158,74 @@ describe('financial invariants (§13.3)', () => {
     expect(malformed).toEqual([]);
   });
 
-  it('4. every COMPLETED reservation is paid for exactly, net of refunds', async () => {
+  it('3b. every reversed tip is mirrored, refunded and un-accrued together', async () => {
+    // The other half of §9.4. A reversal is only trustworthy if all four pieces
+    // moved: the original marked reversed, a negative mirror, the money sent
+    // back when the business had held it, and the liability cancelled.
+    const brokenReversals = await query(`
+      SELECT orig.id AS original_tip, orig.amount_fils, orig.type,
+             mirror.id AS mirror_tip, mirror.amount_fils AS mirror_amount,
+             (SELECT count(*)::int FROM payments p
+               WHERE p.kind = 'REFUND' AND p.reverses_payment_id = orig.payment_id) AS refunds,
+             (SELECT count(*)::int FROM therapist_payout_ledger l
+               WHERE l.tip_id = mirror.id AND l.entry_type = 'REVERSAL') AS reversal_entries
+        FROM tips orig
+        JOIN tips mirror ON mirror.id = orig.reversed_by_tip_id
+       WHERE orig.reversed_by_tip_id IS NOT NULL
+         AND (
+              mirror.amount_fils <> -orig.amount_fils
+           OR mirror.type <> orig.type
+           OR (orig.type = 'COLLECTED_BY_BUSINESS' AND (
+                 (SELECT count(*) FROM payments p
+                   WHERE p.kind = 'REFUND' AND p.reverses_payment_id = orig.payment_id) <> 1
+              OR (SELECT count(*) FROM therapist_payout_ledger l
+                   WHERE l.tip_id = mirror.id AND l.entry_type = 'REVERSAL') <> 1))
+           OR (orig.type = 'DIRECT_CASH' AND (
+                 mirror.payment_id IS NOT NULL
+              OR (SELECT count(*) FROM therapist_payout_ledger l
+                   WHERE l.tip_id = mirror.id) <> 0))
+         )`);
+
+    expect(brokenReversals).toEqual([]);
+  });
+
+  it('4. the desk collected the full quoted price for every COMPLETED reservation', async () => {
     // A short payment is a discount, and a discount is a manager decision recorded
     // as an ADJUSTMENT — never a quiet under-collection at the desk. §8.2.
+    //
+    // This asks about BASE only. The original phrasing, "net of refunds",
+    // bucketed every REFUND against the base, so refunding a TIP made a
+    // fully-paid booking look short — and a legitimate, audited base refund
+    // made it look short too, which is not corruption but a manager's decision.
+    // What the system actually guarantees is narrower and checkable: the desk
+    // collected the quoted price in full. Refunds are governed by 4b.
     const unbalanced = await query(`
       SELECT r.ref AS reservation, r.base_cost_fils,
-             COALESCE(SUM(p.amount_fils) FILTER (WHERE p.kind IN ('BASE', 'REFUND')), 0)::int AS collected_net_fils
+             COALESCE(SUM(p.amount_fils) FILTER (WHERE p.kind = 'BASE'), 0)::int AS base_collected_fils
         FROM reservations r
         LEFT JOIN payments p ON p.reservation_id = r.id
        WHERE r.status = 'COMPLETED'
        GROUP BY r.id, r.ref, r.base_cost_fils
-      HAVING r.base_cost_fils
-             <> COALESCE(SUM(p.amount_fils) FILTER (WHERE p.kind IN ('BASE', 'REFUND')), 0)
+      HAVING r.base_cost_fils <> COALESCE(SUM(p.amount_fils) FILTER (WHERE p.kind = 'BASE'), 0)
        ORDER BY r.ref`);
 
     expect(unbalanced).toEqual([]);
+  });
+
+  it('4b. no payment was refunded for more than it was worth', async () => {
+    // The other direction: money can only go back out if it came in. A refund
+    // resolves to the payment it reverses, so refunding a 50 AED tip can never
+    // be mistaken for shorting a 250 AED base.
+    const overRefunded = await query(`
+      SELECT orig.id AS payment_id, orig.kind, orig.amount_fils,
+             SUM(ref.amount_fils)::int AS refunded_fils
+        FROM payments orig
+        JOIN payments ref ON ref.reverses_payment_id = orig.id AND ref.kind = 'REFUND'
+       GROUP BY orig.id, orig.kind, orig.amount_fils
+      HAVING -SUM(ref.amount_fils) > orig.amount_fils
+       ORDER BY orig.id`);
+
+    expect(overRefunded).toEqual([]);
   });
 
   it('5. no reservation is COMPLETED without a completion time, nor IN_PROGRESS without an arrival', async () => {
@@ -268,8 +328,12 @@ describe('financial invariants (§13.3)', () => {
     // written inside the same transaction, hence the same instant. §9.6.
     const unaudited = await query(`
       WITH money AS (
+        -- created_at, NOT collected_at. collected_at is when the money changed
+        -- hands and reception may legitimately back-date it (§8.2); created_at
+        -- is when the row was written, which is the thing an audit entry is
+        -- supposed to sit beside.
         SELECT 'payments' AS source, p.id, p.branch_id,
-               p.reservation_id AS anchor_id, p.collected_at AS written_at
+               p.reservation_id AS anchor_id, p.created_at AS written_at
           FROM payments p
         UNION ALL
         SELECT 'tips', t.id, t.branch_id, t.reservation_id, t.recorded_at

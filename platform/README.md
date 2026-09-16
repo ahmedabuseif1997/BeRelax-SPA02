@@ -51,22 +51,41 @@ The seed prints its login credentials at the end. They are development-only and 
 ```
 platform/
 ├── apps/
-│   └── api/                      NestJS backend
-│       ├── prisma/
-│       │   ├── schema.prisma     20 models, 11 enums
-│       │   ├── migrations/       6 migrations — 1 generated, 5 hand-written
-│       │   └── seed.ts
-│       └── src/
-│           ├── auth/             JWT, bcrypt, refresh rotation, RBAC
-│           ├── reservations/     booking + the two-step money workflow
-│           ├── prisma/           client, branch-scope extension
-│           ├── common/           audit, idempotency, error filters, context
-│           ├── config/           env validation — the process refuses a bad one
-│           └── health/
+│   ├── api/                      NestJS backend — 67 routes
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma     20 models, 11 enums
+│   │   │   ├── migrations/       7 — 1 generated, 6 hand-written
+│   │   │   └── seed.ts
+│   │   └── src/
+│   │       ├── auth/             JWT, bcrypt, refresh rotation, RBAC
+│   │       ├── reservations/     booking + the two-step money workflow
+│   │       ├── payments/         refunds, tip reversals, payouts, the ledger
+│   │       ├── availability/     free windows — a hint, never a reservation
+│   │       ├── booking-requests/ the unconfirmed-enquiry inbox
+│   │       ├── public/           website menu, form intake, /r redirects
+│   │       ├── guests/           guests and consents
+│   │       ├── employees/        staff, commission, restricted legal names
+│   │       ├── catalogue/        services, categories, rooms
+│   │       ├── shifts/           roster, clock in and out
+│   │       ├── prisma/           client, branch-scope extension
+│   │       ├── common/           audit, idempotency, error filters, context
+│   │       ├── config/           env validation — the process refuses a bad one
+│   │       └── health/
+│   └── dashboard/                Next.js 14 CRM — the screen reception lives in
 └── packages/
     └── contracts/                zod schemas, money and time helpers,
-                                  shared by the API and (later) the dashboard
+                                  shared by the API and the dashboard
 ```
+
+### The dashboard
+
+`pnpm --filter dashboard dev` serves it on :3001. It needs `NEXT_PUBLIC_API_URL=http://localhost:3000/v1`, and the API needs `DASHBOARD_ORIGIN=http://localhost:3001` and `COOKIE_DOMAIN=localhost` — without those the `SameSite=Strict` refresh cookie never arrives and every session dies after fifteen minutes.
+
+Three things about it are deliberate and worth not undoing:
+
+- **The access token lives in memory only.** Never `localStorage`. Neither does the cached grid, which is guest names and phone numbers on a shared iPad.
+- **It degrades rather than lies.** If the API is unreachable it keeps showing the last grid behind a banner saying how old it is, and disables every write button. A receptionist must never believe they took a payment that was not recorded. There is no offline write queue, on purpose: a payment that *might* land later is worse than one that plainly failed.
+- **The amount pad builds an integer.** There is no `parseFloat` between the keypad and the API. Check-in shows a live remainder and Confirm stays dead until it reads exactly zero.
 
 ---
 
@@ -123,6 +142,11 @@ The six migrations, in order:
 | `…_reservation_triggers` | Derived columns, the status state machine |
 | `…_append_only` | Immutability guards on payments, tips, ledger and audit log |
 | `…_retention` | `prune_attribution()` — 90-day attribution retention |
+| `…_payment_created_at` | Splits the business timestamp from the system one |
+
+The last one is worth reading before you write another migration. `payments.collected_at` is when money changed hands — reception supplies it, and a check-in may legitimately back-date it. `created_at` is when the row was written. Auditing against the first made every back-dated check-in look unaudited.
+
+Back-filling that column also ran straight into the append-only trigger, which refused it. That is the guard working: adding a column is DDL and passes, but filling it is an `UPDATE`. The migration suspends the trigger for exactly one statement and restores it. Wanting to suspend it for more than back-filling a new column is the signal to stop and write a reversing entry instead.
 
 The first must sort before the schema migration, because the schema's `uuid_generate_v7()` defaults depend on it. That is why its prefix is all zeroes.
 
@@ -217,10 +241,17 @@ The API must be reachable at **`api.berelax.ae`** — a subdomain of the public 
 
 | Phase | State |
 |---|---|
-| **0 — Foundations** | Schema, all six migrations, seed, contracts package, concurrency suite |
-| **1 — Auth** | Login, refresh rotation with reuse detection, lockout, guards, RBAC, user management |
-| **2 — Booking core** | Reservations, check-in, checkout, cancel, no-show. Guests, employees, services, rooms, shifts and the dashboard are next. |
-| **3 — The money** | Payments, both tip modes, ledger accrual. Reversals, payout batches and the invariant suite are next. |
-| **4–7** | Attribution, reporting, compliance endpoints, pilot — not started |
+| **0 — Foundations** | Done. Schema, seven migrations, seed, contracts package, concurrency suite. |
+| **1 — Auth** | Done. Login, refresh rotation with reuse detection, lockout, guards, RBAC, user management. |
+| **2 — Booking core** | Done. Reservations, availability, the booking-request inbox and conversion, guests, employees, catalogue, shifts, and the dashboard grid, booking sheet, check-in and checkout. |
+| **3 — The money** | Done. Both tip modes, refunds, adjustments, tip reversals, payout batches, the ledger, the earnings split and the audit query. |
+| **4 — Attribution** | Server side is built — the touch beacon, the `brx_vid` cookie mirror, the `/r/*` redirects and the snapshot chain through to a reservation. **Still to do: the client script and the consent gate on the public site**, which need the `.ae` domain and the `api.` subdomain to exist. |
+| **5 — Reporting** | Not started. `/reports/*` returns 404 and the dashboard says so plainly rather than showing zeros. |
+| **6 — Compliance** | Not started. Guest export and erasure (§7.5), the retention job on `pg_cron`, the privacy notice, the processing register, the breach runbook, a rehearsed restore. |
+| **7 — Pilot** | Not started. Two weeks running in parallel with paper. |
 
-Nothing here has touched real guest data, and nothing should until Phase 6 (compliance endpoints, retention jobs, privacy notice, rehearsed restore) is complete.
+Known gaps inside what is built: `PATCH /reservations/:id` (reschedule and reassign) exists in the specification but not in the code or the UI, so a change of time is currently a cancel and a rebook.
+
+Nothing here has touched real guest data, and nothing should until Phase 6 is complete.
+
+

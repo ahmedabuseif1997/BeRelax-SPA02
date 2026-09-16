@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-cream text-ink font-sans antialiased;
+    /* A receptionist holds this at arm's length in low light. */
+    font-size: 16px;
+    line-height: 1.55;
+    /* Rubber-band scrolling on an iPad makes a fixed grid header jump. */
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-serif font-normal tracking-[.01em];
+  }
+
+  /* Never shrink a tap target to show a focus ring; never hide one either. */
+  :focus-visible {
+    outline: 2px solid theme('colors.teal.600');
+    outline-offset: 2px;
+  }
+
+  button {
+    touch-action: manipulation;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply text-[11px] uppercase tracking-eyebrow text-ink-muted font-medium;
+  }
+
+  .field-label {
+    @apply block text-[11.5px] uppercase tracking-label text-ink-muted font-medium mb-1.5;
+  }
+
+  .field-input {
+    @apply w-full rounded-xl border border-line bg-cream px-4 py-3.5 text-[16px] text-ink
+           transition-colors placeholder:text-ink-muted/60
+           focus:border-teal-500 focus:bg-white focus:outline-none
+           focus:ring-4 focus:ring-teal-500/20
+           disabled:opacity-50;
+  }
+
+  /* Tabular figures: money and times must not reflow as the digits change. */
+  .numeric {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+}
+
+/* The booking grid scrolls in both directions with sticky edges; momentum
+   scrolling makes the sticky header flicker on iPadOS without this. */
+.grid-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+.grid-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.grid-scroll::-webkit-scrollbar-thumb {
+  background: #dcc8ac;
+  border-radius: 999px;
+}

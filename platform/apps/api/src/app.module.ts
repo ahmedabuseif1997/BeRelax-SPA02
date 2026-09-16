@@ -15,6 +15,14 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { ReservationsModule } from './reservations/reservations.module';
+import { AvailabilityModule } from './availability/availability.module';
+import { BookingRequestsModule } from './booking-requests/booking-requests.module';
+import { PublicModule } from './public/public.module';
+import { GuestsModule } from './guests/guests.module';
+import { EmployeesModule } from './employees/employees.module';
+import { CatalogueModule } from './catalogue/catalogue.module';
+import { ShiftsModule } from './shifts/shifts.module';
+import { PaymentsModule } from './payments/payments.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -33,6 +41,14 @@ import { HealthModule } from './health/health.module';
     CommonModule,
     AuthModule,
     ReservationsModule,
+    AvailabilityModule,
+    BookingRequestsModule,
+    PublicModule,
+    GuestsModule,
+    EmployeesModule,
+    CatalogueModule,
+    ShiftsModule,
+    PaymentsModule,
     HealthModule,
   ],
   providers: [

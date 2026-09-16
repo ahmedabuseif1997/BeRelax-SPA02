@@ -5,7 +5,17 @@ import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/*.js', '**/*.mjs'],
+    // .next/types is Next.js build output — generated route type stubs that use
+    // `Function` and `{}` by design. Linting generated code reports the
+    // generator's style, not ours.
+    ignores: [
+      '**/dist/**',
+      '**/.next/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      '**/*.js',
+      '**/*.mjs',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

@@ -453,7 +453,12 @@ model Payment {
   amountFils        Int           @map("amount_fils")
   businessDay       DateTime      @map("business_day") @db.Date
   collectedByUserId String        @map("collected_by_user_id") @db.Uuid
+  /// When the money changed hands. Supplied by reception, so it can be
+  /// legitimately back-dated — a guest who arrived twenty minutes ago.
   collectedAt       DateTime      @default(now()) @map("collected_at") @db.Timestamptz(6)
+  /// When the row was written. System time, never back-dated. This is the one
+  /// the audit trail is checked against.
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   /// Card terminal slip number.
   externalRef       String?       @map("external_ref")
   reversesPaymentId String?       @map("reverses_payment_id") @db.Uuid
@@ -466,6 +471,7 @@ model Payment {
 
   @@index([branchId, businessDay, kind])
   @@index([reservationId])
+  @@index([createdAt])
   @@map("payments")
 }
 

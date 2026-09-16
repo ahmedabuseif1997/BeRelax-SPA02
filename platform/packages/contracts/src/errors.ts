@@ -16,6 +16,11 @@ export const ErrorCode = {
   RESERVATION_NOT_IN_PROGRESS: 'RESERVATION_NOT_IN_PROGRESS',
   ILLEGAL_STATUS_TRANSITION: 'ILLEGAL_STATUS_TRANSITION',
 
+  // The intake pipeline. A request holds no resource, so none of these are conflicts
+  // over a slot -- they are conflicts over who is dealing with the enquiry.
+  BOOKING_REQUEST_NOT_FOUND: 'BOOKING_REQUEST_NOT_FOUND',
+  BOOKING_REQUEST_ALREADY_HANDLED: 'BOOKING_REQUEST_ALREADY_HANDLED',
+
   // Money
   BASE_PAYMENT_MISMATCH: 'BASE_PAYMENT_MISMATCH',
   BASE_PAYMENT_OUTSTANDING: 'BASE_PAYMENT_OUTSTANDING',
@@ -28,6 +33,36 @@ export const ErrorCode = {
   PAYOUT_NOT_POSITIVE: 'PAYOUT_NOT_POSITIVE',
   ARRIVAL_TIME_IMPLAUSIBLE: 'ARRIVAL_TIME_IMPLAUSIBLE',
   COMPLETION_BEFORE_ARRIVAL: 'COMPLETION_BEFORE_ARRIVAL',
+
+  // Corrections. Nothing is edited or deleted: a refund, an adjustment and a tip
+  // reversal are all NEW signed rows pointing back at what they correct (§9.4),
+  // so every one of these codes is about what may still be corrected -- never
+  // about a failed write to history.
+  PAYMENT_NOT_FOUND: 'PAYMENT_NOT_FOUND',
+  /** The row is itself a correction (a REFUND), or carries no positive amount to return. */
+  PAYMENT_NOT_REFUNDABLE: 'PAYMENT_NOT_REFUNDABLE',
+  PAYMENT_ALREADY_REFUNDED: 'PAYMENT_ALREADY_REFUNDED',
+  REFUND_EXCEEDS_PAYMENT: 'REFUND_EXCEEDS_PAYMENT',
+  TIP_NOT_FOUND: 'TIP_NOT_FOUND',
+  PAYOUT_BATCH_NOT_FOUND: 'PAYOUT_BATCH_NOT_FOUND',
+  PAYOUT_ALREADY_ACKNOWLEDGED: 'PAYOUT_ALREADY_ACKNOWLEDGED',
+
+  // Guests -- `notes` is preferences, never a medical history. Spec §11.5.
+  GUEST_NOTES_MEDICAL_CONTENT: 'GUEST_NOTES_MEDICAL_CONTENT',
+  GUEST_PHONE_TAKEN: 'GUEST_PHONE_TAKEN',
+
+  // Employees and the catalogue
+  EMPLOYEE_HAS_FUTURE_BOOKINGS: 'EMPLOYEE_HAS_FUTURE_BOOKINGS',
+  ROOM_NAME_TAKEN: 'ROOM_NAME_TAKEN',
+  CATEGORY_NAME_TAKEN: 'CATEGORY_NAME_TAKEN',
+
+  // Shifts and attendance
+  SHIFT_ALREADY_PLANNED: 'SHIFT_ALREADY_PLANNED',
+  SHIFT_ENDS_BEFORE_START: 'SHIFT_ENDS_BEFORE_START',
+  SHIFT_ALREADY_CLOCKED_IN: 'SHIFT_ALREADY_CLOCKED_IN',
+  SHIFT_NOT_CLOCKED_IN: 'SHIFT_NOT_CLOCKED_IN',
+  SHIFT_ALREADY_CLOCKED_OUT: 'SHIFT_ALREADY_CLOCKED_OUT',
+  SHIFT_CLOCK_OUT_BEFORE_CLOCK_IN: 'SHIFT_CLOCK_OUT_BEFORE_CLOCK_IN',
 
   // Idempotency
   IDEMPOTENCY_KEY_REQUIRED: 'IDEMPOTENCY_KEY_REQUIRED',
@@ -44,6 +79,11 @@ export const ErrorCode = {
   REFRESH_TOKEN_REUSED: 'REFRESH_TOKEN_REUSED',
   INSUFFICIENT_ROLE: 'INSUFFICIENT_ROLE',
   PASSWORD_TOO_COMMON: 'PASSWORD_TOO_COMMON',
+
+  // Configuration. Public routes have no token to take a branch from, so they
+  // read DEFAULT_BRANCH_ID; if that is unset and the branch is ambiguous there
+  // is nothing safe to guess at.
+  BRANCH_NOT_CONFIGURED: 'BRANCH_NOT_CONFIGURED',
 
   // Generic
   RATE_LIMITED: 'RATE_LIMITED',
