@@ -177,7 +177,7 @@ A database check constraint enforces the distinction, so a bug in the checkout h
 ```bash
 pnpm test                # unit
 pnpm test:e2e            # needs the test database on :5433
-pnpm verify              # typecheck + build + unit + e2e — what CI runs
+pnpm verify              # lint + typecheck + build + unit + e2e — what CI runs
 ```
 
 The suite that matters is `test/booking-concurrency.e2e-spec.ts`. It fires 25 simultaneous bookings at one therapist and one slot and asserts **exactly one** succeeds. It must run against a real PostgreSQL — a mocked database has no exclusion constraints and would pass while proving nothing.

@@ -30,7 +30,7 @@
  * Money is integer fils throughout. 1 AED = 100 fils (§3.1).
  */
 
-/* eslint-disable no-console */
+ 
 import * as bcrypt from 'bcrypt';
 import {
   ConsentType,

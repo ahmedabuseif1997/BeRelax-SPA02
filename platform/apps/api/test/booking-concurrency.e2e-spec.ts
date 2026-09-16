@@ -128,7 +128,7 @@ describe('double-booking prevention', () => {
     // a failure names its own cause — a throttle, a pool timeout, a real bug.
     const unexpected = responses.filter((r) => r.status !== 201 && r.status !== 409);
     if (unexpected.length > 0) {
-      // eslint-disable-next-line no-console
+       
       console.log(
         'Neither accepted nor conflicted:\n' +
           unexpected.map((r) => `  ${r.status} ${JSON.stringify(r.body).slice(0, 200)}`).join('\n'),

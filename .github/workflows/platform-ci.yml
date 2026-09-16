@@ -93,6 +93,9 @@ jobs:
           echo "$(grep -c '^ok' /tmp/verify.out) assertions passed"
           psql "postgresql://postgres:test@localhost:5432/postgres" -c 'DROP DATABASE verify_scratch'
 
+      - name: Lint
+        run: pnpm lint
+
       - name: Typecheck
         run: pnpm typecheck
 

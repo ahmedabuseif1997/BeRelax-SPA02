@@ -8,7 +8,7 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint \"{src,test}/**/*.ts\" --max-warnings 0",
+    "lint": "eslint \"{src,test,prisma}/**/*.ts\" --max-warnings 0",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
