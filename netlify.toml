@@ -1,8 +1,16 @@
-# BE RELAX - static site, no build step. Netlify serves the repo root.
+# BE RELAX — static site, no framework build.
+#
+# The publish directory is assembled rather than set to "." because the repo
+# root also holds the CRM backend source (platform/) and the internal
+# architecture docs (docs/). With publish = "." those would be served on the
+# public website. The command below copies only the site itself.
+#
+# There is deliberately no package.json at the repo root, so Netlify does not
+# detect a Node project and never runs an install step.
 
 [build]
-  publish = "."
-  command = ""
+  publish = "_site"
+  command = "mkdir -p _site && cp index.html _site/ && cp -R assets _site/assets"
 
 [[headers]]
   for = "/*"

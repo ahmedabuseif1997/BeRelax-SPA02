@@ -1,0 +1,643 @@
+// BE RELAX CRM — data model
+// Companion to docs/spa-crm-architecture-spec.md §4.
+//
+// WHAT PRISMA CANNOT EXPRESS lives in hand-written SQL under prisma/migrations:
+// exclusion constraints, partial indexes, triggers, generated-column guards and
+// grants. `prisma db push` is BANNED on this project — it does not understand
+// any of it and will silently drop it. Always `prisma migrate dev`.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [btree_gist, pgcrypto]
+}
+
+// ─────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────
+
+enum UserRole {
+  OWNER
+  MANAGER
+  RECEPTIONIST
+  THERAPIST
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  ON_LEAVE
+  INACTIVE
+}
+
+enum ReservationStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum BookingRequestStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  DECLINED
+  SPAM
+}
+
+enum SourceChannel {
+  WEBSITE_FORM
+  WHATSAPP
+  PHONE
+  WALK_IN
+  INSTAGRAM
+  GOOGLE_MAPS
+  REFERRAL
+  OTHER
+}
+
+enum PaymentKind {
+  BASE
+  TIP
+  REFUND
+  ADJUSTMENT
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  VOUCHER
+  COMPLIMENTARY
+}
+
+enum TipType {
+  DIRECT_CASH
+  COLLECTED_BY_BUSINESS
+}
+
+enum LedgerEntryType {
+  TIP_ACCRUAL
+  COMMISSION_ACCRUAL
+  PAYOUT
+  ADJUSTMENT
+  REVERSAL
+}
+
+enum ShiftStatus {
+  PLANNED
+  ACTIVE
+  ENDED
+  ABSENT
+}
+
+enum ConsentType {
+  DATA_PROCESSING
+  MARKETING
+  PHOTO
+}
+
+// ─────────────────────────────────────────────────────────────
+// TENANCY
+// ─────────────────────────────────────────────────────────────
+
+model Branch {
+  id             String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  name           String
+  addressLine    String   @map("address_line")
+  city           String   @default("Abu Dhabi")
+  phonePrimary   String   @map("phone_primary")
+  phoneSecondary String?  @map("phone_secondary")
+  phoneLandline  String?  @map("phone_landline")
+  whatsappNumber String   @map("whatsapp_number")
+  googleMapsUrl  String?  @map("google_maps_url")
+  timezone       String   @default("Asia/Dubai")
+  opensAt        String   @default("11:00") @map("opens_at")
+  closesAt       String   @default("02:00") @map("closes_at")
+  /// Room reset between guests. Folded into `blockedUntil` by the derive trigger.
+  turnaroundMins Int      @default(15) @map("turnaround_mins")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  users           User[]
+  employees       Employee[]
+  rooms           Room[]
+  services        Service[]
+  guests          Guest[]
+  reservations    Reservation[]
+  bookingRequests BookingRequest[]
+  payments        Payment[]
+  tips            Tip[]
+  ledgerEntries   TherapistPayoutLedger[]
+  payoutBatches   PayoutBatch[]
+  shifts          Shift[]
+  auditEntries    FinancialAuditLog[]
+
+  @@map("branches")
+}
+
+// ─────────────────────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id                 String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId           String    @map("branch_id") @db.Uuid
+  /// Stored lowercase. Uniqueness is a partial index on lower(email) WHERE deleted_at IS NULL.
+  email              String
+  /// bcrypt, cost 12.
+  passwordHash       String    @map("password_hash")
+  fullName           String    @map("full_name")
+  role               UserRole
+  isActive           Boolean   @default(true) @map("is_active")
+  mustChangePassword Boolean   @default(true) @map("must_change_password")
+  lastLoginAt        DateTime? @map("last_login_at") @db.Timestamptz(6)
+  failedLoginCount   Int       @default(0) @map("failed_login_count")
+  lockedUntil        DateTime? @map("locked_until") @db.Timestamptz(6)
+  passwordChangedAt  DateTime  @default(now()) @map("password_changed_at") @db.Timestamptz(6)
+  /// Set for THERAPIST logins; scopes the self-service endpoints.
+  employeeId         String?   @unique @map("employee_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  branch        Branch         @relation(fields: [branchId], references: [id])
+  employee      Employee?      @relation(fields: [employeeId], references: [id])
+  refreshTokens RefreshToken[]
+
+  @@index([branchId, role])
+  @@map("users")
+}
+
+model RefreshToken {
+  id           String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  /// Rotation lineage. Presenting a spent token revokes the whole family.
+  familyId     String    @map("family_id") @db.Uuid
+  /// SHA-256 of the opaque token. The token itself is never stored.
+  tokenHash    String    @unique @map("token_hash")
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(6)
+  replacedById String?   @map("replaced_by_id") @db.Uuid
+  userAgent    String?   @map("user_agent")
+  ipAddress    String?   @map("ip_address")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// ─────────────────────────────────────────────────────────────
+// CATALOGUE AND RESOURCES
+// ─────────────────────────────────────────────────────────────
+
+model ServiceCategory {
+  id        String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  name      String    @unique
+  sortOrder Int       @default(0) @map("sort_order")
+  isActive  Boolean   @default(true) @map("is_active")
+  services  Service[]
+
+  @@map("service_categories")
+}
+
+model Service {
+  id              String  @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId        String  @map("branch_id") @db.Uuid
+  categoryId      String  @map("category_id") @db.Uuid
+  name            String
+  durationMinutes Int     @map("duration_minutes")
+  priceFils       Int     @map("price_fils")
+  description     String?
+  requiresRoom    Boolean @default(true) @map("requires_room")
+  isActive        Boolean @default(true) @map("is_active")
+  sortOrder       Int     @default(0) @map("sort_order")
+
+  branch       Branch           @relation(fields: [branchId], references: [id])
+  category     ServiceCategory  @relation(fields: [categoryId], references: [id])
+  reservations Reservation[]
+  requests     BookingRequest[]
+
+  @@index([branchId, isActive])
+  @@map("services")
+}
+
+model Room {
+  id       String  @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId String  @map("branch_id") @db.Uuid
+  name     String
+  capacity Int     @default(1)
+  isActive Boolean @default(true) @map("is_active")
+
+  branch       Branch        @relation(fields: [branchId], references: [id])
+  reservations Reservation[]
+
+  @@unique([branchId, name])
+  @@map("rooms")
+}
+
+model Employee {
+  id             String         @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId       String         @map("branch_id") @db.Uuid
+  /// The name shown to guests.
+  displayName    String         @map("display_name")
+  /// HR only. Restricted field — OWNER/MANAGER, or the therapist themselves.
+  legalName      String?        @map("legal_name")
+  phone          String?
+  status         EmployeeStatus @default(ACTIVE)
+  /// Basis points of the base service. 10000 = 100%.
+  commissionBps  Int            @default(0) @map("commission_bps")
+  hiredOn        DateTime?      @map("hired_on") @db.Date
+  photoUrl       String?        @map("photo_url")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?      @map("deleted_at") @db.Timestamptz(6)
+
+  branch        Branch                  @relation(fields: [branchId], references: [id])
+  user          User?
+  reservations  Reservation[]
+  shifts        Shift[]
+  tips          Tip[]
+  ledgerEntries TherapistPayoutLedger[]
+  payoutBatches PayoutBatch[]
+
+  @@index([branchId, status])
+  @@map("employees")
+}
+
+model Shift {
+  id           String      @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId     String      @map("branch_id") @db.Uuid
+  employeeId   String      @map("employee_id") @db.Uuid
+  businessDay  DateTime    @map("business_day") @db.Date
+  plannedStart DateTime    @map("planned_start") @db.Timestamptz(6)
+  plannedEnd   DateTime    @map("planned_end") @db.Timestamptz(6)
+  clockInAt    DateTime?   @map("clock_in_at") @db.Timestamptz(6)
+  clockOutAt   DateTime?   @map("clock_out_at") @db.Timestamptz(6)
+  status       ShiftStatus @default(PLANNED)
+  note         String?
+
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, businessDay])
+  @@index([branchId, businessDay])
+  @@map("shifts")
+}
+
+// ─────────────────────────────────────────────────────────────
+// GUESTS
+//
+// NOTE: this system stores NO health or medical information. `notes` is for
+// operational preferences only — pressure, oil, preferred therapist. See the
+// specification §11.5 and the CHECK constraint in the migration, which is the
+// enforcement, not the comment.
+// ─────────────────────────────────────────────────────────────
+
+model Guest {
+  id           String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId     String    @map("branch_id") @db.Uuid
+  fullName     String    @map("full_name")
+  /// E.164, e.g. +971501234567
+  phone        String
+  email        String?
+  /// Preferences ONLY. "Prefers firm pressure", "no jasmine oil", "requests Maya".
+  notes        String?
+  isBlocked    Boolean   @default(false) @map("is_blocked")
+  /// Set by a PDPL erasure request. Identity severed, transactions retained.
+  anonymisedAt DateTime? @map("anonymised_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  branch       Branch           @relation(fields: [branchId], references: [id])
+  reservations Reservation[]
+  requests     BookingRequest[]
+  consents     GuestConsent[]
+
+  @@unique([branchId, phone])
+  @@index([branchId, fullName])
+  @@map("guests")
+}
+
+model GuestConsent {
+  id            String      @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  guestId       String      @map("guest_id") @db.Uuid
+  type          ConsentType
+  granted       Boolean
+  grantedAt     DateTime    @default(now()) @map("granted_at") @db.Timestamptz(6)
+  withdrawnAt   DateTime?   @map("withdrawn_at") @db.Timestamptz(6)
+  source        String
+  /// Which privacy notice they actually saw. Proof of consent needs the version.
+  policyVersion String      @map("policy_version")
+  ipAddress     String?     @map("ip_address")
+
+  guest Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@index([guestId, type])
+  @@map("guest_consents")
+}
+
+// ─────────────────────────────────────────────────────────────
+// BOOKING PIPELINE
+// ─────────────────────────────────────────────────────────────
+
+/// An unconfirmed enquiry. Holds NO resource, so it can never conflict.
+model BookingRequest {
+  id                    String               @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId              String               @map("branch_id") @db.Uuid
+  guestId               String?              @map("guest_id") @db.Uuid
+  guestName             String               @map("guest_name")
+  guestPhone            String               @map("guest_phone")
+  guestEmail            String?              @map("guest_email")
+  requestedServiceId    String?              @map("requested_service_id") @db.Uuid
+  requestedAt           DateTime?            @map("requested_at") @db.Timestamptz(6)
+  message               String?
+  status                BookingRequestStatus @default(NEW)
+  sourceChannel         SourceChannel        @map("source_channel")
+  attributionId         String?              @unique @map("attribution_id") @db.Uuid
+  convertedReservationId String?             @unique @map("converted_reservation_id") @db.Uuid
+  handledByUserId       String?              @map("handled_by_user_id") @db.Uuid
+  handledAt             DateTime?            @map("handled_at") @db.Timestamptz(6)
+  createdAt             DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  branch      Branch               @relation(fields: [branchId], references: [id])
+  guest       Guest?               @relation(fields: [guestId], references: [id])
+  service     Service?             @relation(fields: [requestedServiceId], references: [id])
+  attribution AttributionSnapshot? @relation(fields: [attributionId], references: [id])
+  reservation Reservation?         @relation(fields: [convertedReservationId], references: [id])
+
+  @@index([branchId, status, createdAt])
+  @@map("booking_requests")
+}
+
+/// A confirmed booking. Holds a therapist, optionally a room, for a time window.
+model Reservation {
+  id              String            @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  /// Human-readable, read over the phone: "BR-2026-0417". Nobody reads a UUID aloud.
+  ref             String            @unique
+  branchId        String            @map("branch_id") @db.Uuid
+  guestId         String?           @map("guest_id") @db.Uuid
+  employeeId      String            @map("employee_id") @db.Uuid
+  roomId          String?           @map("room_id") @db.Uuid
+  serviceId       String            @map("service_id") @db.Uuid
+
+  startsAt        DateTime          @map("starts_at") @db.Timestamptz(6)
+  durationMinutes Int               @map("duration_minutes")
+  /// MAINTAINED BY TRIGGER. Anything the application writes here is overwritten.
+  endsAt          DateTime          @map("ends_at") @db.Timestamptz(6)
+  /// endsAt + branch turnaround. The therapist and room exclusion constraints use THIS.
+  /// MAINTAINED BY TRIGGER.
+  blockedUntil    DateTime          @map("blocked_until") @db.Timestamptz(6)
+  /// MAINTAINED BY TRIGGER. The trading day, not the calendar day — 01:30 Tue is Monday.
+  businessDay     DateTime          @map("business_day") @db.Date
+
+  status          ReservationStatus @default(SCHEDULED)
+  /// Price snapshot at booking time. A later price change must not rewrite history.
+  baseCostFils    Int               @map("base_cost_fils")
+  sourceChannel   SourceChannel     @map("source_channel")
+  attributionId   String?           @map("attribution_id") @db.Uuid
+
+  actualArrivalAt    DateTime? @map("actual_arrival_at") @db.Timestamptz(6)
+  completedAt        DateTime? @map("completed_at") @db.Timestamptz(6)
+  cancelledAt        DateTime? @map("cancelled_at") @db.Timestamptz(6)
+  cancellationReason String?   @map("cancellation_reason")
+
+  notes           String?
+  createdByUserId String?  @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  branch        Branch                  @relation(fields: [branchId], references: [id])
+  guest         Guest?                  @relation(fields: [guestId], references: [id])
+  employee      Employee                @relation(fields: [employeeId], references: [id])
+  room          Room?                   @relation(fields: [roomId], references: [id])
+  service       Service                 @relation(fields: [serviceId], references: [id])
+  attribution   AttributionSnapshot?    @relation(fields: [attributionId], references: [id])
+  payments      Payment[]
+  tips          Tip[]
+  ledgerEntries TherapistPayoutLedger[]
+  originRequest BookingRequest?
+
+  @@index([branchId, businessDay, status])
+  @@index([employeeId, startsAt])
+  @@index([guestId, startsAt])
+  @@map("reservations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// MONEY
+// All amounts are INTEGER FILS. 1 AED = 100 fils. No floats, ever.
+// payments, tips and therapist_payout_ledger are APPEND-ONLY, enforced by
+// database triggers — Prisma `update`/`delete` on them will throw. Intentional.
+// ─────────────────────────────────────────────────────────────
+
+/// Money that moved through the business till.
+model Payment {
+  id                String        @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId          String        @map("branch_id") @db.Uuid
+  reservationId     String        @map("reservation_id") @db.Uuid
+  kind              PaymentKind
+  method            PaymentMethod
+  /// Negative for REFUND. Signed so SUM() is the net position.
+  amountFils        Int           @map("amount_fils")
+  businessDay       DateTime      @map("business_day") @db.Date
+  collectedByUserId String        @map("collected_by_user_id") @db.Uuid
+  collectedAt       DateTime      @default(now()) @map("collected_at") @db.Timestamptz(6)
+  /// Card terminal slip number.
+  externalRef       String?       @map("external_ref")
+  reversesPaymentId String?       @map("reverses_payment_id") @db.Uuid
+  note              String?
+  idempotencyKey    String?       @unique @map("idempotency_key")
+
+  branch      Branch      @relation(fields: [branchId], references: [id])
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+  tip         Tip?
+
+  @@index([branchId, businessDay, kind])
+  @@index([reservationId])
+  @@map("payments")
+}
+
+/// Every tip, both modes. `paymentId` is set ONLY for COLLECTED_BY_BUSINESS,
+/// because a DIRECT_CASH tip never entered the business.
+model Tip {
+  id               String         @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId         String         @map("branch_id") @db.Uuid
+  reservationId    String         @map("reservation_id") @db.Uuid
+  employeeId       String         @map("employee_id") @db.Uuid
+  type             TipType
+  /// Negative on a reversal row.
+  amountFils       Int            @map("amount_fils")
+  method           PaymentMethod?
+  paymentId        String?        @unique @map("payment_id") @db.Uuid
+  businessDay      DateTime       @map("business_day") @db.Date
+  recordedByUserId String         @map("recorded_by_user_id") @db.Uuid
+  recordedAt       DateTime       @default(now()) @map("recorded_at") @db.Timestamptz(6)
+  reversedByTipId  String?        @unique @map("reversed_by_tip_id") @db.Uuid
+  note             String?
+
+  branch      Branch      @relation(fields: [branchId], references: [id])
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+  employee    Employee    @relation(fields: [employeeId], references: [id])
+  payment     Payment?    @relation(fields: [paymentId], references: [id])
+
+  @@index([employeeId, businessDay])
+  @@index([branchId, businessDay, type])
+  @@map("tips")
+}
+
+/// What the business OWES a therapist. Balance is always SUM(amount_fils) —
+/// there is no stored balance column and there will not be one, because a
+/// denormalised balance drifts and the drift is found during a dispute.
+/// A DIRECT_CASH tip creates NO row here: the business never held that money.
+model TherapistPayoutLedger {
+  id              String          @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId        String          @map("branch_id") @db.Uuid
+  employeeId      String          @map("employee_id") @db.Uuid
+  entryType       LedgerEntryType @map("entry_type")
+  /// Signed: positive accrues, negative pays out.
+  amountFils      Int             @map("amount_fils")
+  businessDay     DateTime        @map("business_day") @db.Date
+  reservationId   String?         @map("reservation_id") @db.Uuid
+  tipId           String?         @map("tip_id") @db.Uuid
+  payoutBatchId   String?         @map("payout_batch_id") @db.Uuid
+  reversesEntryId String?         @unique @map("reverses_entry_id") @db.Uuid
+  createdByUserId String          @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  note            String?
+
+  branch      Branch       @relation(fields: [branchId], references: [id])
+  employee    Employee     @relation(fields: [employeeId], references: [id])
+  reservation Reservation? @relation(fields: [reservationId], references: [id])
+  payoutBatch PayoutBatch? @relation(fields: [payoutBatchId], references: [id])
+
+  @@index([employeeId, createdAt])
+  @@index([branchId, businessDay])
+  @@map("therapist_payout_ledger")
+}
+
+model PayoutBatch {
+  id               String        @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId         String        @map("branch_id") @db.Uuid
+  employeeId       String        @map("employee_id") @db.Uuid
+  periodStart      DateTime      @map("period_start") @db.Date
+  periodEnd        DateTime      @map("period_end") @db.Date
+  totalFils        Int           @map("total_fils")
+  method           PaymentMethod
+  paidAt           DateTime      @map("paid_at") @db.Timestamptz(6)
+  approvedByUserId String        @map("approved_by_user_id") @db.Uuid
+  /// The therapist signed for it. The strongest evidence in a dispute.
+  acknowledgedAt   DateTime?     @map("acknowledged_at") @db.Timestamptz(6)
+  note             String?
+
+  branch   Branch                  @relation(fields: [branchId], references: [id])
+  employee Employee                @relation(fields: [employeeId], references: [id])
+  entries  TherapistPayoutLedger[]
+
+  @@index([employeeId, periodEnd])
+  @@map("payout_batches")
+}
+
+/// Append-only, database-enforced. During a breach this is the only record you
+/// can still trust, which is exactly why it cannot be updated or deleted.
+model FinancialAuditLog {
+  id          String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId    String    @map("branch_id") @db.Uuid
+  actorUserId String?   @map("actor_user_id") @db.Uuid
+  actorRole   UserRole? @map("actor_role")
+  action      String
+  entityType  String    @map("entity_type")
+  entityId    String    @map("entity_id") @db.Uuid
+  beforeState Json?     @map("before_state")
+  afterState  Json?     @map("after_state")
+  /// Denormalised for fast money queries.
+  amountFils  Int?      @map("amount_fils")
+  ipAddress   String?   @map("ip_address")
+  userAgent   String?   @map("user_agent")
+  requestId   String    @map("request_id")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([branchId, createdAt])
+  @@map("financial_audit_log")
+}
+
+// ─────────────────────────────────────────────────────────────
+// ATTRIBUTION — 90-day retention, then identifiers stripped (§5.6, §11.6)
+// ─────────────────────────────────────────────────────────────
+
+model AttributionSnapshot {
+  id          String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  /// First-party, generated client-side. Personal data even without a name attached.
+  visitorId   String    @map("visitor_id") @db.Uuid
+  firstTouch  Json      @map("first_touch")
+  lastTouch   Json      @map("last_touch")
+  /// Capped at 10 by the client; first and last always survive the cap.
+  touches     Json
+  touchCount  Int       @map("touch_count")
+  firstSeenAt DateTime  @map("first_seen_at") @db.Timestamptz(6)
+  lastSeenAt  DateTime  @map("last_seen_at") @db.Timestamptz(6)
+  landingPath String?   @map("landing_path")
+  capturedAt  DateTime  @default(now()) @map("captured_at") @db.Timestamptz(6)
+  /// Set by the retention job at 90 days; PII-bearing fields cleared, channel kept.
+  prunedAt    DateTime? @map("pruned_at") @db.Timestamptz(6)
+
+  reservations   Reservation[]
+  bookingRequest BookingRequest?
+
+  @@index([visitorId])
+  @@index([capturedAt])
+  @@map("attribution_snapshots")
+}
+
+/// Click-out log for the WhatsApp and call buttons, written by /r/* before the 302.
+/// A wa.me link is otherwise a dead end — nothing comes back.
+model OutboundClick {
+  id          String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  visitorId   String?  @map("visitor_id") @db.Uuid
+  target      String
+  context     String?
+  landingPath String?  @map("landing_path")
+  utmSource   String?  @map("utm_source")
+  utmMedium   String?  @map("utm_medium")
+  utmCampaign String?  @map("utm_campaign")
+  gclid       String?
+  fbclid      String?
+  referrer    String?
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([target, createdAt])
+  @@index([visitorId])
+  @@map("outbound_clicks")
+}
+
+/// Reception runs on an iPad over patchy Wi-Fi at 01:00. A request times out, the
+/// receptionist taps Confirm again — without this, the guest is charged twice.
+model IdempotencyRecord {
+  key          String   @id
+  userId       String   @map("user_id") @db.Uuid
+  endpoint     String
+  requestHash  String   @map("request_hash")
+  statusCode   Int      @map("status_code")
+  responseBody Json     @map("response_body")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
+
+  @@index([expiresAt])
+  @@map("idempotency_records")
+}

@@ -1,0 +1,39 @@
+# Local PostgreSQL for development. Matches the Supabase major version.
+# btree_gist and pgcrypto ship with the official image's contrib package.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: berelax-postgres
+    environment:
+      POSTGRES_PASSWORD: dev
+      POSTGRES_USER: postgres
+      POSTGRES_DB: berelax
+      TZ: UTC
+    ports: ['5432:5432']
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Separate database for the e2e suite so a test reset never touches dev data.
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: berelax-postgres-test
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_USER: postgres
+      POSTGRES_DB: berelax_test
+      TZ: UTC
+    ports: ['5433:5432']
+    tmpfs: ['/var/lib/postgresql/data']   # ephemeral: fast, and reset between runs
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

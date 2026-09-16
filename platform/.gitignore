@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+
+# Secrets never enter the repository. .env.example carries names, never values.
+.env
+.env.*
+!.env.example
+
+coverage/
+.nyc_output/
+*.log
+.DS_Store
+.idea/
+.vscode/

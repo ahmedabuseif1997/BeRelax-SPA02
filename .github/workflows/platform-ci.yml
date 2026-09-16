@@ -1,0 +1,108 @@
+name: Platform CI
+
+# Only the backend. The static site at the repo root has no build step and
+# nothing to test.
+on:
+  push:
+    branches: ['**']
+    paths: ['platform/**', 'docs/sql/**', '.github/workflows/platform-ci.yml']
+  pull_request:
+    paths: ['platform/**', 'docs/sql/**', '.github/workflows/platform-ci.yml']
+
+concurrency:
+  group: platform-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_USER: postgres
+          POSTGRES_DB: berelax_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:test@localhost:5432/berelax_test
+      DIRECT_URL: postgresql://postgres:test@localhost:5432/berelax_test
+      JWT_SECRET: ci-only-secret-at-least-32-characters-long-abc
+      ERASURE_SALT: ci-only-erasure-salt-value
+      NODE_ENV: test
+      TZ: UTC
+
+    defaults:
+      run:
+        working-directory: platform
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('platform/pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared contracts
+        run: pnpm --filter @berelax/contracts build
+
+      - name: Generate Prisma client
+        run: pnpm --filter api prisma:generate
+
+      - name: Apply migrations
+        run: pnpm --filter api exec prisma migrate deploy
+
+      # The constraints are the product. If a migration dropped one, this fails
+      # here on the pull request rather than on a Friday night.
+      #
+      # Runs against its OWN scratch database: the script builds a minimal
+      # schema of its own, which would collide with the migrated one.
+      - name: Verify database guarantees
+        env:
+          PGPASSWORD: test
+          SCRATCH: postgresql://postgres:test@localhost:5432/verify_scratch
+        run: |
+          psql "postgresql://postgres:test@localhost:5432/postgres" \
+            -v ON_ERROR_STOP=1 -c 'CREATE DATABASE verify_scratch'
+          psql "$SCRATCH" -v ON_ERROR_STOP=1 \
+            -f ../docs/sql/verify-core-constraints.sql | tee /tmp/verify.out
+          if grep -q '^FAIL' /tmp/verify.out; then
+            echo "::error::A database guarantee regressed - see the FAIL lines above."
+            exit 1
+          fi
+          echo "$(grep -c '^ok' /tmp/verify.out) assertions passed"
+          psql "postgresql://postgres:test@localhost:5432/postgres" -c 'DROP DATABASE verify_scratch'
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+      - name: Unit tests
+        run: pnpm --filter api test
+
+      # The exit criterion for the whole foundation phase: 25 simultaneous
+      # bookings for one slot, exactly one accepted.
+      - name: End-to-end tests
+        run: pnpm --filter api test:e2e
