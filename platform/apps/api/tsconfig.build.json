@@ -1,4 +1,13 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "compilerOptions": {
+    // rootDir is src (not the package root) so the build emits dist/main.js
+    // rather than dist/src/main.js, which is what `start:prod` runs.
+    "rootDir": "./src",
+    // Keep the incremental cache INSIDE dist: deleting dist must invalidate it,
+    // or `nest build` exits 0 having emitted nothing.
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "test", "dist", "prisma", "**/*.spec.ts"]
 }

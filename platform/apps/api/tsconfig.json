@@ -6,8 +6,12 @@
     "rootDir": "./",
     "noUncheckedIndexedAccess": false,
     "strictPropertyInitialization": false,
-    "paths": { "@berelax/contracts": ["../../packages/contracts/src"] }
+    "isolatedModules": true
   },
+  // @berelax/contracts resolves through the pnpm workspace symlink to its built
+  // dist/. No `paths` mapping: pointing TypeScript at the package's SOURCE puts
+  // files outside rootDir and breaks the build. Build contracts first —
+  // `pnpm --filter @berelax/contracts build` — which CI and the README both do.
   "include": ["src/**/*", "test/**/*", "prisma/**/*"],
   "exclude": ["node_modules", "dist"]
 }

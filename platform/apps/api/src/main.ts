@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
@@ -32,9 +32,9 @@ async function bootstrap(): Promise<void> {
     allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id'],
   });
 
-  app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
-  );
+  // No global ValidationPipe: that one needs class-validator, and this stack
+  // validates with zod through ZodValidationPipe at each route, so the DTO and
+  // the runtime check come from a single schema in @berelax/contracts.
 
   // Behind Railway/Render/Cloudflare, so x-forwarded-for is the real client.
   app.getHttpAdapter().getInstance().set('trust proxy', 1);

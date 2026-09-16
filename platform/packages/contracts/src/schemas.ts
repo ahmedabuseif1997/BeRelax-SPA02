@@ -94,10 +94,11 @@ export const checkoutSchema = z.object({
       method: z.nativeEnum(PaymentMethod).optional(),
       externalRef: z.string().max(64).optional(),
     })
-    .refine((t) => (t.type === 'COLLECTED_BY_BUSINESS' ? !!t.method : !t.method), {
-      message:
-        'A tip collected by the business needs a payment method; cash handed straight to the therapist must not have one.',
-    })
+    // Deliberately NOT refined here. Cross-field tip rules are enforced by the
+    // checkout handler so it can return TIP_METHOD_REQUIRED and
+    // TIP_METHOD_NOT_ALLOWED (Appendix B). A refine at this layer would fire
+    // first and flatten both into a generic VALIDATION_FAILED, which tells a
+    // receptionist nothing about what to fix.
     .nullable()
     .optional()
     .default(null),

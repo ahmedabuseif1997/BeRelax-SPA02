@@ -27,6 +27,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
         return;
       }
 
+      // Nest's ThrottlerException stringifies to "ThrottlerException: Too Many
+      // Requests" — an exception class name is not something to show a
+      // receptionist, or to leak to whoever is hammering the login endpoint.
+      if (status === HttpStatus.TOO_MANY_REQUESTS) {
+        res.status(status).json({
+          error: {
+            code: ErrorCode.RATE_LIMITED,
+            message: 'Too many attempts. Wait a moment and try again.',
+            requestId,
+          },
+        });
+        return;
+      }
+
       const message =
         typeof body === 'string'
           ? body
@@ -56,6 +70,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 function statusToCode(status: number): string {
   switch (status) {
+    case HttpStatus.TOO_MANY_REQUESTS: return ErrorCode.RATE_LIMITED;
     case HttpStatus.UNAUTHORIZED: return ErrorCode.INVALID_CREDENTIALS;
     case HttpStatus.FORBIDDEN: return ErrorCode.INSUFFICIENT_ROLE;
     case HttpStatus.NOT_FOUND: return ErrorCode.NOT_FOUND;
