@@ -5,6 +5,18 @@ import { z } from 'zod';
  * JWT secret discovered at boot is a five-second problem; discovered at 01:00
  * on a Friday it is a different kind of problem.
  */
+/**
+ * Treat an empty string as absent.
+ *
+ * .env.example ships optional keys as KEY="" so their names are discoverable,
+ * and a developer filling in only the values they need leaves the rest empty.
+ * zod's .optional() only applies to `undefined` — an empty string is present,
+ * so it would be validated as a real value and fail. That turns "follow the
+ * README" into a boot error on someone's first morning.
+ */
+const blankAsAbsent = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (v === '' ? undefined : v), schema.optional());
+
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -16,7 +28,7 @@ export const envSchema = z.object({
   DIRECT_URL: z.string().url(),
 
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters (use 32 random bytes).'),
-  JWT_SECRET_PREVIOUS: z.string().min(32).optional(),
+  JWT_SECRET_PREVIOUS: blankAsAbsent(z.string().min(32)),
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL_DAYS: z.coerce.number().int().positive().default(7),
   BCRYPT_COST: z.coerce.number().int().min(10).max(15).default(12),
@@ -25,7 +37,7 @@ export const envSchema = z.object({
   DASHBOARD_ORIGIN: z.string().url().default('http://localhost:3001'),
   PUBLIC_SITE_ORIGIN: z.string().url().default('http://localhost:8080'),
   COOKIE_DOMAIN: z.string().default('localhost'),
-  DEFAULT_BRANCH_ID: z.string().uuid().optional(),
+  DEFAULT_BRANCH_ID: blankAsAbsent(z.string().uuid()),
 
   TZ: z.string().default('UTC'),
   WHATSAPP_NUMBER: z.string().default('971525108633'),
@@ -37,7 +49,7 @@ export const envSchema = z.object({
   ERASURE_SALT: z.string().min(16).default('dev-only-erasure-salt-change-me'),
 
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
-  SENTRY_DSN: z.string().optional(),
+  SENTRY_DSN: blankAsAbsent(z.string()),
   IDEMPOTENCY_TTL_HOURS: z.coerce.number().int().positive().default(24),
 });
 
