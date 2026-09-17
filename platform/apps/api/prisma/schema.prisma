@@ -658,6 +658,31 @@ model IdempotencyRecord {
   @@map("idempotency_records")
 }
 
+/// One rate-limit window, shared by every instance of the API. Spec §12.4.
+///
+/// Rate limiting only means anything if all the instances count together. The
+/// in-memory default counts per process, so on a serverless platform "5 login
+/// attempts per 15 minutes" silently becomes 5 × however many instances the
+/// platform happens to be running. This table is the shared counter; the
+/// reasoning for Postgres over Redis is in src/common/pg-throttler.storage.ts.
+model RateLimitCounter {
+  /// ThrottlerGuard's own key: sha256(class-handler-throttler-tracker).
+  key          String
+  /// The named window: 'default', 'publicMinute', 'publicHour'.
+  throttler    String
+  /// Requests counted so far in the CURRENT window.
+  hits         Int
+  /// End of the current window. The first request after it starts a new one.
+  windowEndsAt DateTime  @map("window_ends_at") @db.Timestamptz(6)
+  /// Set when the window's limit is exceeded. Requests are refused, and not
+  /// counted, until it passes. NULL means "not blocked".
+  blockedUntil DateTime? @map("blocked_until") @db.Timestamptz(6)
+
+  @@id([key, throttler])
+  @@index([windowEndsAt])
+  @@map("rate_limit_counters")
+}
+
 // ─────────────────────────────────────────────────────────────
 // THE PARALLEL PILOT — §14 Phase 7
 // ─────────────────────────────────────────────────────────────

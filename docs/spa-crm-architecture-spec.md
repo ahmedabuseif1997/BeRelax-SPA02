@@ -64,7 +64,7 @@
 ```
 ┌──────────────────────────────┐   ┌──────────────────────────────┐
 │  Public site (existing)      │   │  CRM Dashboard               │
-│  index.html on Netlify       │   │  Next.js 14 App Router       │
+│  index.html on Vercel        │   │  Next.js 14 App Router       │
 │  + attribution.js            │   │  TypeScript, Tailwind        │
 │  + /r/wa redirect            │   │  Vercel                      │
 └───────────────┬──────────────┘   └───────────────┬──────────────┘
@@ -74,7 +74,7 @@
                  ┌───────────────────────────────┐
                  │  API — NestJS 10              │
                  │  TypeScript, Prisma 5         │
-                 │  Railway or Render (always-on)│
+                 │  Vercel (serverless, fra1)    │
                  └───────────────┬───────────────┘
                                  │  Prisma (pooled)
                                  ▼
@@ -115,11 +115,46 @@ berelax-platform/
 └── turbo.json
 ```
 
-### 2.3 Why NestJS and not "just Next.js API routes"
+### 2.3 Why NestJS — and what happened when it moved to serverless
 
-The money endpoints need database transactions that span several writes, a request-scoped audit context, and idempotency. Serverless function handlers make all three awkward — cold starts fight connection pooling, and there is no natural place to hang a request-scoped interceptor. A long-lived Nest process gives you a real DI container, a global `AuditInterceptor`, and one Prisma client with a stable pool.
+NestJS, rather than bare Next.js API routes, because the money endpoints need
+database transactions spanning several writes, a request-scoped audit context
+and idempotency. A real DI container, a global interceptor with somewhere to
+hang, and one Prisma client are worth having for that. **That part did not
+change.**
 
-The dashboard stays on Next.js because it is a UI, and it benefits from RSC and Vercel's edge network.
+What did change is where it runs. This section originally went on to argue that
+those three needs also required a *long-lived process*, and that serverless made
+all of them awkward. The owner chose Vercel anyway, so each objection was tested
+rather than restated. Four of the five were not real:
+
+| The original objection | What testing found |
+|---|---|
+| Transactions spanning several writes | **Not real.** `prisma.$transaction(async tx => …)` is round trips to Postgres. The whole e2e suite — the 25-way concurrency test and all seven financial invariants included — passes through the serverless handler's own module graph. A transaction does not care how long its caller lives. |
+| Request-scoped audit context | **Not real.** The interceptor runs per invocation, and one invocation is one request. |
+| Idempotency | **Not real.** `idempotency_records` was always a table, never memory. |
+| Connection pooling | **Already correct, and now load-bearing.** `DATABASE_URL` was always the transaction-mode pooler on :6543 with `connection_limit=1`, `DIRECT_URL` the session connection for migrations. `DIRECT_URL` reaches no runtime query. Each warm instance holds at most one pooler connection. |
+| Rate limiting | **Real, and fixed.** `ThrottlerModule` used in-memory storage, so on N instances the login limit of five-per-fifteen-minutes silently became 5 × N — a brute-force control weakening in proportion to traffic. Replaced with a Postgres-backed store ([§12.4](#124-api-hardening)). |
+
+Two things genuinely got worse and are worth knowing rather than glossing:
+
+- **Cold starts.** Measured locally as a floor — roughly 480 ms to require the
+  graph, boot Nest and answer a real `/health/ready`. On Vercel, expect more.
+  The app logs `booted in N ms` on every cold start precisely so the real number
+  is read off production rather than guessed. The trading pattern helps: the spa
+  runs continuously from 11:00 to 02:00, so instances stay warm through a shift
+  and the genuinely cold request is the first of the evening, not the 01:00 one.
+- **The rate-limit window is now fixed rather than sliding**, because a sliding
+  window means a row per hit instead of a row per caller. A caller can land the
+  limit at the end of one window and again at the start of the next. Against
+  5 × N, it is still a large net tightening.
+
+The lesson worth keeping: the argument in this section was reasonable when it was
+written and mostly wrong when it was checked. The one objection that turned out
+to be real was also the only one nobody had thought to name.
+
+The dashboard stays on Next.js because it is a UI, and it benefits from RSC and
+Vercel's edge network.
 
 ### 2.4 Connection pooling — get this right on day one
 
@@ -2409,7 +2444,7 @@ Swap `last_touch` for `first_touch` to see which channel *discovers* guests rath
 
 BE RELAX operates onshore in Abu Dhabi (Al Zahiyah, not a financial free zone), so the governing instrument is **Federal Decree-Law No. 45 of 2021 on the Protection of Personal Data** — the PDPL. The separate regimes of the DIFC and ADGM do not apply to an onshore establishment.
 
-The spa is the **Controller**. Supabase, Vercel, Railway, Netlify and Cloudflare are **Processors**.
+The spa is the **Controller**. Supabase, Vercel and — if it is wired up — Cloudflare are **Processors**. (Railway and Netlify were processors until the move to Vercel; consolidating onto one platform removed two DPAs and two cross-border transfer records, which is a real compliance simplification and not just a billing one.)
 
 ### 11.2 Lawful basis, per data category
 
@@ -2560,6 +2595,7 @@ Flagging this now costs nothing. Discovering it after two years of intake data s
 | `attribution_snapshots` | **90 days** | Identifiers stripped, channel aggregates kept ([§5.6](#56-retention-job)) |
 | `outbound_clicks` | 90 days | Deleted |
 | `refresh_tokens` (revoked/expired) | 30 days | Deleted |
+| `rate_limit_counters` | 1 hour past the window | Swept by the storage itself. The key is a SHA-256 of `ip:<address>` for anonymous callers — an unsalted hash of an IPv4 is reversed by enumerating four billion inputs, so it is treated as personal data, not as anonymous |
 | Marketing consent records | Until withdrawal + 3 years | Proof that consent existed is itself a legal necessity |
 | Application logs with IPs | 90 days | Deleted |
 
@@ -2570,7 +2606,7 @@ Guest data will sit outside the UAE. PDPL Articles 22–23 permit this where the
 The engineering obligations:
 
 1. **Pick the region deliberately and document it.** Check Supabase's current region list before provisioning; at the time of writing there is no UAE region, so the realistic choices are Frankfurt (`eu-central-1`) or Mumbai/Singapore. Frankfurt has the stronger argument on "adequate protection" because of the GDPR regime around it. **Record the choice and its reasoning in this repository** — that record is the first thing anyone will ask for.
-2. **Sign the Data Processing Addendum** with Supabase, Vercel, Railway, Netlify and Cloudflare, and keep countersigned copies in the business records.
+2. **Sign the Data Processing Addendum** with Supabase, Vercel and Cloudflare-if-used, and keep countersigned copies in the business records.
 3. **Name the transfer in the privacy notice.** The notice must state that data is processed outside the UAE, name the country, and name the safeguard relied upon.
 4. **Maintain a record of processing activities** (Art. 7): what is collected, why, on what basis, who it goes to, where it is stored and how long it is kept. A `docs/data-processing-register.md` in this repository, reviewed each quarter.
 5. **If strict localisation is ever required** — by counsel or by a future regulation — the schema is host-agnostic. It is stock PostgreSQL 15 plus `btree_gist` and `pgcrypto`, both in contrib. It moves to any UAE-hosted Postgres with a `pg_dump` and a connection-string change. Nothing in this specification is Supabase-specific. That portability is deliberate.
@@ -2648,7 +2684,17 @@ app.useGlobalInterceptors(new RequestContextInterceptor(), new IdempotencyInterc
 app.use(json({ limit: '128kb' }));
 ```
 
-Rate limits (`@nestjs/throttler`, Redis-backed):
+Rate limits (`@nestjs/throttler`, **Postgres-backed** — see
+`src/common/pg-throttler.storage.ts`):
+
+Postgres rather than Redis on purpose. This system has exactly one data store,
+and a second one would mean another vendor, another DPA, another row in the
+processing register and another thing that can be down at 01:00 — to buy
+throughput a spa doing thirty to sixty bookings a night does not need. The
+counter is a single `INSERT … ON CONFLICT DO UPDATE`, never read-then-write, and
+every timestamp is the database's `now()` rather than an instance's clock,
+because N instances have N clocks. It fails **closed**: a limiter that opens when
+its store is unreachable is one an attacker removes by attacking the store.
 
 | Scope | Limit |
 |---|---|
@@ -2693,7 +2739,7 @@ ERASURE_SALT=                 # 32 random bytes; NEVER rotate — rotation orpha
 
 # ─ Ops ─
 SENTRY_DSN=
-REDIS_URL=
+# (No REDIS_URL. Rate-limit counters live in Postgres — see §12.4.)
 TURNSTILE_SECRET=
 LOG_LEVEL=info
 ```

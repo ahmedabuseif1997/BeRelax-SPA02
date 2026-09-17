@@ -1,15 +1,19 @@
 import 'reflect-metadata';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
-import { json } from 'express';
 import { Logger as PinoNestLogger } from 'nestjs-pino';
 
 import { AppModule } from './app.module';
+import { configureApp } from './app.setup';
 import { initSentry } from './common/sentry';
 import { PrismaService } from './prisma/prisma.service';
 
+/**
+ * The long-lived process: `node dist/main.js`, used for local development and
+ * by anything that runs the API as a server rather than as a function. The
+ * production deployment goes through serverless.ts; both share configureApp()
+ * so neither can quietly lose a hardening step the other has.
+ */
 async function bootstrap(): Promise<void> {
   // Buffered: nothing is written until useLogger() below hands Nest the pino
   // logger, so the boot banner comes out in the same JSON as every other line
@@ -33,30 +37,7 @@ async function bootstrap(): Promise<void> {
     warn: (message) => logger.warn(message, 'bootstrap'),
   });
 
-  app.setGlobalPrefix('v1', { exclude: ['health', 'health/ready'] });
-
-  app.use(helmet());
-  app.use(cookieParser());
-  // A booking payload is small. A 128 KB cap turns a malicious multi-megabyte
-  // body into a cheap rejection instead of an expensive parse.
-  app.use(json({ limit: '128kb' }));
-
-  app.enableCors({
-    origin: [
-      config.get<string>('DASHBOARD_ORIGIN')!,
-      config.get<string>('PUBLIC_SITE_ORIGIN')!,
-    ].filter(Boolean),
-    credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id'],
-  });
-
-  // No global ValidationPipe: that one needs class-validator, and this stack
-  // validates with zod through ZodValidationPipe at each route, so the DTO and
-  // the runtime check come from a single schema in @berelax/contracts.
-
-  // Behind Railway/Render/Cloudflare, so x-forwarded-for is the real client.
-  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  configureApp(app);
 
   await app.get(PrismaService).enableShutdownHooks(app);
   app.enableShutdownHooks();

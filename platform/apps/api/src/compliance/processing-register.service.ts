@@ -17,6 +17,7 @@ export const LawfulBasis = {
   LEGAL_OBLIGATION: 'Compliance with a legal obligation (UAE tax and accounting law)',
   CONSENT: 'Consent — separate, opt-in and withdrawable',
   EMPLOYMENT: 'Employment contract and legal obligation',
+  LEGITIMATE_INTEREST: 'Legitimate interest in operating and securing the service',
 } as const;
 export type LawfulBasis = (typeof LawfulBasis)[keyof typeof LawfulBasis];
 
@@ -169,6 +170,22 @@ const ACTIVITIES: readonly ActivityDeclaration[] = [
     notes:
       'pickAuditFields strips guest identity before anything is written: the log records what changed about the money, not a second copy of the guest database. §9.6. ' +
       'nightly_reconciliations belongs here for the same reason: it names STAFF — who signed a trading night off and who was taking cash at the desk when a variance appeared (§15.4) — and no guest. It is append-only and database-enforced.',
+  },
+  {
+    id: 'abuse-prevention',
+    activity: 'Rate limiting and brute-force protection',
+    purpose:
+      'Refusing a caller who is working through passwords, or flooding the public enquiry form, before they get anywhere.',
+    lawfulBasis: LawfulBasis.LEGITIMATE_INTEREST,
+    dataSubjects: ['Website visitors', 'Prospective guests', 'Employees'],
+    tables: { rate_limit_counters: ['key'] },
+    retention: () =>
+      'The length of the rate-limit window — a minute, an hour, fifteen minutes — plus up to an hour of grace before the sweep removes the row. Nothing here survives the night. §12.4.',
+    specialCategory: false,
+    notes:
+      '`key` is a SHA-256 of the route and the caller: `user:<uuid>` for a signed-in user, `ip:<address>` for everyone else. It is declared as personal data rather than waved through as "just a hash" — an unsalted SHA-256 of an IPv4 address is reversed by enumerating four billion inputs, which is minutes of work. Pseudonymised, not anonymous. ' +
+      'The table holds a count and two timestamps and nothing else: no name, no phone number, no request body, no route in the clear. ' +
+      'It exists because the counter has to be SHARED. Counting in the API process was adequate on one long-lived container and is not on a platform that runs several instances — the login limit would be multiplied by a number nobody controls. See src/common/pg-throttler.storage.ts.',
   },
 ] as const;
 
@@ -461,8 +478,11 @@ export class ProcessingRegisterService {
 
 const PROCESSORS = [
   { name: 'Supabase', role: 'Managed PostgreSQL, backups and storage', location: 'Outside the UAE — region recorded in the repository. §11.7' },
-  { name: 'Vercel', role: 'Dashboard hosting', location: 'Outside the UAE' },
-  { name: 'Railway', role: 'API hosting', location: 'Outside the UAE' },
+  // One entry, not two: the API and the dashboard are separate Vercel projects
+  // but one processor under one contract. This list is what
+  // GET /v1/compliance/processing-register returns, so it states who actually
+  // holds the data today — not who held it when the spec was written.
+  { name: 'Vercel', role: 'API and dashboard hosting', location: 'Outside the UAE' },
   { name: 'Netlify', role: 'Public site hosting', location: 'Outside the UAE' },
   { name: 'Cloudflare', role: 'DNS, CDN and bot protection', location: 'Global edge' },
 ] as const;

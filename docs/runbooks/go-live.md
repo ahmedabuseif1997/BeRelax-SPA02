@@ -21,12 +21,12 @@ None of these is code. All of them stop go-live.
 |---|---|---|---|
 | 0.1 | **`berelax.ae` registered and under our control** | The business / registrar | `api.berelax.ae` must be a *subdomain of the public site*. §10.5: the attribution cookie mirror is a first-party cookie; on any other domain Safari blocks it outright and most iOS attribution disappears silently. Nothing about this is fixable in code later. |
 | 0.2 | **Counsel review of `docs/compliance/`** | Legal counsel | Ten open questions, led by the status of the PDPL Executive Regulations, the cross-border safeguard, and whether Federal Law 2/2019 reaches a non-clinical spa. None is answered in the documents because none should be guessed. |
-| 0.3 | **Data Processing Addenda signed** — Supabase, Vercel, Railway, Netlify, Cloudflare | The business | §11.7(2). Countersigned copies into the business records. Guest data is leaving the UAE the moment the first booking is taken. |
+| 0.3 | **Data Processing Addenda signed** — **Supabase, Vercel**, and **Cloudflare if it is wired up** | The business | §11.7(2). Countersigned copies into the business records. Guest data is leaving the UAE the moment the first booking is taken. **This list is two shorter than it was.** The API moved off Railway and the public site is moving off Netlify, so both drop off — **two fewer DPAs to chase and two fewer cross-border transfer records to write and defend** (§11.7, and the register's §3 and §4). Vercel now hosts all three projects under one DPA. The Netlify DPA stays needed only until the cutover in [`netlify-to-vercel.md`](./netlify-to-vercel.md) §8.4 closes it out. |
 | 0.4 | **The 63 `[TO BE COMPLETED]` blanks filled** in the privacy notice and the processing register | The business + counsel | DPO, breach contact, hosting regions, DPA statuses. |
 | 0.5 | **A named breach contact — a person with a mobile, not a shared inbox** | The business | §11.8. `docs/compliance/runbooks/data-breach.md` needs the name before launch. |
 | 0.6 | **`privacy.html` published on the public site** | The business (content) + counsel | The consent banner links to it. A consent gate pointing at a 404 is not consent. |
 | 0.7 | **One privacy-notice version string agreed**, used in three places | The business | The notice, `BERELAX_PRIVACY_VERSION` in the page, and the `policyVersion` reception records. A consent filed against a version naming no document proves nothing. |
-| 0.8 | **Supabase / Railway / Vercel / Sentry / Cloudflare accounts on paid plans**, owned by the business | The business | PITR is a paid add-on (§11.9 commits to 30 days' retention). Railway pre-deploy commands and Render pre-deploy both need a paid instance. An account in an engineer's personal name is a single point of failure with a leaving date. |
+| 0.8 | **Supabase / Vercel / Sentry / Cloudflare accounts on paid plans**, owned by the business | The business | PITR is a paid add-on (§11.9 commits to 30 days' retention). Vercel's free tier is for personal, non-commercial use, and the things this deployment depends on — function duration, Fluid Compute, how long runtime logs are kept — are plan-dependent. `[TO BE COMPLETED: the Vercel plan, confirmed against its current terms and its function and log-retention limits]`. An account in an engineer's personal name is a single point of failure with a leaving date. |
 | 0.9 | **Region chosen and the reasoning written down** | Engineering decides, the business signs it off | §11.7(1). There is no UAE Supabase region; Frankfurt (`eu-central-1`) has the stronger "adequate protection" argument. **Record the choice and why in `docs/compliance/data-processing-register.md`** — that record is the first thing anyone will ask for. Put the API in the same jurisdiction, so the privacy notice names one country and not two. |
 | 0.10 | **The owner's phone number for alerts** | The business | §12.3 alerts go to a person, at night. |
 | 0.11 | **Reception trained, and the two-week parallel run scheduled** | The business | Spec Phase 7, and `docs/runbooks/parallel-pilot.md`. Switch over only when the paper and the system agree for five consecutive nights. Do not skip this. |
@@ -46,21 +46,91 @@ None of these is code. All of them stop go-live.
       - `DIRECT_URL` — session connection, port **5432**
       Using the wrong one costs an afternoon. Using the pooler for migrations
       fails outright: PgBouncer in transaction mode has no session advisory locks.
-- [ ] **1.5 Railway project and service** created.
-      - Root Directory: `platform`
-      - Config-as-code path: `apps/api/railway.json`
-      - Region: the same jurisdiction as 0.9
-      - **GitHub auto-deploy OFF.** Two deploy paths means a push can release
-        code before the database has been migrated, which is the one ordering
-        that actually breaks things.
+
+**Three Vercel projects, one account.** The API, the dashboard and the public
+site are separate projects with separate root directories and separate domains.
+1.5 and 1.6 are two of them; the public site is [`netlify-to-vercel.md`](./netlify-to-vercel.md)
+§1 and is not part of this checklist.
+
+- [ ] **1.5 Vercel project for the API** created.
+      - Root Directory: **`platform/apps/api`** — where `apps/api/vercel.json`
+        lives. Not `platform`.
+      - **"Include files outside the root directory": ON.** The build reaches up
+        the workspace to build `@berelax/contracts` first. Without this the
+        build fails, and it fails at the install step where it is not obvious
+        why.
+      - **Framework Preset: `Other` / none.** `vercel.json` sets
+        `"framework": null`.
+      - **Build and Output settings: leave every field empty.** `vercel.json`
+        already carries `buildCommand`, `installCommand` and `outputDirectory`,
+        and **a value typed into the dashboard overrides the file** — which is
+        how the two drift apart and how the next person reads `vercel.json`,
+        believes it, and is wrong.
+      - **Fluid Compute: ON.** Of everything on this page it is the single
+        setting that most affects cold starts: one instance serves several
+        invocations at once instead of one apiece, so far fewer requests have to
+        wait while Nest builds its module graph and Prisma loads its query
+        engine. That wait is a receptionist watching a spinner with a guest in
+        front of her (§12.1), and `memory: 1024` in `vercel.json` was already
+        bought for the same reason.
+        It is a project-level setting — look for it in the project's **Settings**
+        under the functions/compute section, and confirm the exact location on
+        the screen rather than from this line.
+      - **Region: the same jurisdiction as 0.9**, and the same region as the
+        Supabase project. `vercel.json` pins `regions: ["fra1"]`
+        (`eu-central-1`); a function in one continent and a database in another
+        pays every round trip twice, and a booking is several of them.
+      - **No Git auto-deploy.** `apps/api/vercel.json` already sets
+        `git.deploymentEnabled: false`, and that is what stops a push releasing
+        code ahead of the migration — the one ordering that actually breaks
+        things. The project does not need a Git connection at all for the
+        deploy path in `.github/workflows/platform-deploy.yml`, which builds on
+        the runner and uploads with `vercel deploy --prebuilt`. **If a
+        deployment ever appears that the workflow did not create, that setting
+        has been overridden in the project — fix it before deploying again.**
 - [ ] **1.6 Vercel project** created for the dashboard.
       - Root Directory: `platform/apps/dashboard`
       - "Include files outside the root directory": **ON** (the build reaches up
         the workspace to build `@berelax/contracts` first)
       - `vercel.json` in that directory carries the rest.
 - [ ] **1.7 Sentry projects** for the API and the dashboard.
-- [ ] **1.8 Redis** provisioned for the rate limiter (`REDIS_URL`, §12.4).
+- [ ] **1.8 No Redis, and nothing to provision for the rate limiter.** §12.4's
+      limits are counted in **PostgreSQL**, in `rate_limit_counters`, shared by
+      every function instance (`apps/api/src/common/pg-throttler.storage.ts`).
+      There is no `REDIS_URL`. Do not add one: a second data store is a second
+      processor, a second DPA and another row in the register, for a spa doing
+      tens of bookings a night.
 - [ ] **1.9 Cloudflare Turnstile** site created (`TURNSTILE_SECRET`).
+- [ ] **1.10 Run `vercel build` locally, once, before the first real deploy.**
+      Three things about `apps/api/vercel.json` could not be checked without a
+      Vercel account, and this is the cheapest way to settle all three before
+      03:00 rather than during it:
+
+      1. that the monorepo install and build actually run from
+         `platform/apps/api` with "Include files outside the root directory" on
+         (1.5),
+      2. that `functions["api/index.ts"].runtime: "nodejs22.x"` is accepted as
+         written,
+      3. that `includeFiles: "dist/**"` really ships `dist/` inside the
+         function — `api/index.ts` does `require('../dist/serverless.js')`, and
+         if that file is not in the bundle the deploy goes green and the first
+         request fails.
+
+      ```bash
+      cd platform/apps/api
+      vercel link                                  # pick the API project from 1.5
+      vercel pull --yes --environment=production
+      vercel build --prod                          # builds here; deploys nothing
+      ```
+
+      Then look at what it produced:
+
+      ```bash
+      find .vercel/output -type d -name '*.func'   # the function that would deploy
+      find .vercel/output -name 'serverless.js'    # dist/ must be inside it
+      ```
+
+      The second command returning nothing is failure 3 above, found for free.
 
 ## 2. T-1 week — secrets
 
@@ -78,23 +148,40 @@ names and no values, and it stays that way.
       of a rotation window.
 - [ ] **2.4 Stored in all the places they are needed**, and nowhere else:
 
-| Secret | Railway (API) | GitHub env `production` | Vercel |
+| Secret | Vercel — **API** project | GitHub env `production` | Vercel — **dashboard** project |
 |---|---|---|---|
 | `DATABASE_URL` | yes | `PRODUCTION_DATABASE_URL` | no |
 | `DIRECT_URL` | yes | `PRODUCTION_DIRECT_URL` | no |
 | `JWT_SECRET` | yes | no | no |
 | `ERASURE_SALT` | yes | no | no |
 | `SENTRY_DSN` | yes | no | no |
-| `REDIS_URL` | yes | no | no |
 | `TURNSTILE_SECRET` | yes | no | no |
-| `RAILWAY_TOKEN` | — | yes | no |
-| `VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` | no | yes | — |
+| `VERCEL_TOKEN` / `VERCEL_ORG_ID` | no | yes | no |
+| `VERCEL_PROJECT_ID_API` | no | yes | no |
+| `VERCEL_PROJECT_ID` | no | yes | no |
 
 The API's own secrets do **not** belong in GitHub. CI never needs to mint a
 token or hash a password; it needs to run one migration.
 
-- [ ] **2.5 Non-secret variables** set in Railway (§12.5):
-      `NODE_ENV=production`, `PORT=3000`, `TZ=UTC`,
+Everything in the API column goes in at **Vercel → the API project → Settings →
+Environment Variables**, **Production** scope.
+
+> **Two project ids, and do not rename the old one.**
+> `VERCEL_PROJECT_ID_API` is the **API** project. `VERCEL_PROJECT_ID` — the
+> unqualified name — is still the **dashboard's**, as it was before the API
+> moved, and `.github/workflows/platform-deploy.yml` reads it that way. Renaming
+> it for tidiness breaks the dashboard release the first time the workflow runs,
+> at 03:00. If it is ever renamed, rename it in both places in one commit.
+
+> **A saved variable is not a live variable.** On Vercel an environment variable
+> belongs to a deployment: changing one does nothing to the deployment currently
+> serving traffic until a **new production deployment** replaces it. This is
+> true at go-live, it is true at 5.3 below, and it is the step people miss
+> during a breach — see `docs/compliance/runbooks/data-breach.md` 1.2.
+
+- [ ] **2.5 Non-secret variables** set on the **Vercel API project**, Production
+      scope (§12.5):
+      `NODE_ENV=production`, `TZ=UTC`,
       `API_BASE_URL=https://api.berelax.ae`,
       `DASHBOARD_ORIGIN=https://crm.berelax.ae`,
       `PUBLIC_SITE_ORIGIN=https://berelax.ae`,
@@ -104,10 +191,13 @@ token or hash a password; it needs to run one migration.
       `FINANCIAL_RETENTION_YEARS=5`, `BCRYPT_COST=12`, `LOG_LEVEL=info`.
       `DEFAULT_BRANCH_ID` is filled in at step 5.3, once the branch row exists.
       **`TZ` stays `UTC`.** The database stores UTC and `business_day()` does the
-      Dubai conversion; a container-level `Asia/Dubai` makes every log line
+      Dubai conversion; a runtime set to `Asia/Dubai` makes every log line
       disagree with every `timestamptz` (§3.2).
-- [ ] **2.6 GitHub environment variables**: `RAILWAY_SERVICE`,
-      `RAILWAY_ENVIRONMENT`, `API_BASE_URL`.
+      **`PORT` is gone from this list.** There is no port to bind: `serverless.ts`
+      calls `app.init()` and the platform hands the request to Express directly.
+      It still defaults to 3000 for `main.ts`, which is the local process.
+- [ ] **2.6 GitHub environment variables**: `API_BASE_URL`. That is the whole
+      list — it is what the deploy workflow polls `/health/ready` on.
 - [ ] **2.7 GitHub environment protection rule**: `production` requires a
       **reviewer**. GitHub cannot express "only 03:00–09:00 Dubai", and a
       cron-gated `if:` would only refuse a deploy someone had already decided to
@@ -132,12 +222,20 @@ backup is a hope. Go-live does not proceed without a row in that log.
 DNS propagates on its own schedule, so it goes in the day before, not on the
 morning.
 
-- [ ] **4.1 `berelax.ae`** (apex) — unchanged, Netlify, the existing public site.
-- [ ] **4.2 `api.berelax.ae`** — CNAME to the Railway-provided host. Add the
-      custom domain in Railway first so the certificate is issued.
+- [ ] **4.1 `berelax.ae`** (apex) — the public site. It is moving from Netlify to
+      Vercel under its own ordered runbook, [`netlify-to-vercel.md`](./netlify-to-vercel.md),
+      which owns the TTL, the cutover and the rollback. **Do not touch the apex
+      from here.** Whether it is on Netlify or on Vercel on the night, nothing in
+      this section changes: `api.` and `crm.` are separate records.
+- [ ] **4.2 `api.berelax.ae`** — add the custom domain on the **Vercel API
+      project** first (**Settings → Domains**), so the certificate is issued,
+      then create the DNS record **exactly as that screen tells you to**.
+      Copy it from the screen, not from this runbook, not from a blog post and
+      not from memory: the record type and value are Vercel's to specify and
+      they change. `[TO BE COMPLETED: the record Vercel shows — type, name, value]`
 
-      > **It must be `api.berelax.ae`.** Not `berelax-api.up.railway.app`, not
-      > `api.berelax.io`, not an apex somewhere else. The attribution cookie
+      > **It must be `api.berelax.ae`.** Not the project's `*.vercel.app` URL,
+      > not `api.berelax.io`, not an apex somewhere else. The attribution cookie
       > mirror (§10.5) writes a first-party cookie on `.berelax.ae`; from any
       > other registrable domain it is third-party and Safari drops it without
       > a word. Nothing errors, nothing logs, and the iOS half of the channel
@@ -167,20 +265,29 @@ morning.
       window.
 - [ ] The workflow, in order: gate on CI -> `prisma migrate deploy` ->
       assert the three exclusion constraints and five append-only triggers
-      survived -> release the image -> poll `/health/ready` -> release the
-      dashboard.
+      survived -> build and release the API -> poll `/health/ready` -> release
+      the dashboard.
 
-      **Migrations are a release step and run exactly once.** They do not run on
-      container boot. `apps/api/railway.json` sets `deploy.preDeployCommand`, and
-      Railway runs a pre-deploy command once per deployment regardless of how
-      many replicas start; the workflow runs the same migration itself before
-      the image is released, for deploys that go through CI. What the start
-      command does is start the server. If migrations ran on boot, two replicas
-      — three during a rollback — would race `migrate deploy` against one
-      database; the advisory lock makes the losers wait rather than corrupt,
-      until one times out mid-migration and leaves `_prisma_migrations` with a
-      `finished_at` of NULL. Every subsequent deploy then refuses until a human
-      resolves it by hand. At 03:20. Seven hours before opening.
+      **Migrations are a release step and run exactly once, and this workflow is
+      now the only place they run.** They do not run on a function's cold start.
+      There used to be a second guard — `deploy.preDeployCommand` in
+      `apps/api/railway.json`, which ran once per deployment whatever the replica
+      count. **Vercel has no equivalent: there is no release phase and no
+      pre-deploy hook, only a cold start.** So the belt is gone and this workflow
+      is the braces.
+
+      Two things keep it the only path, and both must stay true:
+      `git.deploymentEnabled: false` in `apps/api/vercel.json`, and nothing in
+      the API running a migration at runtime.
+
+      If migrations ran on boot it would now be worse than it was. On a container
+      it was two replicas — three during a rollback — racing `migrate deploy`
+      against one database. Here it is an **unbounded** number of function
+      instances doing it under a 30-second function timeout. Prisma takes a
+      Postgres advisory lock, so the losers block rather than corrupt — until one
+      is killed by the timeout mid-migration and leaves `_prisma_migrations` with
+      a `finished_at` of NULL and `logs` set. Every subsequent deploy then refuses
+      until a human resolves it by hand. At 03:20. Seven hours before opening.
 
 - [ ] Confirm by hand:
       ```bash
@@ -218,7 +325,11 @@ by hand, once, and then never again.
               '+971525108633', '971525108633')
       RETURNING id;
       ```
-- [ ] **Put that id in `DEFAULT_BRANCH_ID`** in Railway. Restart the service.
+- [ ] **Put that id in `DEFAULT_BRANCH_ID`** — Vercel → the API project →
+      **Settings → Environment Variables**, Production scope — **and then
+      redeploy.** There is no service to restart: the deployment already running
+      keeps the old (empty) value until a new deployment replaces it. See the
+      note under 2.4.
 - [ ] **Generate a temporary password and its bcrypt hash off-machine**, at the
       cost the API uses (`BCRYPT_COST=12`):
       ```bash
@@ -343,17 +454,18 @@ Only then does paper stop.
 
 ## 7. When a deploy goes wrong
 
-**The migration has already been applied by the time the image is released.**
-That ordering is deliberate — it is the only one that works when a replica can
-start at any moment — and it means the two halves roll back differently.
+**The migration has already been applied by the time the new code is released.**
+That ordering is deliberate — it is the only one that works when a new function
+instance can cold-start at any moment — and it means the two halves roll back
+differently.
 
 | Symptom | Do | Do not |
 |---|---|---|
-| `/health/ready` never goes green | Roll the **image** back in Railway to the previous deployment. The database stays where it is; these migrations are additive. | Roll the migration back. There is no `migrate down`, and hand-written DDL to undo a migration at 04:00 is how a schema becomes unrecoverable. |
+| `/health/ready` never goes green | **Promote the previous deployment**: Vercel → the API project → **Deployments** → the last known-good one → **⋯ → Promote to Production**. The database stays where it is; these migrations are additive. | Roll the migration back. There is no `migrate down`, and hand-written DDL to undo a migration at 04:00 is how a schema becomes unrecoverable. |
 | Migration failed half way | Read `_prisma_migrations`. A row with `finished_at` NULL and `logs` set is a partially-applied migration and needs a human decision, recorded. | `prisma migrate resolve --applied` to make the error go away. That marks it done when it is not. |
 | Database unreachable, API otherwise healthy | Check the Supabase status page and the connection strings. `DATABASE_URL` on 6543, `DIRECT_URL` on 5432. | Point `DATABASE_URL` at 5432 "just to get it up". You will exhaust the direct connection limit and take the database down properly. |
 | Data is wrong, not missing | `docs/runbooks/backup-restore.md` §4. | Fix it with `UPDATE`. `payments`, `tips` and the ledger refuse it, and that refusal is the feature. |
-| It is now 09:30 and reception is arriving | Stop. Roll back to the last known-good image. Finish tonight. | Push one more fix. |
+| It is now 09:30 and reception is arriving | Stop. Promote the last known-good deployment. Finish tonight. | Push one more fix. |
 
 If personal data may have been exposed rather than merely unavailable, this is
 also a §11.8 breach: `docs/compliance/runbooks/data-breach.md`, and the UAE Data
@@ -364,9 +476,16 @@ Office clock has already started.
 ## 8. Related
 
 - `.github/workflows/platform-deploy.yml` — the deploy, and the secret list
-- `platform/apps/api/railway.json` — start command, health check, release step
-- `platform/apps/api/Dockerfile` — the image
+- `platform/apps/api/vercel.json` — the API's build, region, function limits and
+  `git.deploymentEnabled: false`. It is strict JSON and cannot hold comments, so
+  its reasoning lives in the file below.
+- `platform/apps/api/api/index.ts` — the file Vercel invokes, and the page of
+  reasoning behind `vercel.json` and the compiled-output shim
+- `platform/apps/api/src/serverless.ts` — one Nest application per instance, and
+  why the cached promise is the whole trick
 - `platform/apps/dashboard/vercel.json` — the dashboard build
+- `docs/runbooks/netlify-to-vercel.md` — the public site's move, which owns the
+  apex and `netlify.toml`
 - `docs/runbooks/backup-restore.md` — the rehearsal and the real thing
 - `docs/runbooks/alerts.md` — what to do when one of §5.5 fires
 - `docs/runbooks/parallel-pilot.md` — the two weeks beside the paper

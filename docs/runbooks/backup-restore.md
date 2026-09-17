@@ -216,7 +216,9 @@ connection strings**. Nothing rotates itself. In order:
 
 1. **Rotate `DATABASE_URL` and `DIRECT_URL`** — both of them, in all three
    places they live:
-   - Railway -> the API service -> Variables
+   - Vercel -> the API project -> Settings -> Environment Variables (Production)
+     — **and then redeploy.** A saved variable does nothing to the deployment
+     that is already running; a new production deployment is what carries it.
    - GitHub -> Settings -> Environments -> production -> `PRODUCTION_DATABASE_URL`, `PRODUCTION_DIRECT_URL`
    - Any operator's local `.env` used for migrations
    Remember the shapes differ: `DATABASE_URL` is the transaction pooler on
@@ -248,8 +250,10 @@ connection strings**. Nothing rotates itself. In order:
    A restored copy can legitimately be *behind* the deployed code.
 6. **Run `scripts/backup-verify.sh` against the restored project** before it
    takes a single booking.
-7. **Restart the API** so Prisma builds a fresh pool. Old connections point at
-   a database that no longer exists.
+7. **Redeploy the API** so every instance builds a fresh Prisma pool. There is
+   no "restart the service" on Vercel: a new production deployment is what
+   replaces the running instances, and the warm ones still holding connections
+   to a database that no longer exists go with them.
 8. **Delete the old project only after** the new one has taken real traffic for
    a full trading day — and after a `pg_dump` of it is stored somewhere else.
 
@@ -271,10 +275,39 @@ They fail in different ways.
 
 Ordered. Do not skip step 1.
 
-1. **Stop writes.** Scale the API to zero replicas in Railway, or remove the
-   `api.berelax.ae` DNS record. A half-restored database taking bookings is how
-   one incident becomes two. Tell reception to go back to paper *now*, and write
-   down the time you told them.
+1. **Stop writes.** A half-restored database taking bookings is how one incident
+   becomes two. Tell reception to go back to paper *now*, and write down the time
+   you told them.
+
+   **There is no "scale to zero" any more** — the API is serverless and has no
+   replica count. Two things genuinely stop writes, and they are not
+   interchangeable:
+
+   - **Take the deployment out of service.** Vercel -> the API project ->
+     **Settings -> Domains** -> remove `api.berelax.ae`. The hostname stops
+     being served by the project within seconds, **DNS is untouched**, and
+     putting it back is one action in the same screen with no TTL to wait out.
+     Vercel may also offer a project-level pause in the project's advanced
+     settings — if your plan has it, that is the cleaner "the whole project
+     stops"; confirm it exists *before* you need it at 04:00, and if you cannot
+     find it, remove the domain. **This is the right one when the API is the
+     only writer and you intend to put it back within the hour** — which is
+     every ordinary restore.
+   - **Rotate the Supabase database password.** Supabase -> Project Settings ->
+     Database -> Reset database password. This is the only one that stops
+     **every** writer, including the ones you are not thinking about: a
+     forgotten script, an operator's open `psql`, a warm function instance
+     holding a pooled connection. **Use it when you cannot account for every
+     writer, or when the restore is happening because credentials were
+     compromised** (then it is `docs/compliance/runbooks/data-breach.md` 1.3 as
+     well, and its clock has started). The cost is that it invalidates
+     `DATABASE_URL` and `DIRECT_URL` everywhere at once — your own shell
+     included — so rebuild your connection string before step 2. You were going
+     to rotate both in §3.3 anyway.
+
+   Removing the `api.berelax.ae` **DNS record** is still possible and is the
+   blunt version: slower to take effect and slower to undo, because you then
+   wait out the TTL twice. Prefer removing the domain in the project.
 2. **Decide the target time.** Read `financial_audit_log` — it is append-only
    and database-enforced, so during an incident it is the only record you can
    still trust (§11.8). Find the last known-good moment.
@@ -283,7 +316,10 @@ Ordered. Do not skip step 1.
 4. **Verify before connecting anything**: `scripts/backup-verify.sh --source <new DIRECT_URL>`.
    If it does not pass, you do not have a database yet.
 5. **Rotate the connection strings** — §3.3 above, in order.
-6. **Re-point and restart** the API. Watch `/health/ready`.
+6. **Re-point and redeploy** the API, and put `api.berelax.ae` back on the
+   project if you removed it in step 1. Watch `/health/ready` — it is a
+   `SELECT 1` against the pool, so a 200 is the proof that the new connection
+   strings reached the running deployment.
 7. **Reconcile the gap by hand.** Everything between the target time and the
    moment you stopped writes exists only on paper. Reception re-enters it as
    normal bookings and normal check-ins, with the real `collected_at` times.

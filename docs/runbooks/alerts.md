@@ -32,13 +32,23 @@ below says whether it can wait until closing.
 |---|---|
 | Log search | `[TO BE COMPLETED: the log platform's URL]` |
 | Supabase project | `[TO BE COMPLETED]` |
-| API host (Railway) | `[TO BE COMPLETED]` |
+| API project (Vercel) | `[TO BE COMPLETED]` |
+| Dashboard project (Vercel) | `[TO BE COMPLETED]` |
 
 ---
 
 ## How to read the log filters
 
 Every line the API emits is one JSON object (§12.3, `src/common/logger.ts`).
+
+**Where those lines are.** The API runs as a Vercel serverless function. There is
+no machine to log into and no file to `tail`; the lines are the function's
+runtime logs, and unless a log drain is configured — the log-search URL above —
+that is the only copy. Serverless runtime log retention is short and depends on
+the plan, so **export anything that matters before you start reading it**, not
+after. `[TO BE COMPLETED: the API project's runtime-log retention, and whether a
+drain is configured]`
+
 The fields the filters below use:
 
 | Field | What it is |
@@ -97,6 +107,32 @@ carrying the stack:
 level:error AND (msg:"unhandled exception" OR msg:"unhandled database error")
 ```
 
+**What this filter cannot see, now the API is serverless.** Numerator and
+denominator are both autologged request lines, and those only exist once the Nest
+application has booted. A function that **cannot boot** — `dist/serverless.js`
+missing from the bundle, a dependency-injection failure, `validateEnv` refusing a
+bad variable — returns a platform 500 *before any of this code runs*. Both counts
+go to zero, the ratio is undefined, and **this alert stays silent through a total
+outage.** On a single long-lived container that case showed up as a crash-looping
+process; here it shows up as nothing at all.
+
+So pair it with two signals that do not depend on the application logging
+anything:
+
+- **The platform's own invocation error rate** — Vercel → the API project → the
+  runtime/observability view, which counts failed invocations whether or not the
+  function produced a log line. Confirm what that view is called on your plan
+  rather than trusting this line.
+  `[TO BE COMPLETED: the exact alert or drain query, once the project exists]`
+- **Alert 2's `/health/ready` probe.** It is an external HTTP check, so it fires
+  on a deployment that cannot boot exactly as it fires on a database that is
+  down.
+
+A successful boot logs one line per cold start —
+`msg:"BE RELAX API booted in"`, context `bootstrap`. **A window where the
+platform is counting invocations and there are no `request completed` lines at
+all is the boot path failing, not a route.**
+
 **Why it matters.** A 5xx during trading is a receptionist with a guest at the
 desk and a button that does nothing. §12.2 is explicit that the failure mode has
 to be *visibly* failing rather than quietly wrong — a write that 500s has not
@@ -109,7 +145,7 @@ system have diverged for the rest of the night.
 2. If they are spread, go to **alert 2** — it is usually that.
 3. Take a `requestId` from a failing line and run the `financial_audit_log` query above. **If an audit row exists, the transaction committed** and the 500 happened afterwards — the money is recorded and the receptionist is about to take it a second time. Ring the manager on duty before anything else.
 4. If no audit rows exist for any failing request, nothing committed; the damage is confined to the requests that failed.
-5. Roll back the API to the previous deploy. §12.2 bans deploys during trading, so a 5xx rate that started during trading is almost never a deploy — but a rollback is cheap and reversible.
+5. Roll back: Vercel → the API project → **Deployments** → the last known-good one → **⋯ → Promote to Production**. §12.2 bans deploys during trading, so a 5xx rate that started during trading is almost never a deploy — but a promotion takes seconds and is reversible by promoting the other one back.
 6. Tell the manager on duty to fall back to paper until it clears, and to keep the slips: the nightly reconciliation (`nightly_reconciliations`) is how the night gets re-entered.
 
 **Can it wait?** No.
@@ -120,7 +156,7 @@ system have diverged for the rest of the night.
 
 **Condition.** Any readiness failure, or any log line reporting that the pool could not hand out a connection.
 
-**Detect it.** The readiness endpoint is the primary signal — `/health/ready` runs `SELECT 1` against the pool (§12.3) and returns 503 with `DATABASE_UNAVAILABLE` when it cannot. Alert on **two consecutive** failed probes, so that one restarting container does not page.
+**Detect it.** The readiness endpoint is the primary signal — `/health/ready` runs `SELECT 1` against the pool (§12.3) and returns 503 with `DATABASE_UNAVAILABLE` when it cannot. Alert on **two consecutive** failed probes: not because a container is restarting — there are none — but because a single probe can land on a **cold start** that lost a race for a pooler connection, and one of those is not an outage. It must be an **external** probe against `https://api.berelax.ae/health/ready`, not anything running inside the API, because this alert also has to fire when the function cannot boot at all (see alert 1).
 
 In the logs — connection failures surface as Prisma initialisation and pool errors, not as ordinary query errors:
 
@@ -140,6 +176,16 @@ level:error AND msg:"unhandled database error" AND (err.name:"PrismaClientInitia
 a connection out of its own pool. §2.4 pins `connection_limit=1` against the
 transaction-mode pooler, so `P2024` usually means a long-running transaction is
 holding the single connection.
+
+**"The pool" is now one pool per function instance, not one pool.** Each warm
+instance has its own Prisma client with its own single connection, so a `P2024`
+is *that instance* waiting on *its* connection — it does not mean the API as a
+whole is starved, and it can be happening on one instance while every other
+request succeeds. What is shared, and what can genuinely run out, is the
+**pooler's** client slots across all instances; that exhaustion surfaces as
+`P1001`/`P1002` rather than `P2024`. Check the pooler's client-connection count
+on the Supabase project — it is under the database/connection-pooling settings
+and the project's reports; confirm where yours shows it.
 
 ```sql
 -- Who is holding a connection, and for how long
@@ -168,7 +214,7 @@ but cannot take a dirham through the system.
 1. `curl -s -o /dev/null -w '%{http_code}\n' https://api.berelax.ae/health/ready` — confirm it is real.
 2. Supabase dashboard: is the project up, paused, or out of disk? Out of disk is the one that looks like a network fault and is not.
 3. If Supabase is healthy, it is the pool. Run the `pg_stat_activity` queries; terminate a stuck backend with `SELECT pg_terminate_backend(:pid)` only after reading its query — terminating a payment write mid-transaction is safe (it rolls back, audit row and all, §9.6) but terminating a migration is not.
-4. Restart the API. With `connection_limit=1` a restart clears a leaked connection reliably.
+4. **There is no "restart the API".** The nearest real equivalent is a **redeploy**, which replaces the running instances — warm ones and their leaked connections go with them: Vercel → the API project → **Deployments** → the current production deployment → **⋯ → Redeploy**. Prefer step 3 first: `pg_terminate_backend` frees the connection immediately and without a release, and on serverless a redeploy also costs everyone a cold start. Waiting is a third option that used not to exist — an instance with no traffic is retired on its own, and the connection goes with it.
 5. Tell the manager on duty to go to paper.
 
 **Can it wait?** No.
@@ -227,7 +273,7 @@ signed out is corroboration, not a separate problem.
    ORDER  BY created_at;
    ```
 5. **If anything there was not done by the legitimate user, this is a personal data breach.** Stop and go to [`../compliance/runbooks/data-breach.md`](../compliance/runbooks/data-breach.md) — PDPL Art. 9 starts a clock (§11.8).
-6. Two or more of these in a night, for different users, is a pattern. Rotate `JWT_SECRET` and revoke everything.
+6. Two or more of these in a night, for different users, is a pattern. Rotate `JWT_SECRET` and revoke everything — and note that on Vercel **saving the new secret does nothing until the API is redeployed**; the deployment now serving is still signing and accepting tokens with the old one. The full sequence, with the check that proves it worked, is [`../compliance/runbooks/data-breach.md`](../compliance/runbooks/data-breach.md) §1.1–1.2.
 
 **Can it wait?** No. Step 2 is a phone call and takes two minutes.
 

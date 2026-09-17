@@ -43,6 +43,7 @@ const SCHEMA: Record<string, string[]> = {
   financial_audit_log: ['id', 'ip_address', 'user_agent'],
   idempotency_records: ['key'],
   nightly_reconciliations: ['id', 'business_day', 'verdict', 'submitted_by_user_id'],
+  rate_limit_counters: ['key', 'throttler', 'hits', 'window_ends_at', 'blocked_until'],
   // Declared as holding no personal data, so absent from every activity and
   // deliberately NOT a drift finding.
   branches: ['id', 'name'],

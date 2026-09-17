@@ -1,0 +1,29 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "regions": ["fra1"],
+  "git": {
+    "deploymentEnabled": false
+  },
+  "installCommand": "pnpm install --frozen-lockfile --filter \"api...\"",
+  "buildCommand": "pnpm --filter @berelax/contracts build && pnpm --filter api exec prisma generate && pnpm --filter api build && mkdir -p public",
+  "outputDirectory": "public",
+  "github": {
+    "silent": true,
+    "autoJobCancelation": true
+  },
+  "build": {
+    "env": {
+      "ENABLE_EXPERIMENTAL_COREPACK": "1"
+    }
+  },
+  "functions": {
+    "api/index.ts": {
+      "runtime": "nodejs22.x",
+      "memory": 1024,
+      "maxDuration": 30,
+      "includeFiles": "dist/**"
+    }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+}

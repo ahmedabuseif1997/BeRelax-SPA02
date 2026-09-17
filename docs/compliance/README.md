@@ -61,8 +61,12 @@ Nothing below is optional. Items marked **BLOCKER** stop the launch.
 - [ ] **BLOCKER** — The transfer safeguard is chosen, written into the register
       and named in the privacy notice: adequacy, contractual undertaking, or
       express consent
-- [ ] **BLOCKER** — Signed Data Processing Addenda on file for **Supabase,
-      Railway, Vercel, Netlify** and, if it is wired up, **Cloudflare**
+- [ ] **BLOCKER** — Signed Data Processing Addenda on file for **Supabase** and
+      **Vercel** and, if it is wired up, **Cloudflare**. Vercel covers all three
+      projects — the API, the dashboard and the public site — under one
+      addendum. Railway is gone; Netlify stays on this list only until the
+      cutover in [`../runbooks/netlify-to-vercel.md`](../runbooks/netlify-to-vercel.md)
+      §8.4 closes its DPA out
 - [ ] Counsel has answered the ten open questions in the register, including
       whether Federal Law 2/2019 on health data reaches this business and whether
       a DPO must be appointed

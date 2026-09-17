@@ -1,3 +1,22 @@
+# ==============================================================================
+#  RETAINED DELIBERATELY DURING THE NETLIFY -> VERCEL MIGRATION. DO NOT DELETE.
+#
+#  This file is superseded by vercel.json at the repo root, but is kept on
+#  purpose until the cutover is finished. Follow the ordered steps in
+#  docs/runbooks/netlify-to-vercel.md, which say when this file may go.
+#
+#  If you delete it while the Netlify site is still connected to this
+#  repository, Netlify loses its publish directory and falls back to its
+#  default, which is the repository ROOT. That would publish platform/ (the
+#  CRM backend source) and docs/ (the internal architecture and compliance
+#  documents) on the public website at berelax.ae. A day of paying for two
+#  hosts is cheaper than that by every measure.
+#
+#  Correct order, from the runbook: Vercel verified -> DNS moved and settled ->
+#  Netlify site deleted -> only then this file removed. It is harmless while
+#  the Netlify site no longer exists.
+# ==============================================================================
+
 # BE RELAX — static site, no framework build.
 #
 # The publish directory is assembled rather than set to "." because the repo

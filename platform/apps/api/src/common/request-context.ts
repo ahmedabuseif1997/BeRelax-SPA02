@@ -64,7 +64,7 @@ export function resolveRequestId(req: RequestLike): string {
   return (header(req, 'x-request-id') ?? `req_${randomUUID()}`).slice(0, 64);
 }
 
-/** Behind Railway/Render/Cloudflare the socket address is the proxy, not the guest. */
+/** Behind Vercel's edge (or Cloudflare) the socket address is the proxy, not the guest. */
 export function clientIp(req: RequestLike): string | undefined {
   const forwarded = header(req, 'x-forwarded-for');
   if (forwarded) return forwarded.split(',')[0]?.trim();

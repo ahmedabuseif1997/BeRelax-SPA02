@@ -2,13 +2,16 @@
   "name": "api",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint \"{src,test,prisma}/**/*.ts\" --max-warnings 0",
+    "lint": "eslint \"{src,test,prisma,api}/**/*.ts\" --max-warnings 0",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",

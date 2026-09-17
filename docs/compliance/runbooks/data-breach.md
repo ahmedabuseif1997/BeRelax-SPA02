@@ -27,7 +27,7 @@ nobody is reading. Every row needs a **person** and a **phone number**.
 | **Breach lead** (decides, owns the clock) | `[TO BE COMPLETED: NAME]` | `[TO BE COMPLETED: MOBILE]` | Wake this person first, whatever the hour |
 | **Deputy breach lead** (if the lead does not answer in 15 min) | `[TO BE COMPLETED: NAME]` | `[TO BE COMPLETED: MOBILE]` | |
 | **Business owner** | `[TO BE COMPLETED: NAME]` | `[TO BE COMPLETED: MOBILE]` | Must be told, even if not leading |
-| **Technical responder** (has Supabase + Railway access) | `[TO BE COMPLETED: NAME]` | `[TO BE COMPLETED: MOBILE]` | Runs [Step 1](#step-1--contain) |
+| **Technical responder** (has Supabase + Vercel access) | `[TO BE COMPLETED: NAME]` | `[TO BE COMPLETED: MOBILE]` | Runs [Step 1](#step-1--contain) |
 | **UAE counsel** | `[TO BE COMPLETED: FIRM AND LAWYER NAME]` | `[TO BE COMPLETED: MOBILE]` | Engage before [Step 3](#step-3--notify-the-uae-data-office) |
 | **Manager on duty** (tonight) | On the shift roster | 052 510 8633 / 02 557 6533 | The spa is open 11:00–02:00 daily |
 
@@ -36,10 +36,15 @@ nobody is reading. Every row needs a **person** and a **phone number**.
 | System | Account holder | Where the credential lives |
 |---|---|---|
 | Supabase (database) | `[TO BE COMPLETED]` | `[TO BE COMPLETED: password manager location]` |
-| Railway (API) | `[TO BE COMPLETED]` | `[TO BE COMPLETED]` |
-| Vercel (dashboard) | `[TO BE COMPLETED]` | `[TO BE COMPLETED]` |
-| Netlify (public site) | `[TO BE COMPLETED]` | `[TO BE COMPLETED]` |
+| Vercel — **API** project | `[TO BE COMPLETED]` | `[TO BE COMPLETED]` |
+| Vercel — **dashboard** project | `[TO BE COMPLETED]` | `[TO BE COMPLETED]` |
+| Vercel — **public site** project | `[TO BE COMPLETED]` | `[TO BE COMPLETED]` |
+| Netlify (public site) — **only until the cutover in [`../../runbooks/netlify-to-vercel.md`](../../runbooks/netlify-to-vercel.md) finishes**; delete this row with the site | `[TO BE COMPLETED]` | `[TO BE COMPLETED]` |
 | Domain registrar | `[TO BE COMPLETED]` | `[TO BE COMPLETED]` |
+
+Three Vercel projects, one account. Whoever holds that account holds the API,
+the dashboard and the website; if the Vercel login is what was breached, treat
+all three as reached.
 
 ---
 
@@ -68,7 +73,8 @@ Do these in order. Do not investigate first.
 
 **Goal: make any stolen credential worthless in the next ten minutes.**
 
-Work through 1.1 → 1.4 in order. 1.1 and 1.2 together end every active session.
+Work through 1.1 → 1.4 in order. 1.1 and 1.2 together end every active session —
+1.2 only once the API has been **redeployed**, which is the step people miss.
 
 ### 1.1 Revoke every refresh token
 
@@ -117,14 +123,38 @@ Rotating the secret kills them immediately.
 openssl rand -base64 32
 ```
 
-Set it on the API service (Railway):
+Set it on the API project: **Vercel → the API project → Settings →
+Environment Variables** → `JWT_SECRET` → the new value, **Production** scope →
+save.
 
-- **Dashboard route (use this one):** Railway → the API service → **Variables** →
-  set `JWT_SECRET` to the new value → **redeploy**.
-- **CLI route** (verify your CLI version's syntax first):
-  ```bash
-  railway variables --set "JWT_SECRET=<new-value>"
-  ```
+> ## ⛔ SAVING THE VARIABLE HAS CONTAINED NOTHING. YOU MUST REDEPLOY.
+>
+> On Vercel an environment variable belongs to a **deployment**. The deployment
+> serving traffic right now started with the OLD `JWT_SECRET` and **goes on
+> using it until a new deployment replaces it**. Every stolen access token keeps
+> working. There is no "restart the service" any more — a new production
+> deployment is the only way the new value reaches production.
+>
+> **A responder who changes the secret and believes they are done has not
+> contained anything.** Do the redeploy now, then prove it below.
+
+**Redeploy — two routes. Take whichever you can actually do fastest:**
+
+- **Vercel dashboard (fastest):** the API project → **Deployments** → the
+  current production deployment → its overflow (**⋯**) menu → **Redeploy**.
+  Confirm the wording on the screen in front of you rather than trusting this
+  line; the menu has moved between Vercel UI revisions. What you are looking
+  for is "build and release this again", not "promote".
+- **The deploy workflow:** GitHub → Actions → **Platform Deploy** → Run
+  workflow, against the tag or SHA that is already in production, ticking
+  `i_have_checked_the_clock` — it reads "or this is a declared incident", and
+  this is one. Slower: it waits for the `production` environment approval, and
+  it runs `prisma migrate deploy` first, which is a no-op when nothing is
+  pending. It is also the path this repository treats as the only route to
+  production.
+
+**You cannot deploy by pushing a commit.** `apps/api/vercel.json` sets
+`git.deploymentEnabled: false`, on purpose, so a push releases nothing.
 
 > **Critical: leave `JWT_SECRET_PREVIOUS` EMPTY.**
 >
@@ -134,7 +164,8 @@ Set it on the API service (Railway):
 > overlap is the attacker's window.** If `JWT_SECRET_PREVIOUS` is currently set
 > from an earlier planned rotation, **clear it in the same change.**
 
-Then verify the old token is dead:
+Then verify the old token is dead. **This is what proves containment — not the
+environment-variables screen, which will show the new value either way:**
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" \
@@ -142,6 +173,10 @@ curl -s -o /dev/null -w "%{http_code}\n" \
   https://api.berelax.ae/v1/auth/me
 # Expect: 401
 ```
+
+**If this returns 200, the old deployment is still serving** — the redeploy has
+not finished, or it built but was never promoted to production. You are not
+contained. Go back and finish it before doing anything else.
 
 ### 1.3 Rotate the database credentials
 
@@ -156,19 +191,30 @@ curl -s -o /dev/null -w "%{http_code}\n" \
    DATABASE_URL="postgresql://postgres.PROJECT:NEWPASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
    DIRECT_URL="postgresql://postgres.PROJECT:NEWPASSWORD@aws-0-REGION.pooler.supabase.com:5432/postgres"
    ```
-3. Update both on Railway and redeploy.
-4. Confirm the API is alive:
+3. Update both in **Vercel → the API project → Settings → Environment
+   Variables** (Production scope), **and then redeploy.** Same rule as 1.2: the
+   deployment that is running keeps the old values until a new deployment
+   replaces it. A saved variable is not a live variable.
+4. Update them in **GitHub → Settings → Environments → production** as well —
+   `PRODUCTION_DATABASE_URL` and `PRODUCTION_DIRECT_URL`. The deploy workflow
+   runs `prisma migrate deploy` with those, and it will fail on the old
+   password at the worst possible moment.
+5. Confirm the API is alive:
    ```bash
    curl -s https://api.berelax.ae/health/ready
    ```
+   `/health/ready` is a `SELECT 1` against the pool, not a static 200 — it is
+   the check that proves the new connection strings actually reached the
+   running deployment.
 
 ### 1.4 Rotate every other key
 
 | Key | Where | Note |
 |---|---|---|
 | Supabase API keys (`service_role`, `anon`/publishable) | Supabase → Project Settings → API | Rotate if any client or script held them |
-| Netlify deploy keys / build hooks | Netlify → Site settings | The public site is static, but a deploy hook lets someone publish to your domain |
-| Vercel tokens | Vercel → Account → Tokens | |
+| Vercel tokens | Vercel → Account Settings → Tokens | **One token releases all three projects.** Replace `VERCEL_TOKEN` in GitHub → Settings → Environments → production in the same change, or the next deploy fails |
+| Vercel deploy hooks | Each project's **Settings** (find "Deploy Hooks"; confirm the section on the screen) | A deploy hook is a URL that anyone holding it can use to publish to your domain |
+| Netlify deploy keys / build hooks | Netlify → Site settings | Only while the public site is still served by Netlify — see [`../../runbooks/netlify-to-vercel.md`](../../runbooks/netlify-to-vercel.md). The site is static, but a build hook lets someone publish to your domain |
 | Domain registrar and DNS | Registrar account | If DNS could have been touched, this is more urgent than the database |
 | GitHub tokens / deploy keys | GitHub → Settings | |
 
@@ -183,9 +229,28 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 
 ### 1.5 If the attack is still live
 
-- Take the API offline rather than leave it reachable: Railway → the API service
-  → **Remove/scale to zero**, or set the service to sleep. The public website
-  (Netlify) stays up, so guests can still call 052 510 8633 and book.
+**Take the API offline rather than leave it reachable.** There is no "scale to
+zero" on Vercel — there are no replicas to scale. Two real ways, and they are
+not the same thing:
+
+| What | Where | What it does | Speed |
+|---|---|---|---|
+| **Remove the production domain** | Vercel → the API project → **Settings → Domains** → remove `api.berelax.ae` | The hostname stops being served by this project. **DNS is untouched**, so restoring it is one action in the same screen with no TTL to wait out. | **Fastest, and the only one of the two that actually takes the API offline.** Seconds. |
+| **Promote an earlier deployment** | Vercel → the API project → **Deployments** → a known-good earlier deployment → **⋯ → Promote to Production** | Production serves the older build. The API stays up and reachable. | Also seconds — but this is a *rollback*, not an off switch. |
+
+**Which one.** Promote when you know **which deployment** is the problem — a
+poisoned build, a commit that shipped a secret. Promoting is useless if the
+attacker is holding a credential rather than sitting in the code: the older
+build reads the same environment variables and talks to the same database.
+Remove the domain when you want the API to stop answering at all.
+
+If you cannot be sure the API project is the only thing still holding a database
+connection — a forgotten script, somebody's `psql`, a function instance that is
+still warm — the only thing that stops **every** writer is rotating the database
+password (1.3).
+
+- The public website is a **separate project** and stays up, so guests can still
+  call 052 510 8633 and book.
 - Reception falls back to paper. The spa is open until 02:00 and the evening does
   not stop because the CRM did.
 
@@ -313,21 +378,32 @@ honestly claim:
   emails, notes and legal names before writing. That is good for privacy and it
   means the log cannot tell you *which guest's name* was exposed — only which
   entity IDs were touched.
-- **Application-level logging is thin.** The pino structured logging and Sentry
-  described in §12.3 are **not implemented**. Your request-level evidence is
-  whatever Railway, Vercel and Netlify retain by default.
+- **Application logs are the platform's, and the API no longer has a machine of
+  its own.** The API emits one redacted JSON line per request
+  (`apps/api/src/common/logger.ts`; the fields are listed in
+  [`../../runbooks/alerts.md`](../../runbooks/alerts.md)), but nothing in this
+  system stores them — they are Vercel **function logs**, and serverless runtime
+  log retention is short and depends on the plan.
+  `[TO BE COMPLETED: the API project's actual runtime-log retention window —
+  read it off the plan, do not assume days.]`
+  Error *reporting* is not running at all: `initSentry` is an adapter and
+  `@sentry/node` is not installed (`apps/api/src/common/sentry.ts`), so nothing
+  has been sent to Sentry. There is no second copy of these lines anywhere.
 
 So also pull:
 
 | Source | What to pull | Where |
 |---|---|---|
-| Railway | API request and error logs for the window | Railway → the API service → Logs (export before they rotate) |
+| Vercel — API project | Function request and error logs for the window | Vercel → the API project → **Logs** (the runtime/observability log view — confirm the name on your plan). **Export first, read second.** |
 | Supabase | Postgres logs, connection history, auth logs | Supabase → Logs Explorer |
-| Vercel | Dashboard access logs | Vercel → the project → Logs |
-| Netlify | Public site access logs | Netlify → the site → Analytics / Logs |
+| Vercel — dashboard project | Dashboard access logs | Vercel → that project → Logs |
+| Vercel — public site project | Public site access logs | Vercel → that project → Logs |
+| Netlify | Public site access logs — **only while the site is still on Netlify** ([`../../runbooks/netlify-to-vercel.md`](../../runbooks/netlify-to-vercel.md)) | Netlify → the site → Analytics / Logs |
 
-**Export every one of these to a file immediately.** Platform log retention is
-finite and the clock is already running.
+**Export every one of these to a file immediately — before you read any of
+them.** This is more urgent than it was on a container: platform log retention
+is finite, serverless runtime logs are the shortest-lived evidence you have, and
+the clock is already running.
 
 ### Write the assessment
 
@@ -388,9 +464,9 @@ Assemble these before you file, whatever form the filing takes:
 
 ### Also notify
 
-- **The processor whose platform was involved** — Supabase, Railway, Vercel,
-  Netlify or Cloudflare — through their security contact. They may have logs you
-  cannot see.
+- **The processor whose platform was involved** — Supabase, Vercel, Cloudflare,
+  or Netlify while the public site is still there — through their security
+  contact. They may have logs you cannot see.
 - **Abu Dhabi Police / UAE Cybercrime**, if a crime was committed:
   `[TO BE COMPLETED: reporting route confirmed with counsel]`
 - **Your insurer**, if there is cyber cover: `[TO BE COMPLETED]`
@@ -583,10 +659,18 @@ BE RELAX — SUSPECTED DATA BREACH
 4. Technical responder runs:
      psql "$DIRECT_URL" -c "UPDATE refresh_tokens SET revoked_at = now()
                              WHERE revoked_at IS NULL;"
-     openssl rand -base64 32        → new JWT_SECRET on Railway
-                                    → clear JWT_SECRET_PREVIOUS
-     Supabase → reset DB password   → update DATABASE_URL (6543)
-                                       and DIRECT_URL (5432)
+     openssl rand -base64 32     → new JWT_SECRET in Vercel:
+                                   API project → Settings → Env Variables
+                                 → clear JWT_SECRET_PREVIOUS
+                                 → >>> REDEPLOY <<<  A saved variable does
+                                   NOTHING to the deployment now running.
+                                 → prove it: curl /v1/auth/me with an OLD
+                                   token → must be 401. If 200, not done.
+     Supabase → reset DB password → update DATABASE_URL (6543) and
+                                    DIRECT_URL (5432) in Vercel AND in
+                                    GitHub env `production` → REDEPLOY
+     Still live? Vercel → API project → Settings → Domains → remove
+                 api.berelax.ae. Fastest way to take the API offline.
    NEVER rotate ERASURE_SALT.
 5. Call counsel before notifying anyone: [FIRM] — [MOBILE]
 6. Internal target: UAE Data Office notified within 72 hours of awareness.

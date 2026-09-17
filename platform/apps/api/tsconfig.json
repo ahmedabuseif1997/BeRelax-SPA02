@@ -12,6 +12,11 @@
   // dist/. No `paths` mapping: pointing TypeScript at the package's SOURCE puts
   // files outside rootDir and breaks the build. Build contracts first —
   // `pnpm --filter @berelax/contracts build` — which CI and the README both do.
-  "include": ["src/**/*", "test/**/*", "prisma/**/*"],
+  //
+  // api/ is the Vercel entry point. It is NOT in tsconfig.build.json: the Nest
+  // CLI emits src/ only, and api/index.ts is compiled by the platform. It is
+  // typechecked here all the same — an untypechecked entry point is the one
+  // file whose mistakes reach production unseen.
+  "include": ["src/**/*", "test/**/*", "prisma/**/*", "api/**/*"],
   "exclude": ["node_modules", "dist"]
 }

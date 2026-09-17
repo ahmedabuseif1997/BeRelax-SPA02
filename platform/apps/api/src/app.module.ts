@@ -12,6 +12,7 @@ import { CommonModule } from './common/common.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { PrismaErrorFilter } from './common/prisma-error.filter';
 import { RequestContextInterceptor } from './common/request-context.interceptor';
+import { PgThrottlerStorage } from './common/pg-throttler.storage';
 import { UserThrottlerGuard } from './common/user-throttler.guard';
 import { IdempotencyInterceptor } from './common/idempotency.interceptor';
 import { AuthModule } from './auth/auth.module';
@@ -48,12 +49,18 @@ import { HealthModule } from './health/health.module';
     }),
 
     ThrottlerModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: () => ({
+      imports: [CommonModule],
+      inject: [PgThrottlerStorage],
+      useFactory: (storage: PgThrottlerStorage) => ({
         // Spec §12.4. Keyed per user by UserThrottlerGuard, falling back to IP
         // for public routes. The tighter per-IP limits on /auth/login and the
         // public endpoints are declared at those routes with @Throttle.
         throttlers: [{ name: 'default', ttl: 60_000, limit: 300 }],
+
+        // NOT the default in-memory storage. One counter per process means the
+        // limit is multiplied by the instance count, which on a serverless
+        // platform is a number nobody controls. See pg-throttler.storage.ts.
+        storage,
       }),
     }),
     PrismaModule,

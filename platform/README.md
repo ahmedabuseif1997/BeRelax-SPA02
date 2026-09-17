@@ -223,10 +223,10 @@ Coverage expectations: **100% of branches** in the money and auth paths, 80% els
 
 | Component | Host | Notes |
 |---|---|---|
-| API | Railway or Render | A long-lived process. Serverless fights connection pooling and gives request-scoped interceptors nowhere to live. |
+| API | Vercel | `apps/api/vercel.json`. Spec §2.3 argued against serverless; the owner chose it anyway, so the objections were answered rather than inherited. Transactions are `$transaction` round trips and work unchanged; the audit context is per invocation; idempotency was always a table. Two things it forced: `DATABASE_URL` **must** be the :6543 transaction pooler (§2.4 — more important here than it was on a container), and the rate limiter had to stop counting in memory. See `apps/api/src/common/pg-throttler.storage.ts`. |
 | Database | Supabase | Pick the region deliberately and write down why — see spec §11.7. |
 | Dashboard | Vercel | Phase 2. |
-| Public site | Netlify | Already live, unchanged by any of this. |
+| Public site | Vercel | Root `vercel.json`. Moved off Netlify; `netlify.toml` is retained deliberately until the cutover finishes, because deleting it while the Netlify site is still connected makes Netlify fall back to publishing the repository root — which would put `platform/` and `docs/compliance/` on the public web. Order matters: `docs/runbooks/netlify-to-vercel.md`. |
 
 Production checklist:
 

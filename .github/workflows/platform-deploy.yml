@@ -1,40 +1,49 @@
 name: Platform Deploy
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  PRODUCTION DEPLOY — API (Railway) and dashboard (Vercel)
+#  PRODUCTION DEPLOY — API and dashboard, both on Vercel
 #
 #  This workflow does four things, in this order, and stops at the first failure:
 #
 #    1. Refuses to go any further unless Platform CI is GREEN for this exact
 #       commit. Not "green on main", not "green yesterday" — green on this SHA.
 #    2. Applies database migrations with `prisma migrate deploy`, ONCE, from
-#       here, before any new container exists.
-#    3. Releases the API image, then waits for /health/ready to answer.
+#       here, before any new function instance exists.
+#    3. Releases the API, then waits for /health/ready to answer.
 #    4. Releases the dashboard.
 #
-#  ── WHY MIGRATIONS RUN HERE AND NOT ON CONTAINER BOOT ────────────────────────
+#  ── WHY MIGRATIONS RUN HERE, AND WHY THAT IS NOW THE ONLY PATH ───────────────
 #
-#  A start command of `prisma migrate deploy && node dist/main.js` looks tidy
-#  and is a trap. apps/api/railway.json asks for two replicas; a rollback or a
-#  scale-up can briefly run three. Each of them would run `migrate deploy` on
-#  boot, at the same second, against the same database. Prisma takes a Postgres
-#  advisory lock, so the losers block rather than corrupt — until one of them
-#  times out mid-migration and leaves a row in `_prisma_migrations` with
-#  `finished_at` NULL and `logs` set. That database is now in a state where
-#  every future `migrate deploy` refuses to run until a human resolves it by
-#  hand, and you find out at 03:20 with the spa opening in seven hours.
+#  This job used to be the primary of two. The other was
+#  `deploy.preDeployCommand` in apps/api/railway.json, which Railway ran once
+#  per deployment whatever the replica count — belt and braces for a deploy
+#  started from the Railway UI that never passed through this workflow.
 #
-#  Migrations therefore run exactly once, as a RELEASE STEP:
+#  Vercel has no equivalent. There is no release phase and no pre-deploy hook: a
+#  function has a cold start and nothing else. So the belt is gone, and the
+#  braces below are all there is.
 #
-#    - Primary: the `migrate` job below, over DIRECT_URL (port 5432 — the
-#      session connection; PgBouncer's transaction mode has no advisory locks
-#      and `migrate deploy` needs them. Spec §2.4).
-#    - Belt and braces: `deploy.preDeployCommand` in apps/api/railway.json, for
-#      a deploy triggered from the Railway UI (a rollback, say) that never
-#      passes through this workflow. Railway runs a pre-deploy command once per
-#      deployment regardless of replica count.
+#  Do not be tempted to migrate from the function's boot instead. The old
+#  argument against it was two replicas racing; here it would be an unbounded
+#  number of instances, each running `migrate deploy` against the same database
+#  under a 30-second function timeout. Prisma takes a Postgres advisory lock, so
+#  the losers block rather than corrupt — until one is killed by the timeout
+#  mid-migration and leaves a row in `_prisma_migrations` with `finished_at`
+#  NULL and `logs` set. That database now refuses every future `migrate deploy`
+#  until a human resolves it by hand, and you find out at 03:20 with the spa
+#  opening in seven hours.
 #
-#  Either way, the START command starts the server and nothing else.
+#  Two things keep this job the only path, and both must stay true:
+#
+#    - `git.deploymentEnabled: false` in apps/api/vercel.json. Without it a push
+#      releases code straight from GitHub, which can put new code in front of an
+#      un-migrated database — the one ordering that actually breaks.
+#    - Nothing in the API runs a migration at runtime. `pnpm --filter api build`
+#      builds; `prisma migrate deploy` lives here and nowhere else.
+#
+#  It runs over DIRECT_URL (port 5432 — the session connection; PgBouncer's
+#  transaction mode has no advisory locks and `migrate deploy` needs them.
+#  Spec §2.4).
 #
 #  ── THE SEED IS NEVER RUN ────────────────────────────────────────────────────
 #
@@ -65,23 +74,28 @@ name: Platform Deploy
 #        Same page -> "Session pooler" / direct connection, port 5432.
 #        This is the one migrations actually travel over.
 #
-#    RAILWAY_TOKEN
-#        Railway -> Project -> Settings -> Tokens -> "Create project token",
-#        scoped to the production environment. A PROJECT token, not a personal
-#        account token: a personal token can deploy every project you can see.
-#
 #    VERCEL_TOKEN
 #        Vercel -> Account Settings -> Tokens, scoped to the BE RELAX team.
+#        One token releases both projects.
 #
-#    VERCEL_ORG_ID / VERCEL_PROJECT_ID
-#        Vercel -> Project -> Settings -> General (or the `.vercel/project.json`
-#        written by `vercel link`). Not secret in any meaningful sense; they are
-#        stored here so that every deploy input comes from one place.
+#    VERCEL_ORG_ID
+#        Vercel -> Settings -> General, or the `.vercel/project.json` written by
+#        `vercel link`. Not secret in any meaningful sense; stored here so that
+#        every deploy input comes from one place.
+#
+#    VERCEL_PROJECT_ID_API       the API project   (root directory platform/apps/api)
+#    VERCEL_PROJECT_ID           the DASHBOARD project (root directory platform/apps/dashboard)
+#
+#        Two projects, two ids. The dashboard's keeps its original unqualified
+#        name on purpose: renaming it would break the dashboard release the
+#        first time this workflow ran after the API moved, at 03:00, for
+#        tidiness. If you do rename it, rename it in both places in one commit.
+#
+#        Both projects need "Include files outside the root directory" ON:
+#        each build reaches up the workspace to build @berelax/contracts first.
 #
 #  VARIABLES (Settings -> Environments -> production -> Environment variables)
 #
-#    RAILWAY_SERVICE        the API service's name in Railway, e.g. `api`
-#    RAILWAY_ENVIRONMENT    the Railway environment name, e.g. `production`
 #    API_BASE_URL           https://api.berelax.ae   (a subdomain of the public
 #                           site — see docs/runbooks/go-live.md; on any other
 #                           domain Safari blocks the attribution cookie mirror)
@@ -123,7 +137,7 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
 # One deploy at a time, and never cancel one half way: a cancelled run between
-# `migrate deploy` and the image release leaves the database ahead of the code,
+# `migrate deploy` and the release leaves the database ahead of the code,
 # which is survivable, but a cancelled run DURING `migrate deploy` is the thing
 # the advisory lock cannot save you from.
 concurrency:
@@ -295,6 +309,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_API }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -307,38 +324,36 @@ jobs:
       # Unpinned, which is a known weakness: pin this to the version you last
       # deployed with and record the bump in the go-live runbook's change log.
       # An unpinned CLI is a third party's right to change your deploy at 03:00.
-      - name: Install the Railway CLI
-        run: npm install -g @railway/cli
+      - name: Install the Vercel CLI
+        run: npm install -g vercel
 
-      # If the Railway service is connected to GitHub, turn its auto-deploy OFF.
-      # Two deploy paths means a push can release code before this workflow has
-      # migrated the database, which is the one ordering that actually breaks.
+      # Root directory is platform/apps/api, where vercel.json lives. The build
+      # command in that file builds @berelax/contracts, generates the Prisma
+      # client and runs `nest build` — so "Include files outside the root
+      # directory" must be ON in the Vercel project.
       #
-      # `railway up` uploads THIS directory (platform/) as the build root, which
-      # is why apps/api/railway.json says `dockerfilePath: apps/api/Dockerfile`
-      # and why the service's Root Directory is `platform`. On the FIRST deploy,
-      # read the Railway build log and confirm it reports picking up
-      # apps/api/railway.json — if it silently used defaults instead, the
-      # pre-deploy migration step is not running and you have lost the guard
-      # this file spends a page explaining. Record what you saw in
-      # docs/runbooks/go-live.md.
-      - name: Deploy
-        working-directory: platform
+      # `vercel build` runs that here, on this runner, and `--prebuilt` uploads
+      # the result. The build therefore fails in CI, in front of a person, and
+      # not silently on Vercel's builders after the migration has been applied.
+      #
+      # apps/api/vercel.json sets `git.deploymentEnabled: false`, which is what
+      # stops a push releasing code ahead of the `migrate` job above. If a
+      # deployment ever appears that this workflow did not create, that setting
+      # has been overridden in the Vercel project — fix it before deploying
+      # again.
+      - name: Pull, build and deploy
+        working-directory: platform/apps/api
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
-          RAILWAY_ENVIRONMENT: ${{ vars.RAILWAY_ENVIRONMENT }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           set -euo pipefail
-          railway up \
-            --service "${RAILWAY_SERVICE}" \
-            --environment "${RAILWAY_ENVIRONMENT}" \
-            --detach
+          vercel pull --yes --environment=production --token="${VERCEL_TOKEN}"
+          vercel build --prod --token="${VERCEL_TOKEN}"
+          vercel deploy --prebuilt --prod --token="${VERCEL_TOKEN}"
 
-      # --detach means the CLI returns before the build finishes, so this poll
-      # is the real verification. It is also the only check that proves the new
-      # image can reach the database: /health/ready is a SELECT 1 against the
-      # pool, not a static 200.
+      # The only check that proves the new deployment can reach the database:
+      # /health/ready is a SELECT 1 against the pool, not a static 200. It also
+      # pays for one cold start, so the first receptionist of the night does not.
       - name: Wait for /health/ready
         env:
           API_BASE_URL: ${{ vars.API_BASE_URL }}
@@ -349,7 +364,7 @@ jobs:
           until [ "$(date +%s)" -ge "${deadline}" ]; do
             attempt=$(( attempt + 1 ))
             code="$(curl -fsS -o /tmp/ready.json -w '%{http_code}' \
-                      --max-time 10 "${API_BASE_URL}/health/ready" || true)"
+                      --max-time 30 "${API_BASE_URL}/health/ready" || true)"
             if [ "${code}" = "200" ]; then
               echo "ok    ${API_BASE_URL}/health/ready -> 200 after ${attempt} attempt(s)"
               cat /tmp/ready.json
@@ -359,8 +374,9 @@ jobs:
             sleep 10
           done
           echo "::error::${API_BASE_URL}/health/ready never returned 200. The database"
-          echo "::error::migration has ALREADY been applied. Roll the IMAGE back in"
-          echo "::error::Railway; do not try to roll the migration back. See"
+          echo "::error::migration has ALREADY been applied. Promote the previous"
+          echo "::error::deployment in Vercel (Deployments -> ... -> Promote to"
+          echo "::error::Production); do not try to roll the migration back. See"
           echo "::error::docs/runbooks/go-live.md, 'When a deploy goes wrong'."
           exit 1
 

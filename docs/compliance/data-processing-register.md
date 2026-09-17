@@ -51,7 +51,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **Lawful basis** | Steps taken at the data subject's request prior to entering a contract |
 | **Collected from** | The data subject, directly, via `POST /v1/public/booking-requests` |
 | **Recipients** | Reception, managers and the owner (`RECEPTIONIST+`). Not therapists. |
-| **Processors** | Supabase (storage), Railway (API compute), Netlify (serves the form) |
+| **Processors** | Supabase (storage), Vercel (API compute), Netlify (serves the form) |
 | **Storage** | Supabase PostgreSQL, `[TO BE COMPLETED: region]` |
 | **Transfer safeguard** | See [§4 Cross-border transfer](#4-cross-border-transfer) |
 | **Retention** | No **time-based** retention rule exists for `booking_requests`. **This is a gap** — see [G4](#5-known-gaps-between-the-specification-and-the-code). Converted enquiries inherit the reservation's 5-year life; declined and spam enquiries are currently kept indefinitely. |
@@ -73,7 +73,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **Lawful basis** | Performance of a contract |
 | **Collected from** | The data subject, directly (at the desk, by phone, by WhatsApp, or converted from A1) |
 | **Recipients** | `RECEPTIONIST+` for the guest book. Therapists see **their own** bookings only, and cannot read the guest list. |
-| **Processors** | Supabase, Railway, Vercel (the manager dashboard renders this data in the browser) |
+| **Processors** | Supabase, Vercel (API compute, and the manager dashboard renders this data in the browser) |
 | **Storage** | Supabase PostgreSQL, `[TO BE COMPLETED: region]` |
 | **Retention** | Guest identity: **3 years** after last visit, then anonymised by `RetentionService` (`GUEST_RETENTION_YEARS`, read from configuration and never from a request body — "an endpoint that lets a caller shorten them is an endpoint that makes the register a lie"). Reservations: **5 years**, with the guest fields already severed. Triggered by `POST /v1/compliance/retention/run` (`OWNER`), which supports `dryRun` and a `limit`, and reports candidates, anonymised, remaining and failures. |
 | **Erasure** | Anonymisation, not deletion: `full_name` → `Erased guest`, `email` → `NULL`, `notes` → `NULL`, `phone` → a salted SHA-256 token (uniqueness-checked against the branch, so the `(branch_id, phone)` index cannot collide), plus `anonymised_at` and `deleted_at` stamped so the shell leaves reception's guest book entirely. `reservations.notes` is cleared as well — free text is neither an amount nor a date, so the five-year obligation does not reach it, and free text is exactly where a person hides. `ERASURE_SALT` must never be rotated — rotation orphans every already-erased record. |
@@ -95,7 +95,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **Data — ledger / batches** | `entry_type`, `amount_fils`, `business_day`, `created_by_user_id`; batches add `period_start`/`period_end`, `total_fils`, `method`, `paid_at`, `approved_by_user_id`, `acknowledged_at` |
 | **Lawful basis** | Legal obligation (tax and accounting) **and** performance of a contract. For therapist payouts: employment contract and legal obligation. |
 | **Recipients** | `MANAGER+` for any total. **Reception can take money all evening and never see a total** — that separation is deliberate. Therapists see their own earnings only. |
-| **Processors** | Supabase, Railway, Vercel |
+| **Processors** | Supabase, Vercel (API and dashboard) |
 | **Retention** | **5 years minimum.** Never deleted while a dispute is open. |
 | **Survives erasure?** | **Yes.** This is the one place where a guest's erasure request does not remove the record. The transaction is retained; the person is severed from it. The privacy notice states this in plain words rather than citing a statute. |
 | **Security** | All three tables are **append-only, enforced by database triggers** (`forbid_mutation()`, `ledger_guard()`) — `UPDATE` and `DELETE` raise `insufficient_privilege`. The single permitted mutation is attaching a `payout_batch_id` to a ledger row that had none, with every other column provably unchanged in the same statement. Corrections are reversing rows, never edits. Balances are never stored — always `SUM(amount_fils)`. |
@@ -115,7 +115,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **Recipients** | `RECEPTIONIST+` (reception captures consent at the desk) |
 | **Endpoints** | `POST /v1/guests/:id/consents` (record) · `GET /v1/guests/:id/consents` (the ledger: what stands today plus the full history) · `POST /v1/guests/:id/consents/:type/withdraw` (withdraw) — **all three at `RECEPTIONIST+`** |
 | **Withdrawal** | PDPL Art. 6: as easy to withdraw as to give. Granting is one authenticated POST, so withdrawal is one authenticated POST at the same role — no manager escalation, no form, no reason field. `updateMany` stamps `withdrawn_at` on **every** standing grant of that type, because a guest can hold two (one taken at the desk, one from the website) and withdrawing only one is how someone who asked to be left alone keeps receiving messages. |
-| **Processors** | Supabase, Railway, Vercel |
+| **Processors** | Supabase, Vercel (API and dashboard) |
 | **Retention** | Until withdrawal + **3 years**, **except on erasure** — see below |
 | **Security** | `ip_address` is taken from the request context, **never from the request body** — an address the caller nominates is not evidence of anything. A refusal and a withdrawal are the same row shape with `granted = false` and `withdrawn_at` stamped. Current state is **derived on every read**, never cached on `guests`: a cached consent flag is a second source of truth, and the copy that drifts is the one that messages somebody who said no. |
 | **⚠ Deliberate divergence** | An **erasure request deletes the consent rows outright**, rather than keeping them for three years. The reasoning in the code: the three-year rule exists so the business can defend a marketing complaint, but an erasure request is the guest asking for the relationship itself to end — and a consent row holds their IP address. This is a considered trade-off between two PDPL obligations, not an oversight. **Counsel should confirm it.** |
@@ -148,7 +148,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **Consent mechanism** | A banner on berelax.ae. `attribution.js` must not load before consent is granted. Accept and Decline are equally prominent; declining is one click; the choice is re-openable from a persistent footer link; the site works fully when consent is declined. The booking form and WhatsApp buttons are never gated. |
 | **Collected from** | The data subject's browser, via `POST /v1/public/attribution/touch` (`navigator.sendBeacon`) |
 | **Recipients** | `MANAGER+` only (channel ROI reports) |
-| **Processors** | Supabase, Railway, Netlify |
+| **Processors** | Supabase, Vercel (API), Netlify |
 | **Retention** | **90 days**, then `prune_attribution()` overwrites `visitor_id` with the nil UUID, empties `touches`, reduces `first_touch`/`last_touch` to `{source, medium, campaign}` and nulls `landing_path`. Channel aggregates survive; the person does not. |
 | **Severed on erasure** | Yes — immediately, even inside the 90 days |
 | **Data minimisation in force** | `landing_path` stores the **path only**, never the full URL with its query string, because a query string is where somebody's email address ends up. The `brx_vid` cookie is `httpOnly`, `secure`, `sameSite=lax`, 90-day `maxAge` — the script cannot read it back. |
@@ -168,7 +168,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **No IP address** | There is **no `ip_address` column** on this table and none is written. Verified against the schema and `outbound-clicks.service.ts`. |
 | **Lawful basis** | **Consent** where a `visitor_id` is present. Where the visitor declined and no cookie exists, the row carries no identifier. |
 | **Recipients** | `MANAGER+` |
-| **Processors** | Supabase, Railway |
+| **Processors** | Supabase, Vercel (API) |
 | **Retention** | **90 days**, then deleted outright by `prune_attribution()` |
 | **Limit, stated honestly** | This logs the click, not the conversation. Nothing that happens inside WhatsApp is visible to this system and it never will be. |
 
@@ -185,7 +185,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **Data — `refresh_tokens`** | `user_id`, `family_id`, `token_hash` (SHA-256 — the token itself is never stored), `expires_at`, `revoked_at`, `replaced_by_id`, **`user_agent`**, **`ip_address`**, `created_at` |
 | **Lawful basis** | Employment contract; legitimate operation and security of the business |
 | **Recipients** | `OWNER` creates, disables and resets. `MANAGER` may revoke sessions but not create accounts. |
-| **Processors** | Supabase, Railway, Vercel |
+| **Processors** | Supabase, Vercel (API and dashboard) |
 | **Retention** | Revoked and expired refresh tokens deleted **30 days** after expiry by `prune_attribution()`. User rows are soft-deleted (`deleted_at`), which frees the email address for reuse. |
 | **Security** | bcrypt cost 12 with re-hash on login if the stored cost has drifted; login throttled 5 per 15 min per IP **and** per email; account lockout via `failed_login_count` / `locked_until`; refresh-token rotation with **reuse detection** — presenting a spent token revokes the entire token family and writes `AUTH_REFRESH_REUSE_DETECTED` to the audit log |
 
@@ -202,7 +202,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **Data — `shifts`** | `business_day`, `planned_start`, `planned_end`, `clock_in_at`, `clock_out_at`, `status`, `note` |
 | **Lawful basis** | Employment contract and legal obligation |
 | **Recipients** | `legal_name` is readable by `OWNER`, `MANAGER`, or the therapist themselves — **not** by reception. Reception can read the shift roster (it carries no money and is needed to clock people in) but not earnings. |
-| **Processors** | Supabase, Railway, Vercel |
+| **Processors** | Supabase, Vercel (API and dashboard) |
 | **Retention** | `[TO BE COMPLETED: UAE labour law record-keeping period for employee records — counsel to confirm. No retention rule for employee data exists in code.]` |
 | **⚠ Note** | `photo_url` holds a staff photograph. Where that image is hosted is not determined by the schema and must be recorded here once chosen: `[TO BE COMPLETED: image hosting location]` |
 
@@ -219,7 +219,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **Actions recorded** | Reservation create/reschedule/check-in/checkout/cancel/no-show; payment refund and adjustment; tip reversal; payout created and acknowledged; service price change; employee commission change; user created/role changed/disabled; sessions revoked; password reset; login succeeded/failed; refresh reuse detected; guest data exported; guest erased |
 | **Lawful basis** | Legal obligation and legitimate interest in the integrity of financial records |
 | **Recipients** | `MANAGER+` only |
-| **Processors** | Supabase, Railway |
+| **Processors** | Supabase, Vercel (API) |
 | **Retention** | **7 years**, then cold storage. No deletion rule exists in code — appropriate, since the table is immutable. |
 | **Security** | **Append-only, database-enforced.** `UPDATE` and `DELETE` triggers raise `insufficient_privilege`. Audit rows are written inside the same transaction as the business write they record, so a rolled-back transaction takes its audit row with it. |
 | **PII minimisation** | `pickAuditFields()` strips `fullName`, `guestName`, `phone`, `guestPhone`, `email`, `guestEmail`, `legalName`, `notes`, `passwordHash` and `tokenHash` before a row is written. The audit log holds IDs, amounts, statuses and timestamps — **not a second copy of the guest database.** |
@@ -237,7 +237,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **⚠ Why this is in the register** | `response_body` is a **verbatim copy of an API response**. For a money endpoint that response can contain guest-identifying fields. This table is therefore a short-lived secondary store of personal data, and it is **not listed in spec §11.6's retention table**. See [G6](#5-known-gaps-between-the-specification-and-the-code). |
 | **Lawful basis** | Performance of a contract (correct billing) |
 | **Recipients** | None — the table is internal and has no read endpoint |
-| **Processors** | Supabase, Railway |
+| **Processors** | Supabase, Vercel (API) |
 | **Retention** | `IDEMPOTENCY_TTL_HOURS` (default **24 hours**), then deleted by `prune_attribution()` |
 
 ---
@@ -250,9 +250,9 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **Data subjects** | Website visitors, guests, staff |
 | **Data** | Request logs including `request_id`, route, and — behind the proxy — the client IP taken from `x-forwarded-for` |
 | **Lawful basis** | Legitimate interest in operating and securing the service |
-| **Processors** | Railway (API logs), Netlify (static site access logs), Vercel (dashboard logs), Cloudflare (if placed in front — see [§3](#3-processors)) |
-| **Retention** | **90 days** per the specification. In practice retention is whatever each platform's log retention setting is: `[TO BE COMPLETED: confirm and configure the log retention window on Railway, Vercel and Netlify]` |
-| **⚠ Status** | The specification (§12.3) calls for **pino** structured logs with a PII-redacting serialiser and **Sentry** with a `beforeSend` that strips PII from breadcrumbs. **Neither is implemented** — the API uses the default NestJS logger and there is no Sentry integration. See [G7](#5-known-gaps-between-the-specification-and-the-code). |
+| **Processors** | Vercel (API and dashboard logs), Netlify (static site access logs), Cloudflare (if placed in front — see [§3](#3-processors)) |
+| **Retention** | **90 days** per the specification. In practice retention is whatever each platform's log retention setting is: `[TO BE COMPLETED: confirm and configure the log retention window on Vercel and Netlify]` |
+| **Status** | §12.3 calls for **pino** structured logs with a PII-redacting serialiser and **Sentry** with a PII-stripping `beforeSend`. **Pino is implemented** (`src/common/logger.ts`, wired through `nestjs-pino`), redacting the same field list the audit log uses (`src/common/pii.ts`) — verified by grepping 272 emitted lines for guest names, phone numbers, emails, tokens, cookies and hashes, none of which appear. **Sentry is not**: `src/common/sentry.ts` is an adapter carrying the real `beforeSend`, but `@sentry/node` is not installed, so no error reaches Sentry and `initSentry` warns at boot when `SENTRY_DSN` is set. See [G7](#5-known-gaps-between-the-specification-and-the-code). |
 
 ---
 
@@ -273,13 +273,29 @@ the database so an auditor can verify the claim rather than take it on trust.
 
 ---
 
+### A14 — Rate limiting and brute-force protection
+
+| | |
+|---|---|
+| **Purpose** | Refuse a caller who is working through passwords, or flooding the public enquiry form, before they get anywhere |
+| **Data subjects** | Website visitors, prospective guests, staff |
+| **Tables** | `rate_limit_counters` |
+| **Data** | `key`, `throttler`, `hits`, `window_ends_at`, `blocked_until` — a count and two timestamps, and nothing else |
+| **⚠ Why this is in the register** | `key` is a SHA-256 of the route and the caller: `user:<uuid>` when signed in, `ip:<address>` otherwise. It is declared as personal data rather than waved through as "just a hash" — an unsalted SHA-256 of an IPv4 address is reversed by enumerating four billion inputs, which is minutes of work. Pseudonymised, not anonymous. No name, phone number, request body or plaintext route is stored. |
+| **Lawful basis** | Legitimate interest in operating and securing the service |
+| **Recipients** | None — internal, no read endpoint |
+| **Processors** | Supabase, Vercel (API) |
+| **Retention** | The rate-limit window itself — a minute, an hour, fifteen minutes — plus up to an hour of grace before a bounded sweep deletes the row. Nothing here survives the night. |
+| **Why a table and not Redis** | The counter has to be shared across API instances or it is not a limit at all (see [G11](#5-known-gaps-between-the-specification-and-the-code)). Adding Redis would have meant another processor, another DPA and another row in [§3](#3-processors). This system has exactly one data store and that is worth keeping. |
+
+---
+
 ## 3. Processors
 
 | Processor | Role | What it can see | Location | DPA |
 |---|---|---|---|---|
 | **Supabase** | Managed PostgreSQL — the primary data store | **Everything.** Every table in this register. Supabase staff have the access their platform terms describe. | AWS, `[TO BE COMPLETED: region — Frankfurt `eu-central-1` intended]` | `[TO BE COMPLETED: signed DPA on file — date and countersignature]` |
-| **Railway** | Hosts the NestJS API | All data in transit through the API, plus environment secrets (`JWT_SECRET`, `ERASURE_SALT`, database credentials) and application logs containing IP addresses | `[TO BE COMPLETED: deployment region]` | `[TO BE COMPLETED]` |
-| **Vercel** | Hosts the manager dashboard (`apps/dashboard`, Next.js) | Whatever a signed-in staff member's browser requests — guest records, bookings, payments, reports — plus dashboard access logs | `[TO BE COMPLETED: deployment region]` | `[TO BE COMPLETED]` |
+| **Vercel** | Hosts **both** the NestJS API (`apps/api`, serverless functions — moved here from Railway) and the manager dashboard (`apps/dashboard`, Next.js). Two projects, one processor and one DPA. | All data in transit through the API, plus environment secrets (`JWT_SECRET`, `ERASURE_SALT`, database credentials) and application logs containing IP addresses; and whatever a signed-in staff member's browser requests — guest records, bookings, payments, reports | Both projects pin `regions: ["fra1"]` in `vercel.json` and must match the Supabase region. `[TO BE COMPLETED: confirm the deployed region of each project]` | `[TO BE COMPLETED]` |
 | **Netlify** | Hosts the public static site (`index.html` and assets) — configured in `netlify.toml` | **No guest database access.** The site is static; the publish directory is assembled to exclude `platform/` and `docs/`. Netlify sees visitor request logs (IP, user agent, referrer) for the public site. | `[TO BE COMPLETED: Netlify edge — global]` | `[TO BE COMPLETED]` |
 | **Cloudflare** | Intended for Turnstile (bot protection on the public booking form) and/or CDN/DNS | Would see the visitor's IP and the Turnstile challenge on form submission | Global edge | `[TO BE COMPLETED]` |
 | **⚠ Cloudflare status** | **Not currently integrated.** `publicBookingRequestSchema` accepts a `turnstileToken` field, but nothing in the API verifies it — the value is accepted and discarded. Cloudflare is therefore **not yet a processor in fact.** Either wire it up or remove the field and the claim. | | | |
@@ -332,11 +348,11 @@ the schema and the service code against spec §11.
 | **G5** | The consent gate and attribution script now exist as `assets/js/consent.js` and `assets/js/attribution.js`, but **`index.html` does not reference either** — and both are deliberately dormant until `window.BERELAX_ATTRIBUTION_API` is set, which needs the `api.berelax.ae` subdomain to exist. So no analytics of any kind run today and nothing is collected. | High at launch, zero today. | **Must be wired into `index.html` and verified before the CRM goes live.** Until then the privacy notice's analytics section describes something the site does not yet do. |
 | **G13** | **Version-string mismatch.** `consent.js` falls back to `"2026-01"` when `window.BERELAX_PRIVACY_VERSION` is unset, while the privacy notice is `1.0-draft`. A consent recorded against a version string that names no real document proves nothing. | **High once consent is live.** | **Must fix when the gate is wired up:** set `window.BERELAX_PRIVACY_VERSION` in `index.html` to the notice's exact version, and make sure the desk sends the same string in `policyVersion`. |
 | **G6** | `idempotency_records.response_body` holds a verbatim copy of API responses, which for money endpoints can include guest-identifying fields. §11.6's retention table does not list this table. | Low — 24-hour TTL, deleted by the retention function, no read endpoint. | Documented here as [A11](#a11--idempotency-records-operational-resilience). §11.6 should list it. |
-| **G7** | §12.3 specifies pino structured logging with a PII-redacting serialiser and Sentry with PII-stripping `beforeSend`. **Neither exists in the codebase.** The API uses the default NestJS logger. | Medium. Guest names and phone numbers could reach platform logs via an unredacted error, and the 90-day log retention claim is unverified. | **Should fix before launch.** |
+| **G7** | §12.3 specifies pino structured logging with a PII-redacting serialiser, and Sentry with a PII-stripping `beforeSend`. **Pino is now implemented and its redaction is verified; Sentry is not.** The adapter exists and carries the real `beforeSend`, but the SDK is not installed, so nothing is reported. | Low, and narrowed. The PII-in-logs half — the part that mattered for this register — is closed. What remains is that an unhandled error is visible only in the platform's own log stream, with nobody alerted. The 90-day retention claim is still a platform setting nobody has confirmed. | **Reduced.** Sentry is an operational choice, not a launch blocker. The log-retention window still needs confirming: `[TO BE COMPLETED: confirm the runtime log retention window on Vercel]` |
 | **G8** | ~~The `pg_cron` schedule for `prune_attribution()` is commented out.~~ | — | ✅ **Resolved** by `migrations/20260917090000_retention_schedule`, which schedules the job idempotently when `pg_cron` is present and raises a clear notice (rather than failing) when it is not — as on local Postgres and in CI. **Verify on the production database after the first deploy** that the job exists and has run: `SELECT jobname, schedule, active FROM cron.job;` |
 | **G9** | ~~`/guests/:id/export` and `/guests/:id/erase` do not exist.~~ | — | ✅ **Resolved.** Both are implemented in `src/compliance/`, gated at `MANAGER+` on their own controller with no widening exception, and both write to the audit log. See [A13](#a13--data-subject-rights-administration). |
 | **G10** | §11.9 claims `REVOKE DELETE` on `financial_audit_log`, `payments` and `therapist_payout_ledger` as a least-privilege control. No `GRANT`/`REVOKE` statements exist in any migration. | Low. The **effect** is achieved by the append-only triggers, which are stronger (they bind every role, including the table owner). | Either add the grants or amend §11.9 to describe the triggers as the control. |
-| **G11** | §12.4 describes Redis-backed rate limiting and §12.5 lists `REDIS_URL` and `TURNSTILE_SECRET`. `env.ts` has neither, and the throttler uses in-memory storage. | Low for privacy; medium for abuse resistance. On more than one API instance, in-memory limits do not hold. | Note for the ops review. |
+| **G11** | ~~§12.4 describes Redis-backed rate limiting; the throttler uses in-memory storage, which does not hold across more than one API instance.~~ | — | ✅ **Resolved**, and it had to be: the API now runs as serverless functions, where "more than one instance" is the normal case and not an edge one. `PgThrottlerStorage` (`apps/api/src/common/pg-throttler.storage.ts`) keeps the counters in PostgreSQL — **not** Redis, deliberately: a second data store would be a second processor, a second DPA and a new row in [§3](#3-processors) for a spa doing tens of bookings a night. The counter is a single atomic `INSERT … ON CONFLICT DO UPDATE`, proven under concurrency by `test/rate-limit-storage.e2e-spec.ts`. The table is declared at [A14](#a14--rate-limiting-and-brute-force-protection). **Still open:** `TURNSTILE_SECRET` is unimplemented — `publicBookingRequestSchema` accepts `turnstileToken` and discards it. See the Cloudflare status note in [§3](#3-processors). |
 | **G12** | §11.9 claims HSTS `max-age=31536000; includeSubDomains; preload`. `helmet()` sets a default HSTS header, but `preload` is not configured and `netlify.toml` sets no HSTS header for the public site. | Low. | Verify and configure explicitly. |
 
 ---
@@ -355,7 +371,7 @@ the schema and the service code against spec §11.
 | **Accountability** | Every money action carries an actor ID, role, IP, user agent and request ID, written in the same transaction as the change |
 | **PII redaction in the audit log** | `pickAuditFields()` drops name, phone, email, notes, legal name, password hash and token hash before writing |
 | **Input validation** | Zod schemas shared between the API and the dashboard via `@berelax/contracts`; 128 KB request body cap; CORS restricted to the dashboard and public site origins |
-| **Rate limiting** | 300/min per authenticated user; 10/min and 60/hour per IP on `/public/*`; 60/min on `/r/*`; 5 per 15 min per IP and per email on login. **In-memory, not Redis-backed** — see [G11](#5-known-gaps-between-the-specification-and-the-code). |
+| **Rate limiting** | 300/min per authenticated user; 10/min and 60/hour per IP on `/public/*`; 60/min on `/r/*`; 5 per 15 min per IP on login, on top of the five-failure account lockout. Counters are held in **PostgreSQL and shared by every instance** (`PgThrottlerStorage`), not in each process — see [A14](#a14--rate-limiting-and-brute-force-protection) and [G11](#5-known-gaps-between-the-specification-and-the-code). One caveat, stated rather than buried: it is a fixed window, so a caller can land up to 2 × the limit across a window boundary. The sustained rate is unchanged. |
 | **Enumeration resistance** | The public booking endpoint returns a bare reference — no database ID, no guest lookup result, no "welcome back". A form that answers differently for a known number is a phone-number oracle. Unknown or foreign-branch service IDs are silently dropped rather than refused, so the catalogue cannot be enumerated. |
 | **WhatsApp redirect hardening** | `/r/wa?text=` is a first-party URL that gets pasted into adverts, so the text is stripped of control and bidi characters, rejected outright if it looks like a link, filtered to letters/digits/ordinary punctuation, and capped at 300 characters |
 | **Secrets** | Platform secret managers only. `.env` is never committed; `.env.example` holds names and no values. The API refuses to boot in production if `ERASURE_SALT` still holds its development default or `COOKIE_DOMAIN` is `localhost`. |
