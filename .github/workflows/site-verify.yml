@@ -157,6 +157,10 @@ jobs:
     env:
       SITE: ${{ github.event.inputs.deployment_url }}
       COMPARE_TO: ${{ github.event.inputs.compare_to }}
+      # Optional. Vercel: Project → Settings → Deployment Protection →
+      # Protection Bypass for Automation. Without it the firewall may
+      # challenge this runner, and the job says so instead of guessing.
+      BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
     steps:
       - uses: actions/checkout@v4
@@ -172,70 +176,163 @@ jobs:
           echo "SITE=$SITE" >> "$GITHUB_ENV"
           echo "Checking: $SITE"
 
-      # ── §2.1 ────────────────────────────────────────────────────────────────
+      # ═══════════════════════════════════════════════════════════════════════
+      #  ORDER MATTERS, AND SO DOES DETECTING THE FIREWALL
       #
-      #  A note on pacing, learned the hard way. The first version of this job
-      #  fired ~50 requests in four seconds and Vercel's firewall started
-      #  answering 403 to all of them. The same path returned 404 at 19:17:55
-      #  and 403 at 19:17:58 — which reads exactly like a leak appearing, and
-      #  is not one. Every request below is therefore throttled, and the header
-      #  check pulls all four headers from ONE response instead of one request
-      #  per header. The rate limiter is the site defending itself; a checker
-      #  that trips it cannot tell you anything about the site.
+      #  Vercel's firewall escalates on request volume from a datacentre IP,
+      #  which is exactly what a GitHub runner is. Two things follow.
       #
-      - name: What MUST be served — every line 200
+      #  1. The cheap, precise checks run FIRST — headers, then the seven
+      #     must-serve paths — and the forty-path sweep runs LAST. Earlier
+      #     versions had it the other way round and the header check never got
+      #     a real response.
+      #
+      #  2. Every response is inspected for `x-vercel-mitigated`. This is not
+      #     cosmetic. A challenge answers 403, and a 403 is exactly what the
+      #     must-not-serve check treats as a PASS — so a challenged run would
+      #     have reported "every path withheld" while proving nothing whatever.
+      #     A check that can pass without testing anything is worse than no
+      #     check, because someone will move DNS on the strength of it. Any
+      #     challenged response is now INCONCLUSIVE and fails the step.
+      #
+      #  The durable fix is Vercel's own: Project → Settings → Deployment
+      #  Protection → Protection Bypass for Automation. Put that secret in the
+      #  repo as VERCEL_AUTOMATION_BYPASS_SECRET and every request below sends
+      #  it, so the firewall stays fully on for the public and lets this job
+      #  through. Without it the job still runs, and still refuses to pretend.
+      # ═══════════════════════════════════════════════════════════════════════
+
+      - name: Set up request helper
         run: |
           set -euo pipefail
-          FAIL=0
-          for p in \
-            / \
-            /index.html \
-            /privacy.html \
-            /assets/logo/be-relax-logo-dark.png \
-            /assets/photos/hero-team.jpg \
-            /assets/videos/spa-tour-01.mp4 \
-            /assets/js/consent.js \
-          ; do
-            CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$SITE$p" || echo 000)"
-            # 403/429 here is the firewall, not the site. Back off once and retry
-            # before believing it, otherwise a busy moment fails the build.
-            if [ "$CODE" = "403" ] || [ "$CODE" = "429" ]; then
-              sleep 12
-              CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$SITE$p" || echo 000)"
-            fi
-            printf '%s  %s\n' "$CODE" "$p"
-            if [ "$CODE" != "200" ]; then
-              echo "::error::$p returned $CODE, expected 200"
+          if [ -n "${BYPASS:-}" ]; then
+            echo "Protection bypass secret is set — requests will carry x-vercel-protection-bypass."
+          else
+            echo "::warning::VERCEL_AUTOMATION_BYPASS_SECRET is not set. Vercel's firewall may challenge this runner, in which case the job reports INCONCLUSIVE rather than guessing."
+          fi
+
+      - name: Security headers on every URL class
+        run: |
+          set -uo pipefail   # deliberately NOT -e: a missing header must be
+                             # reported, not kill the script before it can say so
+          FAIL=0; CHALLENGED=0
+          H=/tmp/hdrs.txt
+
+          get () {  # url -> saves headers to $H
+            local args=(-sS -D "$H" -o /dev/null --max-time 25)
+            [ -n "${BYPASS:-}" ] && args+=(-H "x-vercel-protection-bypass: $BYPASS")
+            curl "${args[@]}" "$1" || return 1
+            tr -d '\r' < "$H" > "$H.clean" && mv "$H.clean" "$H"
+            return 0
+          }
+
+          hdr () { grep -i "^$1:" "$H" 2>/dev/null | head -1 | sed 's/^[^:]*: *//' | tr 'A-Z' 'a-z'; return 0; }
+
+          want () {
+            local url="$1" name="$2" expect="$3" got
+            got="$(hdr "$name")"
+            if [ "$got" = "$(echo "$expect" | tr 'A-Z' 'a-z')" ]; then
+              printf '  ok        %-24s %s\n' "$name" "$url"
+            elif [ -z "$got" ]; then
+              printf '  ABSENT    %-24s %s\n' "$name" "$url"
+              echo "::error::$url is missing the $name header (expected '$expect')"
+              FAIL=1
+            else
+              printf '  WRONG     %-24s %s\n' "$name" "$url"
+              echo "::error::$url — $name is '$got', expected '$expect'"
               FAIL=1
             fi
-            sleep 0.5
+          }
+
+          check_url () {
+            local url="$1" cc="$2" before=$FAIL
+            echo "── $url"
+            if ! get "$url"; then echo "::error::could not fetch $url"; FAIL=1; return 0; fi
+
+            # Did we reach the site, or the doorman?
+            if [ -n "$(hdr 'x-vercel-mitigated')" ] || [ -n "$(hdr 'x-vercel-challenge-token')" ]; then
+              printf '  CHALLENGED  %s\n' "$url"
+              CHALLENGED=1
+              sleep 1
+              return 0
+            fi
+
+            want "$url" 'x-content-type-options' 'nosniff'
+            want "$url" 'x-frame-options'        'SAMEORIGIN'
+            want "$url" 'referrer-policy'        'strict-origin-when-cross-origin'
+            want "$url" 'permissions-policy'     'geolocation=(), microphone=(), camera=()'
+            want "$url" 'cache-control'          "$cc"
+
+            if [ "$FAIL" -ne "$before" ]; then
+              echo "  --- response headers as received ---"
+              sed 's/^/      /' "$H"
+              echo "  ------------------------------------"
+            fi
+            sleep 1
+            return 0
+          }
+
+          # privacy.html is the serious one: it carries the version string that
+          # consent records are filed against, and a stale copy shows a guest a
+          # version their consent was never given for.
+          check_url "$SITE/"             'public, max-age=0, must-revalidate'
+          check_url "$SITE/index.html"   'public, max-age=0, must-revalidate'
+          check_url "$SITE/privacy.html" 'public, max-age=0, must-revalidate'
+          check_url "$SITE/assets/js/consent.js"        'public, max-age=3600, must-revalidate'
+          check_url "$SITE/assets/photos/hero-team.jpg" 'public, max-age=3600, must-revalidate'
+
+          if [ "$CHALLENGED" -ne 0 ]; then
+            echo "::error::Vercel's firewall challenged this runner, so the headers were never observed. This is INCONCLUSIVE — it says nothing about whether the headers are correct. Set VERCEL_AUTOMATION_BYPASS_SECRET (Project → Settings → Deployment Protection → Protection Bypass for Automation) and re-run."
+            exit 1
+          fi
+          [ "$FAIL" -eq 0 ] || exit 1
+          echo "All header classes correct."
+
+      - name: Privacy version string is reachable and parseable
+        run: |
+          set -uo pipefail
+          ARGS=(-sS --max-time 25)
+          [ -n "${BYPASS:-}" ] && ARGS+=(-H "x-vercel-protection-bypass: $BYPASS")
+          BODY="$(curl "${ARGS[@]}" "$SITE/privacy.html")"
+          if echo "$BODY" | grep -qi 'x-vercel-challenge\|_vercel/challenge'; then
+            echo "::error::Challenged by the firewall — INCONCLUSIVE, not a finding."
+            exit 1
+          fi
+          # Consent records are filed against this exact string. If the deployed
+          # page does not carry it, consent cannot be versioned.
+          V="$(echo "$BODY" | grep -o 'name="berelax:privacy-version"[^>]*' | head -1)"
+          if [ -z "$V" ]; then
+            echo "::error::privacy.html does not carry the berelax:privacy-version meta tag"
+            exit 1
+          fi
+          echo "  ok  $V"
+
+      - name: What MUST be served — every line 200
+        run: |
+          set -uo pipefail
+          FAIL=0
+          for p in / /index.html /privacy.html \
+                   /assets/logo/be-relax-logo-dark.png \
+                   /assets/photos/hero-team.jpg \
+                   /assets/videos/spa-tour-01.mp4 \
+                   /assets/js/consent.js ; do
+            ARGS=(-sS -o /dev/null -w '%{http_code}' --max-time 25)
+            [ -n "${BYPASS:-}" ] && ARGS+=(-H "x-vercel-protection-bypass: $BYPASS")
+            CODE="$(curl "${ARGS[@]}" "$SITE$p" || echo 000)"
+            if [ "$CODE" = "403" ] || [ "$CODE" = "429" ]; then
+              sleep 12
+              CODE="$(curl "${ARGS[@]}" "$SITE$p" || echo 000)"
+            fi
+            printf '%s  %s\n' "$CODE" "$p"
+            [ "$CODE" = "200" ] || { echo "::error::$p returned $CODE, expected 200"; FAIL=1; }
+            sleep 1
           done
-          # privacy.html especially: the consent banner links to it, and a
-          # banner pointing at a 404 is not consent.
           [ "$FAIL" -eq 0 ] || exit 1
 
-      # ── §2.2 ────────────────────────────────────────────────────────────────
-      #
-      #  One list, built from two sources and de-duplicated, so each URL is
-      #  requested once:
-      #
-      #    explicit  deep paths that matter most — the compliance file, the
-      #              Prisma schema, the lockfiles. Nothing generates these.
-      #    generated every top-level entry of the repository at this commit
-      #              that is not one of the three published ones, in both bare
-      #              and trailing-slash form. A directory added next year is
-      #              covered without anyone remembering to edit this file.
-      #
-      #  PASS is any 4xx: the content was withheld, which is the whole question.
-      #  403 and 404 are equally fine and a checker that insists on 404
-      #  specifically is testing the host's choice of status code, not whether
-      #  anything leaked. FAIL is 2xx (served), 3xx (may redirect TO the
-      #  content) or 5xx (the host did something unexpected with a path that
-      #  should simply not exist).
-      #
+      # ── §2.2 — the big sweep, deliberately last ─────────────────────────────
       - name: What must NOT be served — nothing but the site
         run: |
-          set -euo pipefail
+          set -uo pipefail
 
           {
             cat <<'PATHS'
@@ -272,111 +369,39 @@ jobs:
           } | sed 's/^ *//' | sort -u > /tmp/must-not-serve.txt
 
           echo "Checking $(wc -l < /tmp/must-not-serve.txt) paths."
-          FAIL=0
+          FAIL=0; CHALLENGED=0; D=/tmp/mns.txt
           while IFS= read -r p; do
             [ -n "$p" ] || continue
-            CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$SITE$p" || echo 000)"
-            case "$CODE" in
-              4??) printf '  %s  %s\n' "$CODE" "$p" ;;
-              *)   printf '  %s  %s  <-- LEAK\n' "$CODE" "$p"
-                   echo "::error::$p returned $CODE. Anything but a 4xx here means the path is reachable. DO NOT MOVE DNS."
-                   FAIL=1 ;;
-            esac
-            sleep 0.5
+            ARGS=(-sS -D "$D" -o /dev/null -w '%{http_code}' --max-time 25)
+            [ -n "${BYPASS:-}" ] && ARGS+=(-H "x-vercel-protection-bypass: $BYPASS")
+            CODE="$(curl "${ARGS[@]}" "$SITE$p" || echo 000)"
+
+            # A challenge answers 403 — the same code this check calls a pass.
+            # Counting it as a pass would mean reporting "withheld" for a path
+            # nobody ever asked the site about.
+            if grep -qi '^x-vercel-mitigated:\|^x-vercel-challenge-token:' "$D" 2>/dev/null; then
+              printf '  %s  %s  <-- CHALLENGED, not verified\n' "$CODE" "$p"
+              CHALLENGED=1
+            else
+              case "$CODE" in
+                4??) printf '  %s  %s\n' "$CODE" "$p" ;;
+                *)   printf '  %s  %s  <-- LEAK\n' "$CODE" "$p"
+                     echo "::error::$p returned $CODE. Anything but a 4xx means the path is reachable. DO NOT MOVE DNS."
+                     FAIL=1 ;;
+              esac
+            fi
+            sleep 1
           done < /tmp/must-not-serve.txt
 
-          [ "$FAIL" -eq 0 ] || {
+          if [ "$FAIL" -ne 0 ]; then
             echo "::error::A path that must not be public answered. Stop-the-world — see runbook §2.2."
             exit 1
-          }
-          echo "OK — every path withheld."
-
-      # ── §2.3 ────────────────────────────────────────────────────────────────
-      - name: Security headers on every URL class
-        run: |
-          set -uo pipefail   # deliberately NOT -e; see below
-          FAIL=0
-          H=/tmp/hdrs.txt
-
-          #  No `set -e` in this step, on purpose. The first version had it, and
-          #  a `grep` for a header that is absent returns 1, which under -e and
-          #  pipefail killed the script before it could print WHICH header was
-          #  missing. The step failed in under a second with no output — the
-          #  least useful possible result from a check whose entire job is to
-          #  say what is wrong. Every lookup below tolerates its own failure and
-          #  reports it instead.
-
-          hdr () {  # header-name -> value, lowercased, empty if absent
-            grep -i "^$1:" "$H" 2>/dev/null | head -1 | sed 's/^[^:]*: *//' | tr 'A-Z' 'a-z'
-            return 0
-          }
-
-          want () {  # url, header-name, expected-value
-            local url="$1" name="$2" expect="$3" got
-            got="$(hdr "$name")"
-            if [ "$got" = "$(echo "$expect" | tr 'A-Z' 'a-z')" ]; then
-              printf '  ok      %-24s %s\n' "$name" "$url"
-            elif [ -z "$got" ]; then
-              printf '  ABSENT  %-24s %s\n' "$name" "$url"
-              echo "::error::$url is missing the $name header (expected '$expect')"
-              FAIL=1
-            else
-              printf '  WRONG   %-24s %s\n' "$name" "$url"
-              echo "::error::$url — $name is '$got', expected '$expect'"
-              FAIL=1
-            fi
-          }
-
-          check_url () {  # url, expected cache-control
-            local url="$1" cc="$2"
-            echo "── $url"
-            if ! curl -sS -D "$H" -o /dev/null --max-time 25 "$url"; then
-              echo "::error::could not fetch $url"; FAIL=1; return 0
-            fi
-            tr -d '\r' < "$H" > "$H.clean" && mv "$H.clean" "$H"
-
-            want "$url" 'x-content-type-options' 'nosniff'
-            want "$url" 'x-frame-options'        'SAMEORIGIN'
-            want "$url" 'referrer-policy'        'strict-origin-when-cross-origin'
-            want "$url" 'permissions-policy'     'geolocation=(), microphone=(), camera=()'
-            want "$url" 'cache-control'          "$cc"
-
-            # When something is off, show what the host actually sent. Guessing
-            # from an expected-vs-got line alone is how the next hour is wasted.
-            if [ "$FAIL" -ne 0 ]; then
-              echo "  --- response headers as received ---"
-              sed 's/^/      /' "$H"
-              echo "  ------------------------------------"
-            fi
-            sleep 0.5
-            return 0
-          }
-
-          # The pages that must always revalidate. privacy.html is the serious
-          # one: it carries the version string consent records are filed
-          # against, and a stale copy shows a guest the wrong version.
-          check_url "$SITE/"             'public, max-age=0, must-revalidate'
-          check_url "$SITE/index.html"   'public, max-age=0, must-revalidate'
-          check_url "$SITE/privacy.html" 'public, max-age=0, must-revalidate'
-
-          check_url "$SITE/assets/js/consent.js"        'public, max-age=3600, must-revalidate'
-          check_url "$SITE/assets/photos/hero-team.jpg" 'public, max-age=3600, must-revalidate'
-
-          [ "$FAIL" -eq 0 ] || exit 1
-          echo "All header classes correct."
-
-      - name: Privacy version string is reachable and parseable
-        run: |
-          set -euo pipefail
-          # Consent records are filed against this exact string. If the deployed
-          # page does not carry it, consent cannot be versioned.
-          V="$(curl -sS --max-time 25 "$SITE/privacy.html" \
-               | grep -o 'name="berelax:privacy-version"[^>]*' | head -1)"
-          if [ -z "$V" ]; then
-            echo "::error::privacy.html does not carry the berelax:privacy-version meta tag"
+          fi
+          if [ "$CHALLENGED" -ne 0 ]; then
+            echo "::error::One or more paths were answered by the firewall rather than the site, so they were NOT verified. INCONCLUSIVE — do not read this as 'nothing leaked'. Set VERCEL_AUTOMATION_BYPASS_SECRET and re-run."
             exit 1
           fi
-          echo "  ok  $V"
+          echo "OK — every path genuinely withheld."
 
       - name: Optional — diff headers against the site that is live today
         if: env.COMPARE_TO != ''
