@@ -1680,6 +1680,41 @@ body.nav-open .fab{opacity:0;pointer-events:none}
 
   var WHATSAPP = "971525108633";          /* <-- your WhatsApp number */
 
+  /* ── Attribution wiring · spec §10.3 and §10.4 ──────────────────────────
+     DORMANT unless window.BERELAX_ATTRIBUTION_API is set, which it is not
+     until api.berelax.ae exists. With it unset, waUrl() returns the same
+     wa.me link the site has always used, no listener is added and nothing
+     is sent — the page behaves exactly as it did before. One line turns it
+     on; see assets/js/README.md. */
+  var ATTR_API = (typeof window.BERELAX_ATTRIBUTION_API === "string" && window.BERELAX_ATTRIBUTION_API)
+    ? window.BERELAX_ATTRIBUTION_API.replace(/\/+$/, "")
+    : null;
+
+  /* A wa.me link is a dead end: the click leaves the site and nothing comes
+     back. When the API is configured, every WhatsApp destination goes through
+     its redirect instead, which logs the click and 302s onward. §10.4. */
+  function waUrl(text, ctx){
+    var q = text ? "?text=" + encodeURIComponent(text) : "";
+    if(!ATTR_API) return "https://wa.me/" + WHATSAPP + q;
+    return ATTR_API + "/r/wa?ctx=" + encodeURIComponent(ctx || "link")
+         + (text ? "&text=" + encodeURIComponent(text) : "");
+  }
+
+  if(ATTR_API){
+    /* Rewritten at load rather than intercepted on click, so the address the
+       guest sees on hover is the one they actually land on. */
+    Array.prototype.forEach.call(
+      document.querySelectorAll('a[href^="https://wa.me/"]'),
+      function(a){
+        var i = a.href.indexOf("?text=");
+        var text = i > -1 ? decodeURIComponent(a.href.slice(i + 6)) : "";
+        var ctx = a.getAttribute("data-wa-ctx")
+               || (a.className.indexOf("fab") > -1 ? "fab" : "link");
+        a.href = waUrl(text, ctx);
+      }
+    );
+  }
+
   /* --- a price row books that exact treatment over WhatsApp --- */
   document.querySelectorAll(".book-row").forEach(function(row){
     row.addEventListener("click", function(){
@@ -1690,7 +1725,7 @@ body.nav-open .fab{opacity:0;pointer-events:none}
         "Duration: "  + d.dur + "\n" +
         "Price: AED " + d.price + "\n\n" +
         "Please confirm availability.";
-      open("https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(txt), "_blank");
+      open(waUrl(txt, "menu:" + d.menu + ":" + d.treat), "_blank");
     });
   });
 
@@ -1710,7 +1745,30 @@ body.nav-open .fab{opacity:0;pointer-events:none}
       "Duration: "  + f.elements.duration.value + "\n" +
       "Date: "      + (f.elements.date.value || "flexible") + "\n" +
       (f.elements.message.value ? "Notes: " + f.elements.message.value : "");
-    open("https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(txt), "_blank");
+
+    /* §10.3 — the enquiry also reaches the CRM carrying whatever attribution
+       the visitor arrived with, so touch → request → reservation → payment is
+       a join rather than a guess. Fire and forget: WhatsApp opens either way,
+       because a guest must never lose a booking to a failed analytics call. */
+    if(ATTR_API){
+      try{
+        fetch(ATTR_API + "/public/booking-requests", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          keepalive: true,
+          body: JSON.stringify({
+            guestName:   f.elements.name.value,
+            guestPhone:  f.elements.phone.value,
+            message:     f.elements.message.value || undefined,
+            requestedAt: f.elements.date.value || undefined,
+            attribution: window.__berelaxAttr || undefined
+          })
+        }).catch(function(){});
+      }catch(err){ /* never block the booking */ }
+    }
+
+    open(waUrl(txt, "booking-form"), "_blank");
   });
 })();
 </script>
