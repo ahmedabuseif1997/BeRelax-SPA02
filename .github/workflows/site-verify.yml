@@ -173,6 +173,16 @@ jobs:
           echo "Checking: $SITE"
 
       # ── §2.1 ────────────────────────────────────────────────────────────────
+      #
+      #  A note on pacing, learned the hard way. The first version of this job
+      #  fired ~50 requests in four seconds and Vercel's firewall started
+      #  answering 403 to all of them. The same path returned 404 at 19:17:55
+      #  and 403 at 19:17:58 — which reads exactly like a leak appearing, and
+      #  is not one. Every request below is therefore throttled, and the header
+      #  check pulls all four headers from ONE response instead of one request
+      #  per header. The rate limiter is the site defending itself; a checker
+      #  that trips it cannot tell you anything about the site.
+      #
       - name: What MUST be served — every line 200
         run: |
           set -euo pipefail
@@ -187,122 +197,151 @@ jobs:
             /assets/js/consent.js \
           ; do
             CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$SITE$p" || echo 000)"
+            # 403/429 here is the firewall, not the site. Back off once and retry
+            # before believing it, otherwise a busy moment fails the build.
+            if [ "$CODE" = "403" ] || [ "$CODE" = "429" ]; then
+              sleep 12
+              CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$SITE$p" || echo 000)"
+            fi
             printf '%s  %s\n' "$CODE" "$p"
             if [ "$CODE" != "200" ]; then
               echo "::error::$p returned $CODE, expected 200"
               FAIL=1
             fi
+            sleep 0.5
           done
           # privacy.html especially: the consent banner links to it, and a
           # banner pointing at a 404 is not consent.
           [ "$FAIL" -eq 0 ] || exit 1
 
-      # ── §2.2, explicit ──────────────────────────────────────────────────────
-      - name: What must NOT be served — every line 404 (explicit list)
+      # ── §2.2 ────────────────────────────────────────────────────────────────
+      #
+      #  One list, built from two sources and de-duplicated, so each URL is
+      #  requested once:
+      #
+      #    explicit  deep paths that matter most — the compliance file, the
+      #              Prisma schema, the lockfiles. Nothing generates these.
+      #    generated every top-level entry of the repository at this commit
+      #              that is not one of the three published ones, in both bare
+      #              and trailing-slash form. A directory added next year is
+      #              covered without anyone remembering to edit this file.
+      #
+      #  PASS is any 4xx: the content was withheld, which is the whole question.
+      #  403 and 404 are equally fine and a checker that insists on 404
+      #  specifically is testing the host's choice of status code, not whether
+      #  anything leaked. FAIL is 2xx (served), 3xx (may redirect TO the
+      #  content) or 5xx (the host did something unexpected with a path that
+      #  should simply not exist).
+      #
+      - name: What must NOT be served — nothing but the site
         run: |
           set -euo pipefail
+
+          {
+            cat <<'PATHS'
+          /platform/
+          /platform/package.json
+          /platform/pnpm-lock.yaml
+          /platform/docker-compose.yml
+          /platform/apps/api/package.json
+          /platform/apps/api/prisma/schema.prisma
+          /platform/apps/dashboard/vercel.json
+          /docs/
+          /docs/spa-crm-architecture-spec.md
+          /docs/compliance/data-processing-register.md
+          /docs/compliance/privacy-notice.md
+          /docs/compliance/runbooks/data-breach.md
+          /docs/runbooks/go-live.md
+          /docs/runbooks/netlify-to-vercel.md
+          /docs/sql/verify-core-constraints.sql
+          /scripts/backup-verify.sh
+          /.github/workflows/platform-deploy.yml
+          /.github/workflows/platform-ci.yml
+          /netlify.toml
+          /vercel.json
+          /README.md
+          /.gitignore
+          /.env
+          /.env.example
+          PATHS
+            ALLOWED='index.html privacy.html assets'
+            while IFS= read -r entry; do
+              case " $ALLOWED " in *" $entry "*) continue ;; esac
+              printf '/%s\n/%s/\n' "$entry" "$entry"
+            done < <(git ls-tree --name-only HEAD | sed 's#/$##' | sort -u)
+          } | sed 's/^ *//' | sort -u > /tmp/must-not-serve.txt
+
+          echo "Checking $(wc -l < /tmp/must-not-serve.txt) paths."
           FAIL=0
-          for p in \
-            /platform/ \
-            /platform/package.json \
-            /platform/pnpm-lock.yaml \
-            /platform/docker-compose.yml \
-            /platform/apps/api/package.json \
-            /platform/apps/api/prisma/schema.prisma \
-            /platform/apps/dashboard/vercel.json \
-            /docs/ \
-            /docs/spa-crm-architecture-spec.md \
-            /docs/compliance/data-processing-register.md \
-            /docs/compliance/privacy-notice.md \
-            /docs/compliance/runbooks/data-breach.md \
-            /docs/runbooks/go-live.md \
-            /docs/runbooks/netlify-to-vercel.md \
-            /docs/sql/verify-core-constraints.sql \
-            /scripts/backup-verify.sh \
-            /.github/workflows/platform-deploy.yml \
-            /.github/workflows/platform-ci.yml \
-            /netlify.toml \
-            /vercel.json \
-            /README.md \
-            /.gitignore \
-            /.env \
-            /.env.example \
-          ; do
+          while IFS= read -r p; do
+            [ -n "$p" ] || continue
             CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$SITE$p" || echo 000)"
-            printf '%s  %s\n' "$CODE" "$p"
-            if [ "$CODE" != "404" ]; then
-              echo "::error::$p returned $CODE — it must be 404. DO NOT MOVE DNS."
-              FAIL=1
-            fi
-          done
+            case "$CODE" in
+              4??) printf '  %s  %s\n' "$CODE" "$p" ;;
+              *)   printf '  %s  %s  <-- LEAK\n' "$CODE" "$p"
+                   echo "::error::$p returned $CODE. Anything but a 4xx here means the path is reachable. DO NOT MOVE DNS."
+                   FAIL=1 ;;
+            esac
+            sleep 0.5
+          done < /tmp/must-not-serve.txt
+
           [ "$FAIL" -eq 0 ] || {
-            echo "::error::A path that must not be public answered. This is a stop-the-world event — see runbook §2.2."
+            echo "::error::A path that must not be public answered. Stop-the-world — see runbook §2.2."
             exit 1
           }
-
-      # ── §2.2, generated from the repository as it actually is ───────────────
-      - name: What must NOT be served — every root entry that is not the site
-        run: |
-          set -euo pipefail
-          FAIL=0
-          ALLOWED='index.html privacy.html assets'
-          while IFS= read -r entry; do
-            case " $ALLOWED " in *" $entry "*) continue ;; esac
-            for p in "/$entry" "/$entry/"; do
-              CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$SITE$p" || echo 000)"
-              printf '%s  %s\n' "$CODE" "$p"
-              if [ "$CODE" != "404" ]; then
-                echo "::error::$p returned $CODE — it must be 404."
-                FAIL=1
-              fi
-            done
-          done < <(git ls-tree --name-only HEAD | sed 's#/$##' | sort -u)
-          [ "$FAIL" -eq 0 ] || exit 1
+          echo "OK — every path withheld."
 
       # ── §2.3 ────────────────────────────────────────────────────────────────
       - name: Security headers on every URL class
         run: |
           set -euo pipefail
           FAIL=0
+          H=/tmp/hdrs.txt
 
-          want_header () {  # url, header-name, expected-value
+          fetch () {  # one request, all headers, then read them from disk
+            curl -sS -D "$H" -o /dev/null --max-time 25 "$1" || return 1
+            tr -d '\r' < "$H" > "$H.clean" && mv "$H.clean" "$H"
+          }
+
+          want () {  # url, header-name, expected-value  (reads the saved response)
             local url="$1" name="$2" want="$3" got
-            got="$(curl -sS -D - -o /dev/null --max-time 25 "$url" \
-                   | tr -d '\r' \
-                   | grep -i "^$name:" | head -1 | sed "s/^[^:]*: *//" | tr 'A-Z' 'a-z')"
+            got="$(grep -i "^$name:" "$H" | head -1 | sed 's/^[^:]*: *//' | tr 'A-Z' 'a-z')"
             if [ "$got" != "$(echo "$want" | tr 'A-Z' 'a-z')" ]; then
               echo "::error::$url — $name is '$got', expected '$want'"
               FAIL=1
             else
-              printf '  ok  %-22s %s\n' "$name" "$url"
+              printf '  ok  %-24s %s\n' "$name" "$url"
             fi
           }
 
-          for p in / /index.html /privacy.html /assets/js/consent.js; do
-            want_header "$SITE$p" 'x-content-type-options' 'nosniff'
-            want_header "$SITE$p" 'x-frame-options'        'SAMEORIGIN'
-            want_header "$SITE$p" 'referrer-policy'        'strict-origin-when-cross-origin'
-            want_header "$SITE$p" 'permissions-policy'     'geolocation=(), microphone=(), camera=()'
-          done
+          check_url () {  # url, expected cache-control
+            local url="$1" cc="$2"
+            fetch "$url" || { echo "::error::could not fetch $url"; FAIL=1; return; }
+            want "$url" 'x-content-type-options' 'nosniff'
+            want "$url" 'x-frame-options'        'SAMEORIGIN'
+            want "$url" 'referrer-policy'        'strict-origin-when-cross-origin'
+            want "$url" 'permissions-policy'     'geolocation=(), microphone=(), camera=()'
+            want "$url" 'cache-control'          "$cc"
+            sleep 0.5
+          }
 
           # The pages that must always revalidate. privacy.html is the serious
           # one: it carries the version string consent records are filed
-          # against, and a stale copy is a consent problem, not a perf one.
-          for p in / /index.html /privacy.html; do
-            want_header "$SITE$p" 'cache-control' 'public, max-age=0, must-revalidate'
-          done
+          # against, and a stale copy shows a guest the wrong version.
+          check_url "$SITE/"             'public, max-age=0, must-revalidate'
+          check_url "$SITE/index.html"   'public, max-age=0, must-revalidate'
+          check_url "$SITE/privacy.html" 'public, max-age=0, must-revalidate'
 
-          for p in /assets/js/consent.js /assets/photos/hero-team.jpg; do
-            want_header "$SITE$p" 'cache-control' 'public, max-age=3600, must-revalidate'
-          done
+          check_url "$SITE/assets/js/consent.js"        'public, max-age=3600, must-revalidate'
+          check_url "$SITE/assets/photos/hero-team.jpg" 'public, max-age=3600, must-revalidate'
 
           [ "$FAIL" -eq 0 ] || exit 1
 
       - name: Privacy version string is reachable and parseable
         run: |
           set -euo pipefail
-          # Consent records are filed against this exact string. If the
-          # deployed page does not carry it, consent cannot be versioned.
+          # Consent records are filed against this exact string. If the deployed
+          # page does not carry it, consent cannot be versioned.
           V="$(curl -sS --max-time 25 "$SITE/privacy.html" \
                | grep -o 'name="berelax:privacy-version"[^>]*' | head -1)"
           if [ -z "$V" ]; then
