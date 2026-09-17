@@ -103,6 +103,15 @@ enum ConsentType {
   PHOTO
 }
 
+/// The Phase 7 parallel run's nightly verdict (§14).
+/// MATCHED_WITH_NOTE is still a match: every line was inside tolerance and the
+/// manager wrote down why the night was unusual. It counts towards the streak.
+enum ReconciliationVerdict {
+  MATCHED
+  MATCHED_WITH_NOTE
+  MISMATCHED
+}
+
 // ─────────────────────────────────────────────────────────────
 // TENANCY
 // ─────────────────────────────────────────────────────────────
@@ -138,6 +147,7 @@ model Branch {
   payoutBatches   PayoutBatch[]
   shifts          Shift[]
   auditEntries    FinancialAuditLog[]
+  reconciliations NightlyReconciliation[]
 
   @@map("branches")
 }
@@ -646,4 +656,75 @@ model IdempotencyRecord {
 
   @@index([expiresAt])
   @@map("idempotency_records")
+}
+
+// ─────────────────────────────────────────────────────────────
+// THE PARALLEL PILOT — §14 Phase 7
+// ─────────────────────────────────────────────────────────────
+
+/// One night of the parallel run: what reception's PAPER sheet said, what the
+/// SYSTEM said, and the difference between them.
+///
+/// Append-only in spirit and enforced as such by trigger: a correction is a NEW
+/// row for the same trading night, never an edit of the old one, and the most
+/// recent submission is the one that counts. That is the same rule §9.4 applies
+/// to money, for the same reason — a reconciliation you can quietly rewrite
+/// afterwards proves nothing about the night it claims to certify.
+///
+/// The system figures are SNAPSHOTTED here rather than recomputed on read. A
+/// night signed off on Tuesday must still read the way it read on Tuesday, even
+/// after a late refund moves the live total. `lines` holds the full comparison
+/// exactly as it was shown, which is what makes this a record rather than a view.
+model NightlyReconciliation {
+  id          String                @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  branchId    String                @map("branch_id") @db.Uuid
+  /// The TRADING night, not the calendar date: 01:30 belongs to the night before (§3.3).
+  businessDay DateTime              @map("business_day") @db.Date
+  verdict     ReconciliationVerdict
+
+  /// ─ What the paper said ─
+  countedCashFils    Int  @map("counted_cash_fils")
+  paperBookings      Int  @map("paper_bookings")
+  paperCardTotalFils Int  @map("paper_card_total_fils")
+  /// Optional. Cash tips handed STRAIGHT to therapists — money that never
+  /// entered the till, so it is not inside `countedCashFils`. §9.1.
+  paperTipsCashFils  Int? @map("paper_tips_cash_fils")
+
+  /// ─ What the system said, at the moment of submission ─
+  systemCashFils      Int @map("system_cash_fils")
+  systemBookings      Int @map("system_bookings")
+  systemCardTotalFils Int @map("system_card_total_fils")
+  systemTipsCashFils  Int @map("system_tips_cash_fils")
+
+  /// ─ Paper minus system. Signed: positive means the paper is higher ─
+  cashVarianceFils     Int  @map("cash_variance_fils")
+  bookingsVariance     Int  @map("bookings_variance")
+  cardVarianceFils     Int  @map("card_variance_fils")
+  tipsCashVarianceFils Int? @map("tips_cash_variance_fils")
+
+  /// The cash tolerance in force when this night was signed off. Stored so a
+  /// later change to the setting cannot retroactively turn a variance into a match.
+  cashToleranceFils Int @map("cash_tolerance_fils")
+  /// Treatments still IN_PROGRESS on this night. A night with one open session
+  /// has a tip nobody has recorded yet, so its figures are still moving.
+  openSessions      Int @map("open_sessions")
+
+  /// The full line-by-line comparison, exactly as it was presented and signed off.
+  lines Json
+
+  /// §15.4: cash is trust with a paper trail, so a variance is attributed to
+  /// whoever actually took money at the desk that night — never to nobody.
+  cashDeskUserIds String[] @map("cash_desk_user_ids") @db.Uuid
+
+  note              String?
+  submittedByUserId String   @map("submitted_by_user_id") @db.Uuid
+  submittedAt       DateTime @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  /// The submission this one corrects, when the night was reconciled again.
+  supersedesId      String?  @map("supersedes_id") @db.Uuid
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@index([branchId, businessDay, submittedAt])
+  @@index([branchId, submittedAt])
+  @@map("nightly_reconciliations")
 }

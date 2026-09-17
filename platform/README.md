@@ -69,7 +69,7 @@ platform/
 │   │       ├── shifts/           roster, clock in and out
 │   │       ├── reports/          close-out, revenue, utilisation, tips, channels
 │   │       ├── compliance/       export, erasure, retention, the Art. 7 register
-│   │       ├── prisma/           client, branch-scope extension
+│   │       ├── prisma/           the client
 │   │       ├── common/           audit, idempotency, error filters, context
 │   │       ├── config/           env validation — the process refuses a bad one
 │   │       └── health/

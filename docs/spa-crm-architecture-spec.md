@@ -1421,9 +1421,19 @@ export class ReportsController {
 
 Every repository method takes `branchId` as its first argument, sourced from `req.user.bid`. There is no code path where a branch id arrives from the client. With one branch this is invisible; the day a second branch opens it is the difference between a config change and a security incident.
 
-A Prisma client extension enforces it mechanically so nobody has to remember:
+It is tempting to add a Prisma client extension that injects `branchId` into
+every query, as a safety net nobody has to remember. **Do not ship one without
+wiring it.** An earlier draft of this system carried exactly that file, applied
+from nowhere — so the codebase documented a guarantee that did not exist, and a
+reviewer reading it would reasonably conclude the explicit checks were belt to
+its braces. They were the only thing holding.
+
+If you want the net, apply it per request from an interceptor and write a test
+that proves an un-scoped query is rejected. Otherwise rely on the explicit
+argument, which is legible at every call site:
 
 ```ts
+// ILLUSTRATIVE — this file is not in the codebase. See the note above.
 // apps/api/src/prisma/branch-scope.extension.ts
 const BRANCH_SCOPED = new Set([
   'Reservation', 'BookingRequest', 'Payment', 'Tip', 'Guest',
@@ -1452,7 +1462,7 @@ export const branchScope = (branchId: string) =>
   );
 ```
 
-The extension is applied per-request from an interceptor. It is a safety net, not a licence to be careless — service methods still pass `branchId` explicitly.
+The real enforcement is the explicit argument: every repository method takes `branchId` as its first parameter, sourced from `req.user.bid`, and no schema in `@berelax/contracts` has a `branchId` field for a caller to set. That is what a security review can actually verify, and it is what holds today.
 
 ---
 

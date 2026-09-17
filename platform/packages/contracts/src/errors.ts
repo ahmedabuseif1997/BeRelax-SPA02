@@ -106,6 +106,18 @@ export const ErrorCode = {
   // handling in two.
   REPORT_RANGE_TOO_LARGE: 'REPORT_RANGE_TOO_LARGE',
 
+  // The parallel pilot (§14, Phase 7). A reconciliation RECORDS a variance --
+  // it does not refuse one, because a variance is a finding and suppressing it
+  // is how a pilot passes on optimism. So there is exactly one thing this
+  // endpoint will not do: certify a night that has not happened yet. The
+  // figures for a future trading day are all zero, and a paper sheet compared
+  // against them would read as a mismatch caused entirely by the calendar.
+  //
+  // A misconfigured cash tolerance gets no code here and deliberately so: it
+  // fails the PROCESS at boot, not a request, and every code in this enum is
+  // something the dashboard receives and switches on (§3.6).
+  RECONCILIATION_DAY_IN_FUTURE: 'RECONCILIATION_DAY_IN_FUTURE',
+
   // Generic
   RATE_LIMITED: 'RATE_LIMITED',
   VALIDATION_FAILED: 'VALIDATION_FAILED',

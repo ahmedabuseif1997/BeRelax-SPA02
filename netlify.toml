@@ -10,7 +10,7 @@
 
 [build]
   publish = "_site"
-  command = "mkdir -p _site && cp index.html _site/ && cp -R assets _site/assets"
+  command = "mkdir -p _site && cp index.html privacy.html _site/ && cp -R assets _site/assets"
 
 [[headers]]
   for = "/*"
@@ -29,5 +29,13 @@
 
 [[headers]]
   for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# The privacy notice carries the version string that consent records are filed
+# against. A stale cached copy would show a guest the wrong version, so it is
+# revalidated on every request like index.html.
+[[headers]]
+  for = "/privacy.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"

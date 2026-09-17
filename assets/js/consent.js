@@ -1,20 +1,53 @@
 /* BE RELAX — consent.js · §11.3. The gate that decides whether attribution.js
    ever loads. DORMANT without window.BERELAX_ATTRIBUTION_API: no banner, no
-   footer link, no storage, no script — the page is exactly as it was. */
+   footer link, no storage, no script — the page is exactly as it was.
+
+   It is also inert without a privacy-notice version to file the consent
+   against. privacy.html is the published source of that string and carries it
+   in <meta name="berelax:privacy-version">; see §7 of the README beside this
+   file. There is no literal fallback: a consent recorded against a version
+   that names no readable document is not proof of anything. */
 (function () {
   "use strict";
 
   if (typeof window.BERELAX_ATTRIBUTION_API !== "string" || !window.BERELAX_ATTRIBUTION_API) return;
 
   var KEY = "berelax_consent";
-  /* This string is stored WITH each consent and is the proof of what the guest
-     actually agreed to. It must name a real published notice, and it must match
-     docs/compliance/privacy-notice.md and the policyVersion reception records at
-     the desk. Three places, one value — a consent filed against a version naming
-     no document proves nothing. Bump it and everyone is re-asked, which is the
-     correct behaviour when the notice changes. */
-  var VER = window.BERELAX_PRIVACY_VERSION || "1.0-draft";
   var DOC = window.BERELAX_PRIVACY_URL || "privacy.html";
+
+  /* The version string is stored WITH each consent and is the proof of what the
+     guest actually agreed to. It must name a REAL PUBLISHED notice: a consent
+     filed against a version that names no document proves nothing, so there is
+     deliberately no literal fallback here.
+
+     One published source, two ways to reach it, in this order:
+
+       1. window.BERELAX_PRIVACY_VERSION, set explicitly by the page.
+       2. <meta name="berelax:privacy-version" content="..."> in this page's
+          head — which is what privacy.html itself carries, so the published
+          notice states its own version and the page that shows it cannot drift
+          from the page a guest can read.
+
+     Neither set? The gate does not open: no banner, no storage, no script. That
+     is the safe failure. See assets/js/README.md §7. (This script is loaded with
+     defer, so the head is parsed before the meta tag is read.) */
+  function published() {
+    var m;
+    try { m = document.querySelector('meta[name="berelax:privacy-version"]'); } catch (e) { m = null; }
+    return m ? (m.getAttribute("content") || "").replace(/^\s+|\s+$/g, "") : "";
+  }
+  var VER = typeof window.BERELAX_PRIVACY_VERSION === "string" && window.BERELAX_PRIVACY_VERSION
+          ? window.BERELAX_PRIVACY_VERSION
+          : published();
+  if (!VER) {
+    if (window.console && console.error) {
+      console.error("BE RELAX consent: no privacy-notice version. The banner will not " +
+        "be shown and nothing will be stored. Set window.BERELAX_PRIVACY_VERSION to the " +
+        "version published in privacy.html, or copy privacy.html's " +
+        '<meta name="berelax:privacy-version"> tag into this page. See assets/js/README.md.');
+    }
+    return;
+  }
   var SRC = window.BERELAX_ATTRIBUTION_SRC || "assets/js/attribution.js";
 
   /* Injected rather than added to the site stylesheet, so removing the two
@@ -165,7 +198,14 @@
   /* Nothing here gates the booking form or the WhatsApp buttons: those are
      contract necessity, and holding a booking hostage to analytics would
      invalidate the consent anyway. */
-  window.__berelaxConsent = { open: open, grant: function () { decide(1); }, deny: function () { decide(0); } };
+  /* reopen() is the public name: privacy.html's "Manage your choice" control
+     looks for it and stays hidden when this script is dormant. open() is kept
+     as an alias so nothing that already calls it breaks. version is exposed so
+     a page can show the string a consent would be filed against. */
+  window.__berelaxConsent = {
+    reopen: open, open: open, version: VER,
+    grant: function () { decide(1); }, deny: function () { decide(0); }
+  };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();

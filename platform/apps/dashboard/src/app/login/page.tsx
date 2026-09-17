@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { safeNext } from './safe-next';
 import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { loginSchema } from '@berelax/contracts';
 import { useAuth } from '@/lib/auth-context';
@@ -24,8 +25,13 @@ function LoginScreen(): JSX.Element {
   const [error, setError] = useState<unknown>(null);
   const [pending, setPending] = useState(false);
 
-  const next = params.get('next');
-  const destination = next && next.startsWith('/') ? next : '/';
+  // `startsWith('/')` is not enough: "//evil.example/" passes it, and Next's
+  // router hands an absolute URL to window.location.replace, so the host AND
+  // the scheme end up attacker-controlled. A receptionist who follows a link to
+  // the real dashboard, signs in on the real origin, and is then bounced to a
+  // clone saying "session expired" will type the password again. Resolve the
+  // value and keep it only if it lands on this origin.
+  const destination = safeNext(params.get('next'));
 
   useEffect(() => {
     if (status === 'active') router.replace(destination);

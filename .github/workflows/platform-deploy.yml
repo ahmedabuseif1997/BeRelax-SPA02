@@ -1,0 +1,404 @@
+name: Platform Deploy
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  PRODUCTION DEPLOY — API (Railway) and dashboard (Vercel)
+#
+#  This workflow does four things, in this order, and stops at the first failure:
+#
+#    1. Refuses to go any further unless Platform CI is GREEN for this exact
+#       commit. Not "green on main", not "green yesterday" — green on this SHA.
+#    2. Applies database migrations with `prisma migrate deploy`, ONCE, from
+#       here, before any new container exists.
+#    3. Releases the API image, then waits for /health/ready to answer.
+#    4. Releases the dashboard.
+#
+#  ── WHY MIGRATIONS RUN HERE AND NOT ON CONTAINER BOOT ────────────────────────
+#
+#  A start command of `prisma migrate deploy && node dist/main.js` looks tidy
+#  and is a trap. apps/api/railway.json asks for two replicas; a rollback or a
+#  scale-up can briefly run three. Each of them would run `migrate deploy` on
+#  boot, at the same second, against the same database. Prisma takes a Postgres
+#  advisory lock, so the losers block rather than corrupt — until one of them
+#  times out mid-migration and leaves a row in `_prisma_migrations` with
+#  `finished_at` NULL and `logs` set. That database is now in a state where
+#  every future `migrate deploy` refuses to run until a human resolves it by
+#  hand, and you find out at 03:20 with the spa opening in seven hours.
+#
+#  Migrations therefore run exactly once, as a RELEASE STEP:
+#
+#    - Primary: the `migrate` job below, over DIRECT_URL (port 5432 — the
+#      session connection; PgBouncer's transaction mode has no advisory locks
+#      and `migrate deploy` needs them. Spec §2.4).
+#    - Belt and braces: `deploy.preDeployCommand` in apps/api/railway.json, for
+#      a deploy triggered from the Railway UI (a rollback, say) that never
+#      passes through this workflow. Railway runs a pre-deploy command once per
+#      deployment regardless of replica count.
+#
+#  Either way, the START command starts the server and nothing else.
+#
+#  ── THE SEED IS NEVER RUN ────────────────────────────────────────────────────
+#
+#  `prisma db seed`, `prisma migrate dev`, `prisma migrate reset` and
+#  `prisma db push` are all absent from this file on purpose. The seed writes
+#  fake guests, fake takings and three users with printed passwords; `migrate
+#  dev` and `db push` will drop the hand-written exclusion constraints and
+#  triggers that this system's correctness rests on. None of them has a
+#  legitimate use against production.
+#
+#  ── SECRETS AND VARIABLES THIS WORKFLOW NEEDS ────────────────────────────────
+#
+#  All of these live in the GitHub repository's `production` ENVIRONMENT
+#  (Settings -> Environments -> production), not in repository-wide secrets, so
+#  that the environment's protection rules gate access to them as well as to
+#  the deploy.
+#
+#  SECRETS (Settings -> Environments -> production -> Environment secrets)
+#
+#    PRODUCTION_DATABASE_URL
+#        Supabase -> Project Settings -> Database -> Connection string ->
+#        "Transaction pooler" (host …pooler.supabase.com, port 6543).
+#        Append `?pgbouncer=true&connection_limit=1`.
+#        Prisma validates the whole datasource block, so `migrate deploy` wants
+#        this set even though it connects over DIRECT_URL.
+#
+#    PRODUCTION_DIRECT_URL
+#        Same page -> "Session pooler" / direct connection, port 5432.
+#        This is the one migrations actually travel over.
+#
+#    RAILWAY_TOKEN
+#        Railway -> Project -> Settings -> Tokens -> "Create project token",
+#        scoped to the production environment. A PROJECT token, not a personal
+#        account token: a personal token can deploy every project you can see.
+#
+#    VERCEL_TOKEN
+#        Vercel -> Account Settings -> Tokens, scoped to the BE RELAX team.
+#
+#    VERCEL_ORG_ID / VERCEL_PROJECT_ID
+#        Vercel -> Project -> Settings -> General (or the `.vercel/project.json`
+#        written by `vercel link`). Not secret in any meaningful sense; they are
+#        stored here so that every deploy input comes from one place.
+#
+#  VARIABLES (Settings -> Environments -> production -> Environment variables)
+#
+#    RAILWAY_SERVICE        the API service's name in Railway, e.g. `api`
+#    RAILWAY_ENVIRONMENT    the Railway environment name, e.g. `production`
+#    API_BASE_URL           https://api.berelax.ae   (a subdomain of the public
+#                           site — see docs/runbooks/go-live.md; on any other
+#                           domain Safari blocks the attribution cookie mirror)
+#
+#  Nothing above has a value in this repository, and nothing above should ever
+#  acquire one. Secrets are generated at go-live and stored in the platform
+#  secret manager; `apps/api/.env.example` carries names and no values.
+#
+#  ── THE DEPLOY WINDOW ────────────────────────────────────────────────────────
+#
+#  Spec §12.2: deploys happen 03:00–09:00 Dubai (23:00–05:00 UTC), never during
+#  trading. GitHub Actions cannot express "only between these hours", and a
+#  cron-gated `if:` would only refuse a deploy someone had already decided to
+#  make. The enforcement is a REQUIRED REVIEWER on the `production` environment:
+#  a person approves, and a person knows what time it is in Abu Dhabi. That
+#  protection rule is configured in GitHub, not in this file, and setting it up
+#  is a go-live checklist item.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Tag or SHA to deploy (must have a green Platform CI run).'
+        required: true
+        type: string
+      deploy_dashboard:
+        description: 'Also release the dashboard to Vercel.'
+        required: false
+        type: boolean
+        default: true
+      i_have_checked_the_clock:
+        description: 'It is 03:00-09:00 Dubai, or this is a declared incident.'
+        required: true
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+# One deploy at a time, and never cancel one half way: a cancelled run between
+# `migrate deploy` and the image release leaves the database ahead of the code,
+# which is survivable, but a cancelled run DURING `migrate deploy` is the thing
+# the advisory lock cannot save you from.
+concurrency:
+  group: platform-deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────────────
+  # 1. The gate. Nothing below runs until CI is green on this exact commit.
+  # ───────────────────────────────────────────────────────────────────────────
+  gate:
+    name: Refuse to deploy untested code
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+    steps:
+      - name: Check the clock was checked
+        if: github.event_name == 'workflow_dispatch' && inputs.i_have_checked_the_clock != true
+        run: |
+          echo "::error::Deploys run 03:00-09:00 Dubai (spec §12.2). Re-run and tick the box."
+          exit 1
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Resolve the commit under deploy
+        id: resolve
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "Deploying ${sha}"
+          git --no-pager log -1 --format='%H%n%an%n%ad%n%s' "${sha}"
+
+      - name: Require a successful Platform CI run for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.resolve.outputs.sha }}
+        run: |
+          set -euo pipefail
+
+          # Not "is main green" and not "did CI pass on the PR". The question is
+          # whether the bytes about to be released are the bytes CI ran the
+          # concurrency suite and the seven financial invariants against.
+          successes="$(
+            gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/platform-ci.yml/runs?head_sha=${SHA}&per_page=100" \
+              --jq '[.workflow_runs[] | select(.conclusion == "success")] | length'
+          )"
+
+          if [ "${successes}" -lt 1 ]; then
+            echo "::error::No successful 'Platform CI' run for ${SHA}. Refusing to deploy."
+            echo ""
+            echo "Runs recorded for this commit:"
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/platform-ci.yml/runs?head_sha=${SHA}&per_page=100" \
+              --jq '.workflow_runs[] | "  \(.status)/\(.conclusion // "-")  \(.html_url)"' || true
+            echo ""
+            echo "If CI never ran for this commit — platform-ci.yml has a paths"
+            echo "filter, so a commit touching only docs/ or the public site is"
+            echo "skipped — run Platform CI manually against this SHA and try"
+            echo "again. Do not remove this gate."
+            exit 1
+          fi
+
+          echo "Platform CI: ${successes} successful run(s) for ${SHA}."
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 2. The release step. Once, from here, over the DIRECT connection.
+  # ───────────────────────────────────────────────────────────────────────────
+  migrate:
+    name: prisma migrate deploy (release step)
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    defaults:
+      run:
+        working-directory: platform
+    env:
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.PRODUCTION_DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install (api and its workspace dependencies only)
+        run: pnpm install --frozen-lockfile --filter "api..."
+
+      - name: Generate the Prisma client
+        run: pnpm --filter api prisma:generate
+
+      # Read before write. This prints exactly which migrations are pending and
+      # fails if the database is in a state `migrate deploy` cannot resolve —
+      # which is the moment to stop, not the moment to force it.
+      - name: Migration status BEFORE
+        run: pnpm --filter api exec prisma migrate status
+
+      # `migrate deploy` — never `migrate dev`, which would try to create a
+      # shadow database and rewrite the migration history, and never `db push`,
+      # which silently drops the exclusion constraints and triggers.
+      - name: Apply migrations
+        run: pnpm --filter api exec prisma migrate deploy
+
+      - name: Migration status AFTER
+        run: pnpm --filter api exec prisma migrate status
+
+      # The constraints ARE the product. If a migration dropped one, the deploy
+      # stops here rather than on a Friday night with two guests in one room.
+      - name: The three exclusion constraints survived the migration
+        run: |
+          set -euo pipefail
+          found="$(
+            psql "${DIRECT_URL}" -tAX -v ON_ERROR_STOP=1 -c "
+              SELECT string_agg(conname, ',' ORDER BY conname)
+                FROM pg_constraint
+               WHERE contype = 'x'
+                 AND conrelid = 'public.reservations'::regclass;"
+          )"
+          expected='reservations_no_guest_overlap,reservations_no_room_overlap,reservations_no_therapist_overlap'
+          if [ "${found}" != "${expected}" ]; then
+            echo "::error::Exclusion constraints on reservations are wrong after migrating."
+            echo "  expected: ${expected}"
+            echo "  found:    ${found:-<none>}"
+            exit 1
+          fi
+          echo "ok    three exclusion constraints present"
+
+      - name: The append-only triggers survived the migration
+        run: |
+          set -euo pipefail
+          found="$(
+            psql "${DIRECT_URL}" -tAX -v ON_ERROR_STOP=1 -c "
+              SELECT string_agg(tgname, ',' ORDER BY tgname)
+                FROM pg_trigger t
+                JOIN pg_class c ON c.oid = t.tgrelid
+               WHERE NOT t.tgisinternal
+                 AND c.relname IN ('payments','financial_audit_log','therapist_payout_ledger');"
+          )"
+          expected='trg_audit_no_delete,trg_audit_no_update,trg_ledger_guard,trg_payments_no_delete,trg_payments_no_update'
+          if [ "${found}" != "${expected}" ]; then
+            echo "::error::Append-only triggers are wrong after migrating."
+            echo "  expected: ${expected}"
+            echo "  found:    ${found:-<none>}"
+            exit 1
+          fi
+          echo "ok    five append-only triggers present"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 3. The API. The database is already at the new schema when this starts.
+  # ───────────────────────────────────────────────────────────────────────────
+  deploy-api:
+    name: Release the API
+    needs: [gate, migrate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Unpinned, which is a known weakness: pin this to the version you last
+      # deployed with and record the bump in the go-live runbook's change log.
+      # An unpinned CLI is a third party's right to change your deploy at 03:00.
+      - name: Install the Railway CLI
+        run: npm install -g @railway/cli
+
+      # If the Railway service is connected to GitHub, turn its auto-deploy OFF.
+      # Two deploy paths means a push can release code before this workflow has
+      # migrated the database, which is the one ordering that actually breaks.
+      #
+      # `railway up` uploads THIS directory (platform/) as the build root, which
+      # is why apps/api/railway.json says `dockerfilePath: apps/api/Dockerfile`
+      # and why the service's Root Directory is `platform`. On the FIRST deploy,
+      # read the Railway build log and confirm it reports picking up
+      # apps/api/railway.json — if it silently used defaults instead, the
+      # pre-deploy migration step is not running and you have lost the guard
+      # this file spends a page explaining. Record what you saw in
+      # docs/runbooks/go-live.md.
+      - name: Deploy
+        working-directory: platform
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
+          RAILWAY_ENVIRONMENT: ${{ vars.RAILWAY_ENVIRONMENT }}
+        run: |
+          set -euo pipefail
+          railway up \
+            --service "${RAILWAY_SERVICE}" \
+            --environment "${RAILWAY_ENVIRONMENT}" \
+            --detach
+
+      # --detach means the CLI returns before the build finishes, so this poll
+      # is the real verification. It is also the only check that proves the new
+      # image can reach the database: /health/ready is a SELECT 1 against the
+      # pool, not a static 200.
+      - name: Wait for /health/ready
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          deadline=$(( $(date +%s) + 600 ))
+          attempt=0
+          until [ "$(date +%s)" -ge "${deadline}" ]; do
+            attempt=$(( attempt + 1 ))
+            code="$(curl -fsS -o /tmp/ready.json -w '%{http_code}' \
+                      --max-time 10 "${API_BASE_URL}/health/ready" || true)"
+            if [ "${code}" = "200" ]; then
+              echo "ok    ${API_BASE_URL}/health/ready -> 200 after ${attempt} attempt(s)"
+              cat /tmp/ready.json
+              exit 0
+            fi
+            echo "  attempt ${attempt}: ${code:-no response}"
+            sleep 10
+          done
+          echo "::error::${API_BASE_URL}/health/ready never returned 200. The database"
+          echo "::error::migration has ALREADY been applied. Roll the IMAGE back in"
+          echo "::error::Railway; do not try to roll the migration back. See"
+          echo "::error::docs/runbooks/go-live.md, 'When a deploy goes wrong'."
+          exit 1
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # 4. The dashboard. Last, because it is the client of everything above.
+  # ───────────────────────────────────────────────────────────────────────────
+  deploy-dashboard:
+    name: Release the dashboard
+    needs: [gate, deploy-api]
+    if: github.event_name != 'workflow_dispatch' || inputs.deploy_dashboard
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install the Vercel CLI
+        run: npm install -g vercel
+
+      # Root directory is platform/apps/dashboard, where vercel.json lives; the
+      # build command in that file reaches back up the workspace to build
+      # @berelax/contracts first, so "Include files outside the root directory"
+      # must be ON in the Vercel project.
+      - name: Pull, build and deploy
+        working-directory: platform/apps/dashboard
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          vercel pull --yes --environment=production --token="${VERCEL_TOKEN}"
+          vercel build --prod --token="${VERCEL_TOKEN}"
+          vercel deploy --prebuilt --prod --token="${VERCEL_TOKEN}"

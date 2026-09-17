@@ -1,0 +1,41 @@
+# Build context for apps/api/Dockerfile is this directory (platform/).
+#
+# Two jobs: keep the context small, and make it impossible for a secret or a
+# host-built artefact to be baked into an image.
+
+# ── never, under any circumstances ───────────────────────────────────────────
+# A .env in the context is one `COPY . .` away from a JWT secret in a published
+# image layer. .env.example carries names and no values, and the image has no
+# use for it either.
+**/.env
+**/.env.*
+
+# ── host artefacts: the image builds its own ─────────────────────────────────
+# A host node_modules is the wrong platform's binaries (bcrypt and the Prisma
+# engines are native) and would silently shadow the install done in the image.
+**/node_modules
+**/dist
+**/build
+**/.next
+**/out
+**/.turbo
+**/*.tsbuildinfo
+
+# ── test and tooling output ──────────────────────────────────────────────────
+**/coverage
+**/.nyc_output
+**/*.log
+**/.eslintcache
+
+# ── repository and editor noise ──────────────────────────────────────────────
+.git
+.gitignore
+.github
+**/.DS_Store
+**/.idea
+**/.vscode
+
+# ── not part of the API ──────────────────────────────────────────────────────
+# Local Postgres only; the deployed database is Supabase.
+docker-compose.yml
+**/*.md

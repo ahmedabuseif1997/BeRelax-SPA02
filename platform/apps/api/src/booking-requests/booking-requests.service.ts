@@ -220,6 +220,33 @@ export class BookingRequestsService {
       const startsAt = new Date(dto.startsAt);
       const ref = await nextReservationRef(tx, startsAt);
 
+      // The room comes from reception's conversion form, so it is caller input
+
+      // like any other — resolved in branch and active, the way create() does.
+
+      if (dto.roomId) {
+
+        const room = await tx.room.findFirst({
+
+          where: { id: dto.roomId, branchId: actor.branchId, isActive: true },
+
+          select: { id: true },
+
+        });
+
+        if (!room) {
+
+          throw new NotFoundException(
+
+            apiError(ErrorCode.NOT_FOUND, 'No such room in this branch.'),
+
+          );
+
+        }
+
+      }
+
+
       const reservation = await tx.reservation.create({
         data: {
           ref,

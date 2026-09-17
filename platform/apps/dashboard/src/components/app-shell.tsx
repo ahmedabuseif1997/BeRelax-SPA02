@@ -69,6 +69,7 @@ function TopBar(): JSX.Element {
   // because the person handling cash should not be the person auditing it. §6.4.
   const links: Array<{ href: string; label: string }> = [{ href: '/', label: 'Tonight' }];
   if (can(user?.role, 'reports.view')) links.push({ href: '/reports', label: 'Reports' });
+  if (can(user?.role, 'reports.view')) links.push({ href: '/reconciliation', label: 'Reconciliation' });
 
   return (
     <header className="sticky top-0 z-30 flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-line bg-white/95 px-4 py-3 backdrop-blur sm:px-6">

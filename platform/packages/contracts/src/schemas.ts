@@ -633,3 +633,82 @@ export const attributionReportQuerySchema = z.object({
   to: isoDate.optional(),
 });
 export type AttributionReportQuery = z.infer<typeof attributionReportQuerySchema>;
+
+/* ──────────────── the parallel pilot (§14, Phase 7) ──────────────── */
+
+/**
+ * Phase 7 runs this system beside reception's paper process for two weeks and
+ * switches over "only when the numbers match for five consecutive nights".
+ * These are the shapes that make that sentence checkable.
+ *
+ * `ReconciliationVerdict` lives here rather than in `enums.ts` because it is
+ * born with the schemas below and mirrors the Postgres enum of the same name —
+ * keep the three in step exactly as `enums.ts` says of its own.
+ *
+ * MATCHED_WITH_NOTE is still a MATCH. Every line was inside tolerance and the
+ * manager wrote down why the night was unusual ("one walk-in paid half cash
+ * half card"). It counts towards the five. A note is context, not a caveat —
+ * if the figures did not agree, the verdict is MISMATCHED whatever was written.
+ */
+export const ReconciliationVerdict = {
+  MATCHED: 'MATCHED',
+  MATCHED_WITH_NOTE: 'MATCHED_WITH_NOTE',
+  MISMATCHED: 'MISMATCHED',
+} as const;
+export type ReconciliationVerdict =
+  (typeof ReconciliationVerdict)[keyof typeof ReconciliationVerdict];
+
+/** The spec's exit criterion for Phase 7, in one number. §14. */
+export const RECONCILIATION_STREAK_REQUIRED = 5;
+
+/**
+ * A counted till can legitimately be empty, so the shared `fils` above — which
+ * is `.positive()` — is the wrong shape for a paper figure. This one allows
+ * zero and still refuses a decimal, a negative and anything past the per-line
+ * ceiling. Money is an integer number of fils and nothing here may invite a
+ * decimal point (§3.1); the dashboard's amount pad builds these from digit
+ * characters for the same reason.
+ */
+const countedFils = z
+  .number()
+  .int('Enter whole fils — 184000 for AED 1,840.00, never 1840.00.')
+  .min(0)
+  .max(100_000_000);
+
+/**
+ * What reception's paper says about one trading night.
+ *
+ * Deliberately NOT cross-field `.refine()`d. Every disagreement between these
+ * figures and the system's is the POINT of the endpoint, not a validation
+ * failure — a variance is a finding to record, never an error to suppress
+ * (§15.4) — and the one refusal that does exist (a night that has not happened)
+ * is decided in the service so it can answer with RECONCILIATION_DAY_IN_FUTURE
+ * and the offending day in `details`, rather than an anonymous 422.
+ */
+export const submitReconciliationSchema = z.object({
+  /** Counted in the drawer at close. Count it before you look at the screen. */
+  countedCashFils: countedFils,
+  /** Sessions written on the paper sheet — treatments that took place. */
+  paperBookings: z.number().int().min(0).max(1_000),
+  /** The card terminal's Z-report total, net of anything refunded on the terminal. */
+  paperCardTotalFils: countedFils,
+  /**
+   * Optional. Cash tips handed STRAIGHT to a therapist, which never entered the
+   * till and so are not part of `countedCashFils`. §9.1 keeps the two tip modes
+   * apart because conflating them is how a spa pays a tip twice.
+   */
+  paperTipsCashFils: countedFils.optional(),
+  /** Why the night was unusual. Present and matching ⇒ MATCHED_WITH_NOTE. */
+  note: z.string().min(1).max(500).optional(),
+});
+export type SubmitReconciliationDto = z.infer<typeof submitReconciliationSchema>;
+
+/** The `:businessDay` path parameter — a TRADING night, `YYYY-MM-DD`. §3.3. */
+export const reconciliationDaySchema = isoDate;
+
+/** The pilot's history. Same inclusive trading-day window as every report. */
+export const reconciliationHistoryQuerySchema = z.object({
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+});
+export type ReconciliationHistoryQuery = z.infer<typeof reconciliationHistoryQuerySchema>;

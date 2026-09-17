@@ -1,18 +1,37 @@
 import 'reflect-metadata';
-import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { json } from 'express';
+import { Logger as PinoNestLogger } from 'nestjs-pino';
 
 import { AppModule } from './app.module';
+import { initSentry } from './common/sentry';
 import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: false });
+  // Buffered: nothing is written until useLogger() below hands Nest the pino
+  // logger, so the boot banner comes out in the same JSON as every other line
+  // rather than in Nest's coloured format that no log platform can parse.
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  // Replaces Nest's default logger everywhere, including the `new Logger(...)`
+  // instances scattered through the services — those delegate to whatever is
+  // registered here. Spec §12.3.
+  const logger = app.get(PinoNestLogger);
+  app.useLogger(logger);
+  app.flushLogs();
+
   const config = app.get(ConfigService);
-  const logger = new Logger('bootstrap');
+
+  // A no-op until @sentry/node is installed; see src/common/sentry.ts for what
+  // it does when it is, and why it must then move above NestFactory.create.
+  initSentry({
+    dsn: config.get<string>('SENTRY_DSN'),
+    environment: String(config.get('NODE_ENV')),
+    warn: (message) => logger.warn(message, 'bootstrap'),
+  });
 
   app.setGlobalPrefix('v1', { exclude: ['health', 'health/ready'] });
 
@@ -44,7 +63,7 @@ async function bootstrap(): Promise<void> {
 
   const port = config.get<number>('PORT') ?? 3000;
   await app.listen(port, '0.0.0.0');
-  logger.log(`BE RELAX API listening on :${port} (${config.get('NODE_ENV')})`);
+  logger.log(`BE RELAX API listening on :${port} (${config.get('NODE_ENV')})`, 'bootstrap');
 }
 
 void bootstrap();

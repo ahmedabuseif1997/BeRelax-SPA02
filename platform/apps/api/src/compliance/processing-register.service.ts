@@ -159,11 +159,16 @@ const ACTIVITIES: readonly ActivityDeclaration[] = [
       'Answering a therapist’s dispute, a tax question or a breach investigation — during a breach this is the only record that can still be trusted.',
     lawfulBasis: LawfulBasis.LEGAL_OBLIGATION,
     dataSubjects: ['Employees', 'Spa guests'],
-    tables: { financial_audit_log: ['ip_address', 'user_agent'], idempotency_records: [] },
+    tables: {
+      financial_audit_log: ['ip_address', 'user_agent'],
+      idempotency_records: [],
+      nightly_reconciliations: [],
+    },
     retention: () => '7 years, then cold storage. Append-only and never edited. §5.4, §11.6.',
     specialCategory: false,
     notes:
-      'pickAuditFields strips guest identity before anything is written: the log records what changed about the money, not a second copy of the guest database. §9.6.',
+      'pickAuditFields strips guest identity before anything is written: the log records what changed about the money, not a second copy of the guest database. §9.6. ' +
+      'nightly_reconciliations belongs here for the same reason: it names STAFF — who signed a trading night off and who was taking cash at the desk when a variance appeared (§15.4) — and no guest. It is append-only and database-enforced.',
   },
 ] as const;
 

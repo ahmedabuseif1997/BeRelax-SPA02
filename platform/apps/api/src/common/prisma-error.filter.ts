@@ -1,5 +1,6 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Logger } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/common';
 import type { Response } from 'express';
+import { PinoLogger } from 'nestjs-pino';
 import { Prisma } from '@prisma/client';
 import { ErrorCode } from '@berelax/contracts';
 
@@ -50,7 +51,9 @@ const CONSTRAINT_MESSAGES: Record<string, { code: string; message: string }> = {
   Prisma.PrismaClientValidationError,
 )
 export class PrismaErrorFilter implements ExceptionFilter {
-  private readonly logger = new Logger(PrismaErrorFilter.name);
+  constructor(private readonly logger: PinoLogger) {
+    this.logger.setContext(PrismaErrorFilter.name);
+  }
 
   catch(err: Error, host: ArgumentsHost): void {
     const http = host.switchToHttp();
@@ -70,6 +73,15 @@ export class PrismaErrorFilter implements ExceptionFilter {
       const mapped = namedConstraint
         ? CONSTRAINT_MESSAGES[namedConstraint]!
         : { code: ErrorCode.SLOT_CONFLICT, message: 'That slot is no longer available.' };
+      // Not an error — the constraint did its job and the receptionist gets a
+      // sentence they can act on. But §12.3 alerts above five an hour, because
+      // the database being the thing that catches a double-booking means the
+      // availability grid offered a slot that was already gone. Countable only
+      // if it is on a line, so here it is. docs/runbooks/alerts.md, alert 4.
+      this.logger.warn(
+        { constraint: namedConstraint ?? null, code: mapped.code },
+        'slot conflict rejected by the database',
+      );
       res.status(HttpStatus.CONFLICT).json({ error: { ...mapped, requestId } });
       return;
     }
@@ -97,7 +109,10 @@ export class PrismaErrorFilter implements ExceptionFilter {
     if (known(PG.INSUFFICIENT_PRIVILEGE) && haystack.includes('append-only')) {
       // A bug, not a user error: something tried to edit an immutable financial
       // row. Loud in the logs, generic to the caller.
-      this.logger.error({ err: err.message, requestId }, 'attempted mutation of an append-only table');
+      // The error goes through whole: the serialiser keeps the stack and masks
+      // any argument values Prisma rendered into the message. `requestId` is
+      // already a binding on the line.
+      this.logger.error({ err }, 'attempted mutation of an append-only table');
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         error: {
           code: ErrorCode.INTERNAL_ERROR,
@@ -126,7 +141,7 @@ export class PrismaErrorFilter implements ExceptionFilter {
       return;
     }
 
-    this.logger.error({ err: err.message, requestId }, 'unhandled database error');
+    this.logger.error({ err }, 'unhandled database error');
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       error: { code: ErrorCode.INTERNAL_ERROR, message: 'Something went wrong.', requestId },
     });

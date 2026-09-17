@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, UserRole } from '@prisma/client';
+import { PII_FIELD_SET } from './pii';
 import type { RequestContext } from './request-context';
 
 /** The money-affecting actions this system records. Spec §9.6. */
@@ -27,6 +28,12 @@ export const AuditAction = {
   AUTH_REFRESH_REUSE_DETECTED: 'AUTH_REFRESH_REUSE_DETECTED',
   GUEST_DATA_EXPORTED: 'GUEST_DATA_EXPORTED',
   GUEST_ERASED: 'GUEST_ERASED',
+  /**
+   * A night of the parallel pilot signed off against reception's paper (§14).
+   * It moves no money, but it is the evidence the switchover decision rests on:
+   * who certified which night, when, and against what figures.
+   */
+  RECONCILIATION_SUBMITTED: 'RECONCILIATION_SUBMITTED',
 } as const;
 export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
 
@@ -80,14 +87,15 @@ function toJson(value: unknown): Prisma.InputJsonValue | typeof Prisma.JsonNull 
  * The audit log records WHAT CHANGED ABOUT THE MONEY, not a second copy of the
  * guest database. IDs, amounts, statuses and timestamps only — never a name,
  * phone number or email.
+ *
+ * The field names live in `./pii`, shared with the log redaction paths (§12.3)
+ * so that the audit log and the logs cannot come to disagree about what counts
+ * as personal data.
  */
-const PII_FIELDS = new Set(['fullName', 'guestName', 'phone', 'guestPhone', 'email',
-  'guestEmail', 'legalName', 'notes', 'passwordHash', 'tokenHash']);
-
 export function pickAuditFields<T extends object>(row: T): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(row)) {
-    if (PII_FIELDS.has(k)) continue;
+    if (PII_FIELD_SET.has(k)) continue;
     if (v instanceof Date) out[k] = v.toISOString();
     else if (v === null || ['string', 'number', 'boolean'].includes(typeof v)) out[k] = v;
   }

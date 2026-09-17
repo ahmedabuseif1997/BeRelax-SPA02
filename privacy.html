@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- ============================================================
+     THE PUBLISHED VERSION STRING LIVES HERE AND NOWHERE ELSE.
+
+     This page is the notice a guest is shown, so the version it
+     carries is the version a consent can honestly be filed against.
+     assets/js/consent.js reads window.BERELAX_PRIVACY_VERSION and,
+     failing that, the meta tag below; it refuses to record a consent
+     with no version at all. See assets/js/README.md §7.
+
+     To publish a new version, change the meta tag, the two visible
+     version chips, the "Changes to this notice" tables, and
+     docs/compliance/privacy-notice.md — in one commit, never reusing
+     a number.
+     ============================================================ -->
+<meta name="berelax:privacy-version" content="1.0-draft">
+<meta name="berelax:privacy-date" content="2026-09-17">
+<meta name="berelax:privacy-status" content="draft">
+
+<title>Privacy Notice — BE RELAX Massage Center and Spa</title>
+<meta name="description" content="How BE RELAX Massage Center and Spa collects, uses and keeps personal data — in English and Arabic. Version 1.0-draft, 17 September 2026. Draft, not yet in force.">
+<meta name="robots" content="noindex, follow">
+<link rel="icon" href="assets/logo/be-relax-logo-dark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   BE RELAX — Privacy notice.
+   Same palette, type and custom property names as index.html, so a
+   guest arriving from the consent banner does not feel they left
+   the site. Self-contained: no external stylesheet, no dependency.
+   ============================================================ */
+:root{
+  /* --- the site's own tokens, unchanged --- */
+  --mint-50:#FBF6EF;  --mint-100:#F5EDE1; --mint-200:#EDE0CE;
+  --mint-300:#DCC8AC; --mint-400:#C9AE8B; --mint-500:#5FB8AC;
+  --mint-600:#3E9A8E; --mint-700:#2A6E66; --mint-800:#2A2724;
+  --mint-900:#1B1A17;
+  --ink:#26241F; --muted:#6E675D; --line:#E6D8C4;
+  --sand:#C08A43; --white:#fff;
+  --gold-1:#C08A43; --gold-2:#F0C283; --gold-3:#A0703A;
+  --oat:#F2E9DC; --clay:#E6D8C4; --ivory:#FDFAF5;
+  --shadow-sm:0 1px 3px rgba(58,40,26,.05);
+  --shadow-md:0 6px 20px rgba(58,40,26,.07);
+  --shadow-lg:0 18px 44px rgba(58,40,26,.10);
+  --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  --sans:"Jost",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --r:8px; --wrap:1200px; --doc:740px;
+
+  /* --- semantic tokens, so dark mode is one block of overrides --- */
+  --page:var(--mint-50); --card:var(--white); --panel:var(--mint-100);
+  --link:var(--mint-700); --rule:var(--line); --head:var(--ink);
+  --flag-bg:#FCF1DE; --flag-line:#C08A43; --flag-ink:#6A4A17;
+  --warn-bg:#FBF1E4; --warn-line:rgba(192,138,67,.55);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --page:#141310; --card:#1B1A17; --panel:#221F1A;
+    --ink:#F1E7D8; --muted:#C7B49A; --head:#F6EFE3;
+    --link:#7FD0C4; --rule:rgba(192,138,67,.34);
+    --flag-bg:#2A2114; --flag-line:#C08A43; --flag-ink:#F0C283;
+    --warn-bg:#241E16; --warn-line:rgba(192,138,67,.45);
+    --shadow-sm:0 1px 3px rgba(0,0,0,.4);
+    --shadow-md:0 6px 20px rgba(0,0,0,.45);
+    --shadow-lg:0 18px 44px rgba(0,0,0,.5);
+  }
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip;-webkit-text-size-adjust:100%}
+body{
+  margin:0;overflow-x:clip;font-family:var(--sans);color:var(--ink);
+  background:var(--page);font-size:16px;line-height:1.65;font-weight:300;
+  -webkit-font-smoothing:antialiased
+}
+img{max-width:100%;display:block}
+a{color:var(--link);text-decoration:underline;text-underline-offset:2px}
+a:hover{color:var(--mint-600)}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:400;line-height:1.18;margin:0;
+  letter-spacing:.01em;color:var(--head)}
+strong,b{font-weight:500;color:var(--head)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em;
+  background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:1px 5px;
+  word-break:break-word}
+.wrap{max-width:var(--wrap);margin:0 auto;padding-inline:24px}
+.eyebrow{font-size:11px;letter-spacing:.34em;text-transform:uppercase;
+  color:var(--gold-3);font-weight:500;margin:0 0 14px}
+
+/* ---------- focus: always visible, gold like the rest of the site ---------- */
+a:focus,button:focus,[tabindex]:focus{outline:2px solid var(--sand);outline-offset:3px;border-radius:2px}
+/* A browser without :focus-visible skips the next rule and keeps the ring. */
+a:focus:not(:focus-visible),button:focus:not(:focus-visible),[tabindex]:focus:not(:focus-visible){outline:0}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--sand);outline-offset:3px}
+
+.skip{
+  position:absolute;inset-inline-start:-9999px;top:0;z-index:100;
+  background:var(--card);color:var(--link);padding:12px 18px;border:1px solid var(--rule);
+  border-radius:0 0 var(--r) var(--r);text-decoration:none;font-size:13px;
+  letter-spacing:.1em;text-transform:uppercase
+}
+.skip:focus{inset-inline-start:0}
+
+/* ---------- header ---------- */
+header{background:var(--card);border-bottom:1px solid var(--rule);box-shadow:var(--shadow-sm)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:18px;
+  min-height:84px;flex-wrap:wrap;padding-block:12px}
+.logo{display:flex;align-items:center;gap:13px;flex:none;text-decoration:none}
+.logo-mark{height:50px;width:auto;display:block;flex:none}
+.logo-light{display:none}
+@media (prefers-color-scheme:dark){.logo-light{display:block}.logo-dark{display:none}}
+.nav-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.back{
+  font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;
+  padding:11px 20px;border-radius:999px;border:1px solid var(--mint-300);
+  color:var(--ink);background:transparent;text-decoration:none;transition:.28s
+}
+.back:hover{background:var(--panel);border-color:var(--mint-500);color:var(--ink)}
+
+/* ---------- language switch ---------- */
+.langbar{display:flex;align-items:center;gap:6px;
+  border:1px solid var(--rule);border-radius:999px;padding:4px;background:var(--panel)}
+.langbar a{
+  font:inherit;font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+  padding:8px 16px;border-radius:999px;text-decoration:none;color:var(--muted);
+  background:transparent;border:0;cursor:pointer;transition:.25s;white-space:nowrap
+}
+.langbar a:hover{color:var(--ink);background:var(--card)}
+.langbar a[aria-current="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow-sm)}
+.langbar .ar{font-size:14px;letter-spacing:normal}
+
+/* ---------- document shell ---------- */
+main{display:block}
+.doc{max-width:var(--doc);margin:0 auto;padding-inline:20px;padding-block:52px 24px}
+.doc-wide{max-width:var(--wrap);margin:0 auto;padding-inline:20px}
+h1{font-size:clamp(30px,5.4vw,46px);margin:0 0 10px;text-wrap:balance}
+h1 .sub{display:block;font-size:.58em;color:var(--muted);margin-top:8px;font-weight:300}
+.masthead p.lead{color:var(--muted);font-size:17px;margin:0 0 26px}
+.rule{height:1px;background:var(--rule);border:0;margin:40px 0}
+.orn{display:flex;align-items:center;gap:11px;margin:22px 0 34px}
+.orn i{display:block;height:1px;flex:1;background:var(--rule)}
+.orn .lang-h{font-family:var(--serif);font-size:16px;font-weight:500;color:var(--gold-3);
+  letter-spacing:.06em;flex:none;line-height:1;scroll-margin-top:24px}
+.orn .lang-h:focus{outline:2px solid var(--sand);outline-offset:6px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);
+  clip-path:inset(50%);white-space:nowrap}
+
+/* ---------- version block: the thing a guest checks ---------- */
+.version{
+  border:1px solid var(--mint-300);border-radius:var(--r);background:var(--card);
+  box-shadow:var(--shadow-md);overflow:hidden;margin:0 0 30px
+}
+.version-top{
+  display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--rule)
+}
+.version-cell{
+  flex:1 1 150px;padding:18px 20px;border-inline-end:1px solid var(--rule)
+}
+.version-cell:last-child{border-inline-end:0}
+.version-cell dt{
+  font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);
+  font-weight:500;margin:0 0 7px
+}
+.version-cell dd{margin:0;font-family:var(--serif);font-size:25px;font-weight:500;
+  color:var(--head);line-height:1.1;word-break:break-word}
+.version-cell dd small{font-family:var(--sans);font-size:13px;font-weight:400;
+  display:block;color:var(--muted);margin-top:5px;letter-spacing:.02em}
+.version-note{padding:16px 20px;font-size:14px;color:var(--muted);background:var(--panel);margin:0}
+.badge-draft{
+  display:inline-block;font-family:var(--sans);font-size:11px;font-weight:600;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--flag-ink);
+  background:var(--flag-bg);border:1px dashed var(--flag-line);
+  border-radius:999px;padding:6px 14px;vertical-align:middle
+}
+
+/* ---------- callouts ---------- */
+.callout{
+  border:1px solid var(--warn-line);border-inline-start:4px solid var(--gold-1);
+  background:var(--warn-bg);border-radius:var(--r);padding:22px 24px;margin:26px 0
+}
+.callout h2,.callout h3,.callout p:first-child{margin-top:0}
+.callout p:last-child{margin-bottom:0}
+.callout-title{
+  font-family:var(--sans);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  font-weight:600;color:var(--gold-3);margin:0 0 10px;display:block
+}
+.callout-erase{border-inline-start-color:var(--mint-600)}
+.callout-erase .callout-title{color:var(--mint-700)}
+@media (prefers-color-scheme:dark){.callout-erase .callout-title{color:var(--link)}}
+.callout-erase q,.callout-erase .pull{font-family:var(--serif);font-size:23px;
+  font-style:italic;color:var(--head);display:block;margin:0 0 12px;line-height:1.35}
+.callout-erase .pull strong{font-weight:500;color:var(--head)}
+blockquote{
+  margin:24px 0;padding:18px 22px;border-inline-start:3px solid var(--mint-400);
+  background:var(--panel);border-radius:0 var(--r) var(--r) 0;color:var(--muted);font-size:15.5px
+}
+[dir="rtl"] blockquote{border-radius:var(--r) 0 0 var(--r)}
+blockquote p:first-child{margin-top:0}
+blockquote p:last-child{margin-bottom:0}
+
+/* ---------- the unfinished blanks ---------- */
+.tbc{
+  display:inline;background:var(--flag-bg);color:var(--flag-ink);
+  border:1px dashed var(--flag-line);border-radius:5px;padding:2px 8px;
+  font-family:var(--sans);font-size:.88em;font-weight:500;line-height:1.9;
+  text-decoration:none;word-break:break-word
+}
+.tbc::before{content:"\26A0\FE0E\00A0"}
+.tbc-inline{line-height:1.9}
+
+/* ---------- table of contents ---------- */
+.toc{
+  border:1px solid var(--rule);border-radius:var(--r);background:var(--card);
+  padding:24px 26px;margin:0 0 40px;box-shadow:var(--shadow-sm)
+}
+.toc h3{font-size:22px;margin:0 0 4px}
+.toc p{font-size:13.5px;color:var(--muted);margin:0 0 16px}
+.toc ol{margin:0;padding-inline-start:22px;display:grid;gap:9px;font-size:15px}
+.toc a{text-decoration:none;border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--mint-400)}
+.toc li::marker{color:var(--muted);font-size:13px}
+.toc .flag{
+  display:inline-block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--gold-3);border:1px solid var(--flag-line);border-radius:999px;
+  padding:1px 8px;margin-inline-start:8px;vertical-align:1px;font-weight:500
+}
+
+/* ---------- prose ---------- */
+.sec{margin:0 0 46px;scroll-margin-top:24px}
+.sec h3{font-size:clamp(24px,3.4vw,31px);margin:0 0 16px;scroll-margin-top:24px}
+.sec h4{font-size:19px;margin:32px 0 12px;color:var(--head);scroll-margin-top:24px}
+.sec p{margin:0 0 16px}
+.sec ul,.sec ol{margin:0 0 18px;padding-inline-start:24px;display:grid;gap:10px}
+.sec li{padding-inline-start:2px}
+.sec li>ul,.sec li>ol{margin-top:10px}
+em{font-style:italic}
+.totop{
+  display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;margin-top:6px
+}
+.totop:hover{color:var(--link)}
+
+/* ---------- key/value lists (the source's two-column tables) ---------- */
+.kv{margin:0 0 22px;border:1px solid var(--rule);border-radius:var(--r);
+  background:var(--card);overflow:hidden}
+.kv>div{display:grid;grid-template-columns:minmax(150px,.42fr) 1fr;
+  border-bottom:1px solid var(--rule)}
+.kv>div:last-child{border-bottom:0}
+.kv dt{padding:13px 16px;font-weight:500;color:var(--head);font-size:14.5px;
+  background:var(--panel);border-inline-end:1px solid var(--rule)}
+.kv dd{padding:13px 16px;margin:0;font-size:15px}
+@media (max-width:560px){
+  .kv>div{grid-template-columns:1fr}
+  .kv dt{border-inline-end:0;border-bottom:1px solid var(--rule)}
+}
+
+/* ---------- tables ---------- */
+.tw{
+  overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 0 22px;
+  border:1px solid var(--rule);border-radius:var(--r);background:var(--card)
+}
+.tw:focus{outline:2px solid var(--sand);outline-offset:2px}
+table{border-collapse:collapse;width:100%;min-width:480px;font-size:14.5px}
+caption{
+  text-align:start;padding:12px 16px;font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--muted);font-weight:500;
+  border-bottom:1px solid var(--rule);background:var(--panel)
+}
+th,td{padding:12px 16px;text-align:start;vertical-align:top;
+  border-bottom:1px solid var(--rule);line-height:1.55}
+thead th{
+  font-family:var(--sans);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:600;color:var(--muted);background:var(--panel);white-space:nowrap
+}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+tbody th{font-weight:500;color:var(--head)}
+.t-hint{font-size:12.5px;color:var(--muted);margin:-14px 0 22px}
+
+/* ---------- consent control ---------- */
+.manage{
+  border:1px solid var(--rule);border-radius:var(--r);background:var(--card);
+  padding:22px 24px;margin:34px 0;box-shadow:var(--shadow-sm)
+}
+.manage h3{font-size:21px;margin:0 0 8px}
+.manage p{margin:0 0 14px;font-size:14.5px;color:var(--muted)}
+.btn-manage{
+  font-family:var(--sans);font-size:12px;font-weight:500;letter-spacing:.14em;
+  text-transform:uppercase;padding:13px 26px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--mint-600);background:var(--card);color:var(--ink);transition:.28s
+}
+.btn-manage:hover{background:var(--panel)}
+[hidden]{display:none !important}
+
+/* ---------- footer (the site's own) ---------- */
+footer{background:var(--mint-900);color:#C7B49A;padding:54px 0 0;font-weight:300;
+  border-top:1px solid rgba(192,138,67,.34);margin-top:60px}
+footer a{color:#C7B49A;text-decoration:none}
+footer a:hover{color:#fff}
+footer h4{color:#fff;font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  font-family:var(--sans);font-weight:500;margin:0 0 18px}
+footer ul{list-style:none;padding:0;margin:0;display:grid;gap:11px;font-size:14.5px}
+.f-grid{display:grid;grid-template-columns:1.5fr 1fr 1.2fr;gap:42px;padding-bottom:40px}
+.f-logo .logo-mark{height:46px}
+.f-logo .logo-dark{display:none}
+.f-logo .logo-light{display:block}
+.f-about{font-size:14.5px;line-height:1.7;margin:18px 0 0;max-width:32em;color:#C7B49A}
+.f-bottom{
+  border-top:1px solid rgba(255,255,255,.12);padding:22px 0;display:flex;
+  justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:13px;align-items:center
+}
+.f-bottom .brx-c-link,.f-bottom button{color:#C7B49A}
+.f-ver{font-variant-numeric:tabular-nums}
+
+/* ---------- language blocks ---------- */
+/* No JavaScript: BOTH languages are in the page, one after the other, and the
+   switch above is a pair of ordinary anchors that jump to them. With
+   JavaScript the same switch hides the other language and remembers the
+   choice for this visit. Nothing is ever loaded on demand. */
+.lang-sep{margin:70px 0 0;border:0;border-top:1px solid var(--rule)}
+.js .lang-sep{display:none}
+.js [data-lang-doc]{display:none}
+.js[data-lang="en"] [data-lang-doc="en"],
+.js[data-lang="ar"] [data-lang-doc="ar"]{display:block}
+.nojs-note{font-size:13.5px;color:var(--muted);margin:0 0 26px}
+.js .nojs-note{display:none}
+
+/* ---------- arabic / rtl ---------- */
+[lang="ar"]{
+  font-family:"Jost",-apple-system,"Segoe UI","Noto Naskh Arabic","Geeza Pro",
+    "Traditional Arabic",Tahoma,sans-serif;
+  line-height:1.95;font-size:16.5px
+}
+[lang="ar"] h1,[lang="ar"] h2,[lang="ar"] h3,[lang="ar"] h4{
+  font-family:"Cormorant Garamond","Noto Naskh Arabic","Geeza Pro",Georgia,serif;
+  line-height:1.5;letter-spacing:0
+}
+[dir="rtl"] .toc ol,[dir="rtl"] .sec ul,[dir="rtl"] .sec ol{padding-inline-start:24px}
+[dir="rtl"] code,[dir="rtl"] .tbc{direction:ltr;unicode-bidi:embed;display:inline-block}
+[dir="rtl"] .tbc{direction:rtl}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .f-grid{grid-template-columns:1fr 1fr;gap:32px}
+}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .doc,.doc-wide{padding-inline:16px;padding-block:36px 16px}
+  .nav{min-height:0;gap:12px}
+  .logo-mark{height:42px}
+  .f-grid{grid-template-columns:1fr;gap:28px}
+  .toc{padding:20px 18px}
+  .callout{padding:18px 18px}
+  .version-cell{flex:1 1 100%;border-inline-end:0;border-bottom:1px solid var(--rule)}
+  .version-top .version-cell:last-child{border-bottom:0}
+  .sec{margin-bottom:38px}
+}
+@media (max-width:360px){
+  .back{padding:10px 14px;font-size:11px}
+  .langbar a{padding:8px 12px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important}
+}
+
+@media print{
+  header,.langbar,.skip,.manage,.totop,footer{display:none}
+  .js [data-lang-doc]{display:block}
+  body{background:#fff;color:#000}
+  .tw{overflow:visible}
+  table{min-width:0}
+}
+</style>
+<script>
+/* Sets the language before first paint. ES5, no dependency. With JavaScript
+   off this never runs, the html element keeps no "js" class, and both
+   language documents stay visible one after the other. */
+(function(){
+  var d=document.documentElement,l="en",m,s;
+  try{
+    m=/[?&]lang=(ar|en)(?:&|$)/i.exec(location.search);
+    if(m){l=m[1].toLowerCase();}
+    else{s=sessionStorage.getItem("berelax_privacy_lang");if(s==="ar"||s==="en"){l=s;}}
+  }catch(e){}
+  if(location.hash==="#doc-ar"){l="ar";}
+  if(location.hash==="#doc-en"){l="en";}
+  d.className=d.className?d.className+" js":"js";
+  d.setAttribute("data-lang",l);
+  d.setAttribute("lang",l);
+  if(l==="ar"){d.setAttribute("dir","rtl");}
+}());
+</script>
+</head>
+<body>
+<a class="skip" href="#notice">Skip to the privacy notice</a>
+
+<header>
+  <div class="wrap nav">
+    <a href="index.html" class="logo" aria-label="BE RELAX — Massage Center and Spa, back to the website">
+      <img class="logo-mark logo-dark" src="assets/logo/be-relax-logo-dark.png"
+           alt="BE RELAX — Massage Center and Spa" width="950" height="467"
+           decoding="async">
+      <img class="logo-mark logo-light" src="assets/logo/be-relax-logo-white.png"
+           alt="" aria-hidden="true" width="719" height="354" decoding="async">
+    </a>
+    <div class="nav-right">
+      <nav class="langbar" id="langbar" aria-label="Language / اللغة">
+        <a href="#doc-en" id="lang-en" hreflang="en" lang="en" aria-current="true">English</a>
+        <a href="#doc-ar" id="lang-ar" hreflang="ar" lang="ar" class="ar">العربية</a>
+      </nav>
+      <a href="index.html" class="back">Back to the site</a>
+    </div>
+  </div>
+</header>
+
+<main id="notice">
+
+<!-- ============================================================
+     MASTHEAD — shown whichever language is selected, because the
+     version, the draft status, the governing-language rule and the
+     erasure warning must reach every reader.
+     ============================================================ -->
+<div class="doc masthead">
+
+  <p class="eyebrow">BE RELAX Massage Center and Spa</p>
+  <h1>Privacy Notice
+    <span class="sub" lang="ar" dir="rtl">إشعار الخصوصية</span>
+  </h1>
+  <p class="lead">What we collect, why we are allowed to hold it, how long we keep it,
+    and exactly how to get it back or have it erased.</p>
+
+  <!-- The version a guest can check against their consent record. -->
+  <section class="version" aria-labelledby="ver-h">
+    <h2 id="ver-h" class="sr-only">Version of this notice</h2>
+    <dl class="version-top">
+      <div class="version-cell">
+        <dt>Version <span lang="ar" dir="rtl">/ الإصدار</span></dt>
+        <dd><code class="v-str" id="berelax-privacy-version">1.0-draft</code></dd>
+      </div>
+      <div class="version-cell">
+        <dt>Date <span lang="ar" dir="rtl">/ التاريخ</span></dt>
+        <dd>17 September 2026
+          <small><span lang="ar" dir="rtl">17 سبتمبر 2026</span></small></dd>
+      </div>
+      <div class="version-cell">
+        <dt>Status <span lang="ar" dir="rtl">/ الحالة</span></dt>
+        <dd><span class="badge-draft">Draft — not yet in force</span>
+          <small><span lang="ar" dir="rtl">مسودة — غير سارية</span></small></dd>
+      </div>
+      <div class="version-cell">
+        <dt>Applies to</dt>
+        <dd><small style="margin-top:0">The BE RELAX CRM and booking platform,
+          and the berelax.ae website</small></dd>
+      </div>
+    </dl>
+    <p class="version-note"><strong>Why the version is printed here.</strong>
+      Every consent the system records stores the exact version of the notice the
+      guest was shown. If you have agreed to something, this is the string to check
+      it against. On sign-off the version becomes <code>1.0</code> and the date is
+      updated; a new version always carries a new number, and a number is never reused.</p>
+  </section>
+
+  <div class="callout" role="note">
+    <span class="callout-title">Draft — not to be published</span>
+    <p><strong>This notice is not yet in force.</strong> It is not to be published until
+      UAE counsel has reviewed it and the
+      <mark class="tbc">[TO BE COMPLETED]</mark> blanks below are filled.
+      <strong>No consent from a real guest may be captured against a draft version.</strong>
+      Test data captured against <code class="v-str">1.0-draft</code> must be deleted before launch.</p>
+    <p><strong>This document is not legal advice.</strong> It was written by the
+      engineering team to describe, accurately, what the system does. It must be
+      reviewed by UAE counsel before publication. See
+      <a href="#en-counsel">What counsel must review</a>.</p>
+  </div>
+
+  <!-- The governing-language rule, carried from the notice's own Arabic header. -->
+  <div class="callout" role="note" aria-labelledby="gov-h">
+    <span class="callout-title" id="gov-h">On the translation <span lang="ar" dir="rtl">/ ملاحظة على الترجمة</span></span>
+    <p>The Arabic text below is a full translation of the English, not a transliteration.
+      This is nevertheless a legal document, and it must be reviewed by a certified legal
+      translator and by UAE counsel before publication. Passages marked
+      <mark class="tbc">[TRANSLATION TO BE REVIEWED]</mark> are where the legal
+      terminology is genuinely contested or where we judge the wording needs specialist
+      checking. <strong>In the event of any difference between the two texts before
+      counsel's review, the English text governs.</strong></p>
+    <p lang="ar" dir="rtl">النص العربي أدناه ترجمة كاملة للنص الإنجليزي وليس نقلاً حرفياً
+      للحروف. ومع ذلك، فهذه وثيقة قانونية، ويجب أن يراجعها مترجم قانوني معتمد ومستشار
+      قانوني إماراتي قبل النشر. المقاطع التي تحمل علامة
+      <mark class="tbc">[TRANSLATION TO BE REVIEWED]</mark> هي المواضع التي تكون فيها
+      المصطلحات القانونية محل خلاف حقيقي أو التي نرى فيها أن الصياغة تحتاج إلى تدقيق
+      متخصص. <strong>في حال وجود أي اختلاف بين النصين قبل مراجعة المستشار القانوني،
+      يُعتمد النص الإنجليزي.</strong></p>
+  </div>
+
+  <!-- The one thing a guest is most likely to be surprised by. -->
+  <div class="callout callout-erase" role="note" aria-labelledby="erase-h">
+    <span class="callout-title" id="erase-h">Before you ask us to delete your data</span>
+    <q>The transaction survives, the person does not.</q>
+    <p>If you ask us to erase your data we remove <strong>you</strong> — your name, your
+      email, your notes, your number — but <strong>we keep the financial records</strong>:
+      the booking, the amount, the tip, the audit trail behind it. UAE tax and accounting
+      law requires a business to keep its books for five years, and the right to erasure
+      gives way where the law requires records to be kept.
+      <a href="#en-erasure">Read the full explanation before you ask</a>.</p>
+    <p lang="ar" dir="rtl"><strong>تبقى المعاملة، ويختفي الشخص.</strong>
+      إذا طلبت حذف بياناتك فإننا نحذف <strong>أنت</strong> — اسمك وبريدك وملاحظاتك ورقمك —
+      لكننا <strong>نحتفظ بالسجلات المالية</strong>: الحجز والمبلغ والإكرامية وسجل التدقيق
+      المرتبط به. <a href="#ar-erasure">اقرأ الشرح الكامل قبل أن تطلب</a>.</p>
+  </div>
+
+  <!-- How the printed version is kept in step with the code and the desk. -->
+  <details class="manage">
+    <summary style="cursor:pointer;font-family:var(--serif);font-size:19px;color:var(--head)">
+      How this version string is kept in step</summary>
+    <p style="margin-top:14px">The version string matters: a consent filed against a
+      version that names no document proves nothing. <strong>Three places must carry the
+      same string</strong> — this published page, the consent gate in the browser
+      (<code>window.BERELAX_PRIVACY_VERSION</code>, which falls back to this page's
+      <code>&lt;meta name="berelax:privacy-version"&gt;</code> and records nothing at all if
+      neither is set), and the <code>policyVersion</code> the front desk sends with a
+      consent. <strong>This page is the published source.</strong> The string is bumped in
+      one commit, and a number is never reused.</p>
+  </details>
+
+  <p class="nojs-note"><strong>Both languages are on this page.</strong> The English notice
+    is first, the Arabic follows below it. The switch at the top of the page jumps between
+    them, and hides the other language when JavaScript is available.</p>
+
+</div><!-- /masthead -->
+
+<!-- ============================================================
+     ENGLISH
+     ============================================================ -->
+<article id="doc-en" data-lang-doc="en" lang="en" aria-labelledby="en-h">
+<div class="doc">
+
+  <div class="orn"><i></i><h2 id="en-h" class="lang-h">English</h2><i></i></div>
+
+  <nav class="toc" id="en-contents" aria-labelledby="en-toc-h">
+    <h3 id="en-toc-h">Contents</h3>
+    <p>Fifteen sections. The one most people are surprised by is number 8.</p>
+    <ol>
+      <li><a href="#en-who-we-are">Who we are</a></li>
+      <li><a href="#en-what-we-collect">What we collect</a></li>
+      <li><a href="#en-what-we-dont-collect">What we do <em>not</em> collect</a></li>
+      <li><a href="#en-lawful-basis">Why we are allowed to hold it</a></li>
+      <li><a href="#en-cookies">Cookies and analytics — and the fact that declining changes nothing</a></li>
+      <li><a href="#en-where-kept">Where your data is kept</a></li>
+      <li><a href="#en-retention">How long we keep it</a></li>
+      <li><a href="#en-erasure">If you ask us to delete your data</a><span class="flag">Financial records survive</span></li>
+      <li><a href="#en-rights">Your rights</a></li>
+      <li><a href="#en-health">Why we refuse to store health information</a></li>
+      <li><a href="#en-children">Children</a></li>
+      <li><a href="#en-security">Security</a></li>
+      <li><a href="#en-known-issues">Known issues, being fixed before launch</a></li>
+      <li><a href="#en-changes">Changes to this notice</a></li>
+      <li><a href="#en-counsel">What counsel must review before this goes live</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1 -->
+  <section class="sec" id="en-who-we-are" aria-labelledby="en-who-h">
+    <h3 id="en-who-h">1. Who we are</h3>
+    <p>BE RELAX Massage Center and Spa is the <strong>controller</strong> of the personal
+      data described here. That means we decide what is collected and why, and we are the
+      ones answerable for it.</p>
+    <dl class="kv">
+      <div><dt>Name</dt><dd>BE RELAX Massage Center and Spa</dd></div>
+      <div><dt>Address</dt><dd>250 Al Meena Street, Tower Block A/B, M-Floor, Al Zahiyah (Al Mina), E14, Abu Dhabi, United Arab Emirates</dd></div>
+      <div><dt>Mobile / WhatsApp</dt><dd>052 510 8633 (+971 52 510 8633)</dd></div>
+      <div><dt>Mobile</dt><dd>056 342 9399 (+971 56 342 9399)</dd></div>
+      <div><dt>Landline</dt><dd>02 557 6533 (+971 2 557 6533)</dd></div>
+      <div><dt>Open</dt><dd>Every day, 11:00 am – 2:00 am</dd></div>
+      <div><dt>Trade licence</dt><dd><mark class="tbc">[TO BE COMPLETED: Abu Dhabi DED trade licence number]</mark></dd></div>
+      <div><dt>Legal entity name</dt><dd><mark class="tbc">[TO BE COMPLETED: the registered name on the trade licence, if different from the trading name]</mark></dd></div>
+      <div><dt>Privacy contact</dt><dd><mark class="tbc">[TO BE COMPLETED: name of the person responsible for privacy questions]</mark>, reachable on <mark class="tbc">[TO BE COMPLETED: direct phone number]</mark></dd></div>
+      <div><dt>Email for privacy requests</dt><dd><mark class="tbc">[TO BE COMPLETED: e.g. privacy@berelax.ae — this address must exist and be monitored before launch]</mark></dd></div>
+    </dl>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 2 -->
+  <section class="sec" id="en-what-we-collect" aria-labelledby="en-collect-h">
+    <h3 id="en-collect-h">2. What we collect</h3>
+    <p>Everything in this list is a real field in our system. There is nothing collected
+      that is not named here.</p>
+
+    <h4 id="en-collect-booking">When you book, or when you visit</h4>
+    <div class="tw" tabindex="0" role="region" aria-label="What we collect when you book or visit">
+      <table>
+        <caption>When you book, or when you visit</caption>
+        <thead><tr><th scope="col">What</th><th scope="col">Required?</th><th scope="col">Why we have it</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Your name</th><td>Yes</td><td>To know whose booking it is and to greet you</td></tr>
+          <tr><th scope="row">Your mobile number</th><td>Yes</td><td>To confirm the booking, to call you if the therapist runs late, and to find your record when you return</td></tr>
+          <tr><th scope="row">Your email address</th><td><strong>Optional</strong></td><td>Only if you give it. We do not ask for it at the desk.</td></tr>
+          <tr><th scope="row">Preference notes</th><td>No</td><td>Short operational notes: <em>“prefers firm pressure”</em>, <em>“no jasmine oil”</em>, <em>“requests Maya”</em>. Capped at 500 characters by the system.</td></tr>
+          <tr><th scope="row">Your booking history</th><td>Automatic</td><td>Dates, treatments, durations, which therapist, whether you attended, cancelled or did not arrive</td></tr>
+          <tr><th scope="row">What you paid</th><td>Automatic</td><td>Amount, method (cash, card, bank transfer, voucher, complimentary), the date, and which member of staff took it</td></tr>
+          <tr><th scope="row">Tips you leave</th><td>Automatic</td><td>The amount, and whether it went to the therapist directly or through us</td></tr>
+          <tr><th scope="row">Card terminal slip number</th><td>If you pay by card</td><td>A reference number typed in by reception so a payment can be matched to a terminal slip</td></tr>
+          <tr><th scope="row">Whether you are blocked</th><td>Rarely</td><td>If a guest is not welcome back, we mark the record. It is not a deletion and it can be reversed.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 id="en-collect-enquiry">When you send an enquiry through the website</h4>
+    <p>The website form creates an <strong>enquiry</strong>, not a booking. It holds your
+      name, your mobile number, an optional email, the treatment and date you asked about,
+      and anything you typed in the message box. Someone calls you back to turn it into a
+      real booking.</p>
+
+    <h4 id="en-collect-website">When you use the website</h4>
+    <div class="tw" tabindex="0" role="region" aria-label="What we collect when you use the website">
+      <table>
+        <caption>When you use the website</caption>
+        <thead><tr><th scope="col">What</th><th scope="col">Only if you consent?</th><th scope="col">Notes</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">A visitor ID (a random number stored in your browser and in a cookie called <code>brx_vid</code>)</th><td><strong>Yes</strong></td><td>Lets us tell one visit from another and see which adverts and search results bring people to us</td></tr>
+          <tr><th scope="row">Where you came from</th><td><strong>Yes</strong></td><td>Google, Instagram, a referral, a campaign name, an advert click ID (<code>gclid</code>, <code>fbclid</code>)</td></tr>
+          <tr><th scope="row">Which page you landed on</th><td><strong>Yes</strong></td><td>The path only — <code>/</code> or <code>/services</code> — never the full web address with its query string</td></tr>
+          <tr><th scope="row">When you tapped WhatsApp or Call</th><td><strong>Yes</strong></td><td>We log the click, the page it happened on and the campaign. <strong>We do not read your WhatsApp conversation and we never will.</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Your visitor ID is a unique identifier tied to your behaviour, so we treat it as
+      personal data even though your name is not attached to it.</p>
+
+    <h4 id="en-collect-photo">If we photograph you</h4>
+    <p>We ask separately, in person, and record the answer. We do not photograph guests
+      without asking.</p>
+
+    <h4 id="en-collect-staff">If you have a staff login</h4>
+    <p>Staff accounts hold an email address, a name, a role, a hashed password, when the
+      account last signed in, and — for each active session — the browser type and the
+      IP address the session was started from. This is how a lost phone is dealt with.</p>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 3 -->
+  <section class="sec" id="en-what-we-dont-collect" aria-labelledby="en-not-h">
+    <h3 id="en-not-h">3. What we do <strong>not</strong> collect</h3>
+    <p>This is a deliberate design decision, and it is worth being plain about.</p>
+    <ul>
+      <li><strong>No health or medical information.</strong> Not pregnancy, not injuries,
+        not blood pressure, not medication, not allergies, not surgery history. There is no
+        column for it, and the system actively rejects notes containing medical terms.
+        If a health question ever matters for a treatment, it is asked verbally or kept
+        on paper in a locked cabinet on site — it never enters this system. See
+        <a href="#en-health">Why we refuse to store health information</a>.</li>
+      <li><strong>No Emirates ID number, no passport number, no visa details.</strong></li>
+      <li><strong>No date of birth, no nationality, no gender, no home address.</strong></li>
+      <li><strong>No card numbers.</strong> We do not process payments. Card payments go
+        through the terminal from the bank; we only record the amount and the slip number.</li>
+      <li><strong>No location tracking.</strong> The website does not ask for your location,
+        and the browser permission is switched off at the server.</li>
+      <li><strong>No advertising trackers from other companies.</strong> No Google Analytics,
+        no Facebook pixel, no third-party advertising cookies. The only measurement is our
+        own, first-party, and consent-based.</li>
+    </ul>
+    <blockquote>
+      <p><strong>One thing to be careful about.</strong> The website’s message box currently
+        invites you to mention injuries. If you write health information there it will be
+        stored in that message until reception handles the enquiry. <strong>We are changing
+        that prompt</strong> — see <a href="#en-known-issues">Known issues</a> — but until it
+        is changed, please tell us about injuries on the phone or when you arrive rather
+        than typing them into the form.</p>
+    </blockquote>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 4 -->
+  <section class="sec" id="en-lawful-basis" aria-labelledby="en-basis-h">
+    <h3 id="en-basis-h">4. Why we are allowed to hold it</h3>
+    <p>Under the UAE Personal Data Protection Law, every category of data needs a lawful
+      basis. Ours are:</p>
+    <div class="tw" tabindex="0" role="region" aria-label="Lawful basis for each category of data">
+      <table>
+        <caption>Lawful basis</caption>
+        <thead><tr><th scope="col">What</th><th scope="col">Lawful basis</th><th scope="col">In plain terms</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Name, phone, booking history, preference notes</th><td><strong>Performance of a contract</strong></td><td>We cannot give you a massage at 9pm on Thursday without knowing who you are and how to reach you. No consent is needed for this, and you cannot decline it and still book.</td></tr>
+          <tr><th scope="row">Payment and tip records</th><td><strong>Legal obligation</strong> (tax and accounting) <strong>and contract</strong></td><td>UAE tax law requires a business to keep its accounting records. See <a href="#en-erasure">If you ask us to delete your data</a>.</td></tr>
+          <tr><th scope="row">Marketing messages</th><td><strong>Consent</strong></td><td>Separate, opt-in, and withdrawable at any time. It is never bundled into the booking form’s submit button. Declining costs you nothing.</td></tr>
+          <tr><th scope="row">Analytics and attribution identifiers</th><td><strong>Consent</strong></td><td>You are asked before anything is stored. Declining is one click and the website works exactly the same.</td></tr>
+          <tr><th scope="row">Photographs of guests</th><td><strong>Consent</strong></td><td>Asked separately, in person, recorded against your record.</td></tr>
+          <tr><th scope="row">Staff records, payroll and payouts</th><td><strong>Employment contract and legal obligation</strong></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 5 -->
+  <section class="sec" id="en-cookies" aria-labelledby="en-cookies-h">
+    <h3 id="en-cookies-h">5. Cookies and analytics — and the fact that declining changes nothing</h3>
+    <p>When you first visit berelax.ae you are asked whether we may measure where our
+      visitors come from.</p>
+    <ul>
+      <li><strong>Accept</strong> and <strong>Decline</strong> are the same size and the
+        same prominence. There is no greyed-out refusal.</li>
+      <li>Declining is <strong>one click</strong>, not a settings journey.</li>
+      <li>You can change your mind at any time from the link in the footer of every page.
+        Withdrawing is as easy as giving.</li>
+      <li><strong>The website works fully if you decline.</strong> You can read the menu,
+        see the prices, submit the booking form, tap WhatsApp and call us. The only thing
+        that stops is our measurement of where visitors come from.</li>
+      <li>The booking form and the WhatsApp buttons are <strong>never</strong> blocked
+        behind the banner. Making you accept analytics before you can book would not be
+        real consent anyway.</li>
+    </ul>
+    <p>There are two cookies. <code>berelax_consent</code> remembers your answer and is set
+      whichever way you answer. <code>brx_vid</code> is the visitor ID and is set
+      <strong>only</strong> if you accept.</p>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 6 -->
+  <section class="sec" id="en-where-kept" aria-labelledby="en-where-h">
+    <h3 id="en-where-h">6. Where your data is kept</h3>
+    <p>Your data is <strong>stored and processed outside the United Arab Emirates.</strong></p>
+    <dl class="kv">
+      <div><dt>Database</dt><dd>Supabase (managed PostgreSQL), hosted on Amazon Web Services in <mark class="tbc">[TO BE COMPLETED: the region actually provisioned — Frankfurt, eu-central-1, is the intended choice]</mark></dd></div>
+      <div><dt>Country</dt><dd><mark class="tbc">[TO BE COMPLETED: Germany, if Frankfurt is chosen]</mark></dd></div>
+      <div><dt>Safeguard relied on</dt><dd><mark class="tbc">[TO BE COMPLETED BY COUNSEL: adequacy determination, or a data processing addendum containing appropriate contractual undertakings under PDPL Arts. 22–23, or your express consent]</mark></dd></div>
+    </dl>
+    <p><strong>Why we cannot simply answer this today, honestly:</strong> the PDPL permits
+      transfers abroad where the destination has been recognised by the UAE Data Office as
+      offering adequate protection, or — where it has not — under an appropriate
+      contractual undertaking or with your express consent. Whether a given country or
+      a given Supabase region carries a published adequacy determination is a question
+      of the current state of UAE regulatory practice, and the PDPL’s Executive
+      Regulations, which set the procedural detail, must be checked at the time this
+      notice is published. We would rather leave this blank and have counsel fill it in
+      than print a comfortable answer that is wrong.</p>
+    <p>What we can say now: the choice of region is deliberate and recorded, we hold
+      signed data processing agreements with every provider, and the database is
+      ordinary PostgreSQL with no vendor-specific features — so if UAE law ever
+      requires the data to be held inside the country, it moves without a rebuild.</p>
+    <p>Our other providers are listed in full, with what each can see, in our
+      data processing register.</p>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 7 -->
+  <section class="sec" id="en-retention" aria-labelledby="en-ret-h">
+    <h3 id="en-ret-h">7. How long we keep it</h3>
+    <div class="tw" tabindex="0" role="region" aria-label="How long we keep each kind of data">
+      <table>
+        <caption>Retention</caption>
+        <thead><tr><th scope="col">What</th><th scope="col">How long</th><th scope="col">What happens then</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Your name, phone and email</th><td><strong>3 years</strong> after your last visit</td><td>Replaced with an anonymous placeholder. Your phone number is replaced with a one-way code so that, if you were blocked, you stay blocked — but the number itself is gone.</td></tr>
+          <tr><th scope="row">Your booking records</th><td><strong>5 years</strong></td><td>Your name is already removed by then; the booking itself stays, without a person attached</td></tr>
+          <tr><th scope="row">Payments, tips and the payout ledger</th><td><strong>5 years minimum</strong> (tax law)</td><td>Reviewed and archived. Never deleted while any dispute is open.</td></tr>
+          <tr><th scope="row">The financial audit trail</th><td><strong>7 years</strong></td><td>Moved to cold storage</td></tr>
+          <tr><th scope="row">Website analytics (visitor ID, where you came from)</th><td><strong>90 days</strong></td><td>The identifiers are stripped. Only the channel — “Google”, “Instagram” — is kept, with no way back to a person.</td></tr>
+          <tr><th scope="row">WhatsApp and call button clicks</th><td><strong>90 days</strong></td><td>Deleted</td></tr>
+          <tr><th scope="row">Marketing consent records</th><td>Until you withdraw, then <strong>3 years</strong></td><td>Being able to prove that you did consent, and when you stopped, is itself a legal requirement</td></tr>
+          <tr><th scope="row">Staff login sessions</th><td><strong>30 days</strong> after they expire</td><td>Deleted</td></tr>
+          <tr><th scope="row">System logs containing IP addresses</th><td><strong>90 days</strong></td><td>Deleted</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 8 — the section a guest is most likely to be surprised by -->
+  <section class="sec" id="en-erasure" aria-labelledby="en-erase-h">
+    <h3 id="en-erase-h">8. If you ask us to delete your data</h3>
+    <p><strong>Read this part before you ask, because the honest answer has two halves.</strong></p>
+    <p><strong>The half you would expect.</strong> We remove your name, your email and your
+      preference notes. We replace your phone number with a one-way code that cannot be
+      turned back into a number. We delete your consent records. We clear the free-text
+      notes on your bookings. We go back through the website enquiry inbox and blank
+      out your name, number, email and anything you typed in the message box — even for
+      enquiries that never became a booking. We cut the link between you and everything
+      the website recorded about how you found us, and delete your WhatsApp and call
+      button clicks, even if that data is younger than 90 days. Your record leaves
+      reception’s guest book entirely.</p>
+    <p>When a manager does this, the system hands them an itemised receipt of exactly
+      what was removed and what was kept. If you want to see it, ask — it is yours.</p>
+
+    <div class="callout callout-erase" role="note">
+      <span class="callout-title">The half you should know about before you ask</span>
+      <p><em>We keep the financial records.</em> The booking stays — the date, the
+        treatment, the amount paid, the tip, which therapist, and the audit trail behind
+        it. What we delete is <strong>you</strong>: the row that once held your name now
+        holds a placeholder, and the payment record points at that placeholder instead of
+        at a person.</p>
+      <p><strong>Why.</strong> UAE tax and accounting law requires a business to keep its
+        books for five years. The right to erasure is not absolute — it gives way where
+        the law requires records to be kept. If we deleted the payment line, the books
+        would no longer balance, and a tax audit would find a hole.</p>
+      <p class="pull">So the trade we make is this: <strong>the transaction survives, the person does not.</strong></p>
+      <p>After an erasure request, our records still show that a 60-minute massage was
+        paid for at 22:15 on a Tuesday in March. They no longer show that it was you.</p>
+      <p>If that is not what you wanted to hear, we would rather you heard it now than
+        discovered it afterwards.</p>
+    </div>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 9 -->
+  <section class="sec" id="en-rights" aria-labelledby="en-rights-h">
+    <h3 id="en-rights-h">9. Your rights</h3>
+    <p>Under the UAE Personal Data Protection Law you have the right to:</p>
+    <ul>
+      <li><strong>Be told</strong> what we hold about you and what we do with it — this notice</li>
+      <li><strong>Get a copy</strong> of it, including your bookings, payments, tips and consents</li>
+      <li><strong>Take it with you</strong> in a machine-readable file</li>
+      <li><strong>Correct</strong> anything that is wrong</li>
+      <li><strong>Have it erased</strong>, subject to the financial records explained above</li>
+      <li><strong>Restrict</strong> or <strong>object to</strong> how we use it</li>
+      <li><strong>Withdraw consent</strong> at any time, for marketing and for analytics,
+        without giving a reason and without it affecting anything else</li>
+    </ul>
+
+    <h4 id="en-rights-how">How to actually exercise them</h4>
+    <p>Not “contact us”. Here are the real routes:</p>
+    <div class="tw" tabindex="0" role="region" aria-label="How to exercise your rights">
+      <table>
+        <caption>Routes</caption>
+        <thead><tr><th scope="col">Route</th><th scope="col">Detail</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">In person</th><td>Come to the front desk at 250 Al Meena Street, Tower Block A/B, M-Floor, Al Zahiyah, any day between 11:00 am and 2:00 am. Ask for the manager on duty and say you have a data request. Bring the mobile number you booked with.</td></tr>
+          <tr><th scope="row">By phone</th><td>Call <strong>052 510 8633</strong> or <strong>02 557 6533</strong> during opening hours and ask for the manager on duty.</td></tr>
+          <tr><th scope="row">By WhatsApp</th><td>Message <strong>052 510 8633</strong>. Write “data request” and we will call you back.</td></tr>
+          <tr><th scope="row">In writing</th><td><mark class="tbc">[TO BE COMPLETED: the monitored email address for privacy requests]</mark></td></tr>
+          <tr><th scope="row">Responsible person</th><td><mark class="tbc">[TO BE COMPLETED: name]</mark>, <mark class="tbc">[TO BE COMPLETED: direct phone number]</mark></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>What happens next.</strong> We will confirm your identity — usually by
+      calling the mobile number on the booking — because handing someone else’s booking
+      history to a stranger who knows their name would be the worse failure. Only a
+      manager or the owner can action an access or erasure request; reception cannot.
+      We aim to respond within <strong>30 days</strong>, and we will tell you if it will
+      take longer and why.</p>
+    <p><strong>Two of these are quicker than the rest:</strong></p>
+    <ul>
+      <li><strong>Withdrawing consent</strong> — for marketing, for analytics, or for
+        photographs — is done at the front desk on the spot, by whoever is there. It takes
+        one action, no manager, no form, no reason needed. Withdrawing is as easy as
+        giving, because the law requires that and because anything else is a dark pattern.
+        The record that you once consented is kept, so that if you ever ask why you
+        received a message last March we can show you the answer.</li>
+      <li><strong>Asking for a copy</strong> produces a single machine-readable file
+        containing your guest record, your consents, every booking, every payment, every
+        tip, your website enquiries and any attribution data linked to your visits — with
+        a list, inside the file, of what is <em>not</em> in it and why. It is one document
+        that answers both “show me what you have” and “give it to me so I can take it
+        elsewhere”.</li>
+    </ul>
+    <p><strong>If you are not satisfied</strong>, you may complain to the UAE Data Office,
+      the federal authority responsible for personal data protection. Their current contact
+      route should be checked at <mark class="tbc">[TO BE COMPLETED: the UAE Data Office's
+      published complaint channel at the time of publication]</mark>.</p>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 10 -->
+  <section class="sec" id="en-health" aria-labelledby="en-health-h">
+    <h3 id="en-health-h">10. Why we refuse to store health information</h3>
+    <p>Massage intake forms routinely ask about pregnancy, injuries, blood pressure,
+      recent surgery and allergies. We decided not to.</p>
+    <p>Two reasons. First, health data is <strong>sensitive personal data</strong> under the
+      PDPL and carries stricter obligations. Second, and more sharply: UAE Federal Law
+      No. 2 of 2019, on the use of information technology in the health field, requires
+      health data generated in the UAE to be stored and processed inside the UAE and
+      restricts sending it abroad. Our database is not in the UAE.</p>
+    <p><strong>Whether that law reaches a wellness spa that is not a licensed health
+      facility is genuinely arguable</strong> — we are not asserting that it does, and it is
+      a question for lawyers rather than for engineers. We simply chose not to have the
+      argument. Storing no health data at all means the question never arises.</p>
+    <p>If a health questionnaire ever becomes genuinely necessary, it stays on paper, in
+      a locked cabinet on site, and never enters this system.</p>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 11 -->
+  <section class="sec" id="en-children" aria-labelledby="en-children-h">
+    <h3 id="en-children-h">11. Children</h3>
+    <p>We do not knowingly take bookings for anyone under 18 without a parent or
+      guardian present, and we do not hold data about children. If you believe we hold
+      a child’s data, tell us using any of the routes above and we will remove it.</p>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 12 -->
+  <section class="sec" id="en-security" aria-labelledby="en-security-h">
+    <h3 id="en-security-h">12. Security</h3>
+    <p>In plain terms: the connection is encrypted, the database is encrypted, passwords
+      are hashed and never stored in readable form, staff only see what their role
+      needs, every action that touches money is recorded with who did it and from
+      where, and the record of those actions cannot be edited or deleted by anyone —
+      including us. Backups are taken daily and a restore is rehearsed every quarter,
+      because an untested backup is a hope rather than a plan.</p>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 13 -->
+  <section class="sec" id="en-known-issues" aria-labelledby="en-known-h">
+    <h3 id="en-known-h">13. Known issues, being fixed before launch</h3>
+    <p>We would rather list these than pretend they do not exist.</p>
+    <ol>
+      <li><strong>The website’s message box invites health information.</strong> The prompt
+        currently reads “Injuries, pressure preference, preferred therapist…”. It is being
+        changed, and the system does not yet screen that field for medical terms the
+        way it screens the guest record. Until then, please do not type health
+        information into the form.</li>
+      <li><strong>The consent banner is not live on the site yet.</strong> Until it is, no
+        analytics script runs at all — so nothing is collected — but the banner must be in
+        place before the CRM goes live.</li>
+      <li><strong>Some of the retention schedule above is newly built and has not yet run
+        against real data.</strong> The automatic anonymisation of guest records at three
+        years works and is tested, but it has never had a three-year-old record to
+        act on, because there are none yet. The first real run will be deliberate and
+        checked, not silent. See the register for the full list of what is built, what is
+        not, and what is still open.</li>
+    </ol>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 14 -->
+  <section class="sec" id="en-changes" aria-labelledby="en-changes-h">
+    <h3 id="en-changes-h">14. Changes to this notice</h3>
+    <p>If we change this notice we will publish the new version with a new version
+      number and date, and the footer of the website will link to it. Consent records
+      store which version you were shown, so we can always tell what you actually
+      agreed to.</p>
+    <div class="tw" tabindex="0" role="region" aria-label="Version history">
+      <table>
+        <caption>Version history</caption>
+        <thead><tr><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Change</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><code class="v-str">1.0-draft</code></th><td>17 September 2026</td><td>First draft. Not in force.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- 15 -->
+  <section class="sec" id="en-counsel" aria-labelledby="en-counsel-h">
+    <h3 id="en-counsel-h">15. What counsel must review before this goes live</h3>
+    <p>This notice is an engineering description of a real system. It is <strong>not legal
+      advice</strong> and it has not been reviewed by a lawyer. Before publication, UAE
+      counsel must confirm:</p>
+    <ol>
+      <li><strong>The current status of the PDPL’s Executive Regulations</strong>, which set
+        the procedural detail for several obligations referred to here — including the
+        mechanics of cross-border transfer and of data subject requests. Much of what
+        this notice says about <em>process</em> depends on them.</li>
+      <li><strong>The cross-border transfer basis</strong> — whether the chosen hosting
+        country carries a UAE Data Office adequacy determination, and if not, which
+        alternative safeguard is being relied on and whether the provider agreements
+        support it.</li>
+      <li><strong>The wording of the consent requests</strong> for marketing, analytics and
+        photography, and whether they meet PDPL Art. 6.</li>
+      <li><strong>Whether Federal Law No. 2 of 2019 on ICT in the health field applies to
+        this business at all.</strong> We assume it might and design around it. Counsel
+        should confirm whether that caution is necessary or merely prudent.</li>
+      <li><strong>The five-year retention claim for financial records</strong> against the
+        applicable UAE tax and commercial-companies record-keeping rules, and whether any
+        longer period applies.</li>
+      <li><strong>The complaint route to the UAE Data Office</strong> as currently published.</li>
+      <li><strong>Whether a Data Protection Officer must be appointed</strong> for a business
+        of this size and processing profile.</li>
+    </ol>
+    <a class="totop" href="#en-contents">&uarr; Contents</a>
+  </section>
+
+  <!-- The control the banner promises: "change your mind at any time". -->
+  <section class="manage" id="manage-en" hidden data-manage aria-labelledby="manage-en-h">
+    <h3 id="manage-en-h">Manage your choice</h3>
+    <p>Reopen the analytics question and change your answer. Withdrawing is as easy as
+      giving, and nothing else on the site changes either way.</p>
+    <button type="button" class="btn-manage" data-manage-btn>Manage your choice</button>
+  </section>
+
+</div>
+</article>
+
+<hr class="lang-sep">
+
+<!-- ============================================================
+     ARABIC — the same notice. Phone numbers are wrapped in
+     dir="ltr" so the digits read and copy in the right order
+     inside a right-to-left paragraph.
+     ============================================================ -->
+<article id="doc-ar" data-lang-doc="ar" lang="ar" dir="rtl" aria-labelledby="ar-h">
+<div class="doc">
+
+  <div class="orn"><i></i><h2 id="ar-h" class="lang-h">العربية</h2><i></i></div>
+
+  <dl class="kv">
+    <div><dt>الإصدار</dt><dd><code class="v-str">1.0-draft</code></dd></div>
+    <div><dt>التاريخ</dt><dd>17 سبتمبر 2026</dd></div>
+    <div><dt>الحالة</dt><dd><strong>مسودة — غير سارية.</strong> لا تُنشر قبل مراجعة المستشار
+      القانوني الإماراتي واستكمال الحقول الفارغة.</dd></div>
+  </dl>
+
+  <nav class="toc" id="ar-contents" aria-labelledby="ar-toc-h">
+    <h3 id="ar-toc-h">المحتويات</h3>
+    <p>خمسة عشر قسماً. القسم الذي يفاجئ أغلب الناس هو القسم الثامن.</p>
+    <ol>
+      <li><a href="#ar-who-we-are">من نحن</a></li>
+      <li><a href="#ar-what-we-collect">ما الذي نجمعه</a></li>
+      <li><a href="#ar-what-we-dont-collect">ما الذي <em>لا</em> نجمعه</a></li>
+      <li><a href="#ar-lawful-basis">الأساس القانوني للاحتفاظ بالبيانات</a></li>
+      <li><a href="#ar-cookies">ملفات تعريف الارتباط والتحليلات — والرفض لا يغيّر شيئاً</a></li>
+      <li><a href="#ar-where-kept">أين تُحفظ بياناتك</a></li>
+      <li><a href="#ar-retention">مدة الاحتفاظ</a></li>
+      <li><a href="#ar-erasure">إذا طلبت حذف بياناتك</a><span class="flag">السجلات المالية تبقى</span></li>
+      <li><a href="#ar-rights">حقوقك</a></li>
+      <li><a href="#ar-health">لماذا نرفض حفظ المعلومات الصحية</a></li>
+      <li><a href="#ar-children">الأطفال</a></li>
+      <li><a href="#ar-security">الأمن</a></li>
+      <li><a href="#ar-known-issues">مسائل معروفة، قيد المعالجة قبل الإطلاق</a></li>
+      <li><a href="#ar-changes">تعديلات هذا الإشعار</a></li>
+      <li><a href="#ar-disclaimer">إخلاء مسؤولية</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1 -->
+  <section class="sec" id="ar-who-we-are" aria-labelledby="ar-who-h">
+    <h3 id="ar-who-h">1. من نحن</h3>
+    <p>مركز ومنتجع «بي ريلاكس» للمساج هو <strong>المتحكّم</strong> في البيانات الشخصية
+      الموضحة هنا. أي أننا الجهة التي تقرر ما يُجمع ولماذا، ونحن المسؤولون عنه.</p>
+    <dl class="kv">
+      <div><dt>الاسم</dt><dd>مركز ومنتجع بي ريلاكس للمساج</dd></div>
+      <div><dt>العنوان</dt><dd>250 شارع الميناء، برج A/B، الطابق الميزانين، الزاهية (المينا)، E14، أبوظبي، الإمارات العربية المتحدة</dd></div>
+      <div><dt>الهاتف المتحرك / واتساب</dt><dd><span dir="ltr">052 510 8633</span></dd></div>
+      <div><dt>هاتف متحرك</dt><dd><span dir="ltr">056 342 9399</span></dd></div>
+      <div><dt>الهاتف الأرضي</dt><dd><span dir="ltr">02 557 6533</span></dd></div>
+      <div><dt>ساعات العمل</dt><dd>يومياً من 11:00 صباحاً حتى 2:00 فجراً</dd></div>
+      <div><dt>الرخصة التجارية</dt><dd><mark class="tbc">[TO BE COMPLETED: رقم الرخصة التجارية]</mark></dd></div>
+      <div><dt>مسؤول الخصوصية</dt><dd><mark class="tbc">[TO BE COMPLETED: الاسم]</mark>، على الرقم <mark class="tbc">[TO BE COMPLETED: رقم هاتف مباشر]</mark></dd></div>
+      <div><dt>البريد الإلكتروني لطلبات الخصوصية</dt><dd><mark class="tbc">[TO BE COMPLETED]</mark></dd></div>
+    </dl>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 2 -->
+  <section class="sec" id="ar-what-we-collect" aria-labelledby="ar-collect-h">
+    <h3 id="ar-collect-h">2. ما الذي نجمعه</h3>
+    <p>كل بند في هذه القائمة يقابله حقل فعلي في نظامنا. لا نجمع شيئاً غير مذكور هنا.</p>
+
+    <h4 id="ar-collect-booking">عند الحجز أو الزيارة</h4>
+    <div class="tw" tabindex="0" role="region" aria-label="ما نجمعه عند الحجز أو الزيارة">
+      <table>
+        <caption>عند الحجز أو الزيارة</caption>
+        <thead><tr><th scope="col">البيان</th><th scope="col">إلزامي؟</th><th scope="col">سبب الاحتفاظ به</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">الاسم</th><td>نعم</td><td>لمعرفة صاحب الحجز ولاستقبالك باسمك</td></tr>
+          <tr><th scope="row">رقم الهاتف المتحرك</th><td>نعم</td><td>لتأكيد الحجز، وللاتصال بك إذا تأخر المعالج، وللعثور على سجلك عند عودتك</td></tr>
+          <tr><th scope="row">البريد الإلكتروني</th><td><strong>اختياري</strong></td><td>فقط إن قدّمته. لا نطلبه عند الاستقبال.</td></tr>
+          <tr><th scope="row">ملاحظات التفضيلات</th><td>لا</td><td>ملاحظات تشغيلية قصيرة: «يفضّل الضغط القوي»، «بدون زيت الياسمين»، «يطلب مايا». يحدّها النظام بـ 500 حرف.</td></tr>
+          <tr><th scope="row">سجل الحجوزات</th><td>تلقائي</td><td>التواريخ، الجلسات، المدد، المعالج، وما إذا حضرت أو ألغيت أو لم تحضر</td></tr>
+          <tr><th scope="row">المبالغ المدفوعة</th><td>تلقائي</td><td>المبلغ، وطريقة الدفع (نقداً، بطاقة، تحويل بنكي، قسيمة، مجاني)، والتاريخ، ومن استلمه من الموظفين</td></tr>
+          <tr><th scope="row">الإكراميات</th><td>تلقائي</td><td>المبلغ، وما إذا كان قد سُلّم للمعالج مباشرة أم عن طريقنا</td></tr>
+          <tr><th scope="row">رقم إيصال جهاز البطاقة</th><td>عند الدفع بالبطاقة</td><td>رقم مرجعي يُدخله الاستقبال لمطابقة الدفعة مع إيصال الجهاز</td></tr>
+          <tr><th scope="row">وضع الحظر</th><td>نادراً</td><td>إذا لم يعد الضيف مرحّباً به نضع علامة على السجل. هذا ليس حذفاً ويمكن التراجع عنه.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 id="ar-collect-enquiry">عند إرسال استفسار عبر الموقع</h4>
+    <p>نموذج الموقع ينشئ <strong>استفساراً</strong> وليس حجزاً. يتضمن اسمك، ورقم هاتفك
+      المتحرك، وبريداً إلكترونياً اختيارياً، والجلسة والتاريخ اللذين سألت عنهما، وأي نص
+      كتبته في خانة الرسالة. يتصل بك أحد الموظفين لتحويله إلى حجز فعلي.</p>
+
+    <h4 id="ar-collect-website">عند استخدام الموقع الإلكتروني</h4>
+    <div class="tw" tabindex="0" role="region" aria-label="ما نجمعه عند استخدام الموقع الإلكتروني">
+      <table>
+        <caption>عند استخدام الموقع الإلكتروني</caption>
+        <thead><tr><th scope="col">البيان</th><th scope="col">بموافقتك فقط؟</th><th scope="col">ملاحظات</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">معرّف زائر (رقم عشوائي يُحفظ في متصفحك وفي ملف تعريف ارتباط اسمه <code>brx_vid</code>)</th><td><strong>نعم</strong></td><td>يتيح لنا التمييز بين الزيارات ومعرفة أي الإعلانات ونتائج البحث تقودك إلينا</td></tr>
+          <tr><th scope="row">مصدر وصولك إلينا</th><td><strong>نعم</strong></td><td>جوجل، إنستجرام، إحالة، اسم حملة إعلانية، معرّف نقرة إعلان (<code>gclid</code>، <code>fbclid</code>)</td></tr>
+          <tr><th scope="row">الصفحة التي دخلت منها</th><td><strong>نعم</strong></td><td>المسار فقط — مثل <code>/</code> أو <code>/services</code> — ولا نحفظ العنوان الكامل بمعاملاته</td></tr>
+          <tr><th scope="row">نقرك على زر واتساب أو الاتصال</th><td><strong>نعم</strong></td><td>نسجّل النقرة والصفحة والحملة. <strong>لا نقرأ محادثتك على واتساب ولن نفعل أبداً.</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>معرّف الزائر رقم فريد مرتبط بسلوكك، ولذلك نتعامل معه كبيانات شخصية حتى وإن لم يكن
+      اسمك مرتبطاً به.</p>
+
+    <h4 id="ar-collect-photo">التصوير الفوتوغرافي</h4>
+    <p>نطلب إذنك بشكل منفصل وشخصياً، ونسجّل إجابتك. لا نصوّر الضيوف دون استئذان.</p>
+
+    <h4 id="ar-collect-staff">إذا كان لديك حساب موظف</h4>
+    <p>حسابات الموظفين تتضمن بريداً إلكترونياً واسماً ودوراً وكلمة مرور مُجزّأة (مشفّرة
+      باتجاه واحد)، وتاريخ آخر دخول، ولكل جلسة نشطة نوع المتصفح وعنوان بروتوكول الإنترنت
+      الذي بدأت منه الجلسة. هذا ما يتيح التصرف عند فقدان هاتف.</p>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 3 -->
+  <section class="sec" id="ar-what-we-dont-collect" aria-labelledby="ar-not-h">
+    <h3 id="ar-not-h">3. ما الذي <strong>لا</strong> نجمعه</h3>
+    <p>هذا قرار تصميمي مقصود، ويستحق التوضيح الصريح.</p>
+    <ul>
+      <li><strong>لا نجمع أي معلومات صحية أو طبية.</strong> لا عن الحمل، ولا الإصابات، ولا
+        ضغط الدم، ولا الأدوية، ولا الحساسية، ولا العمليات الجراحية السابقة. لا يوجد حقل
+        لذلك في النظام، والنظام يرفض فعلياً أي ملاحظة تتضمن مصطلحات طبية. وإذا كان هناك
+        سؤال صحي مهم لجلسة ما، فإنه يُطرح شفهياً أو يُحفظ على ورق في خزانة مغلقة في
+        المركز — ولا يدخل هذا النظام أبداً.</li>
+      <li><strong>لا نجمع رقم الهوية الإماراتية، ولا رقم جواز السفر، ولا بيانات التأشيرة.</strong></li>
+      <li><strong>لا نجمع تاريخ الميلاد، ولا الجنسية، ولا النوع، ولا عنوان السكن.</strong></li>
+      <li><strong>لا نجمع أرقام البطاقات.</strong> نحن لا نعالج المدفوعات. الدفع بالبطاقة
+        يتم عبر جهاز البنك؛ ونحن نسجّل المبلغ ورقم الإيصال فقط.</li>
+      <li><strong>لا نتتبع موقعك الجغرافي.</strong> الموقع الإلكتروني لا يطلب موقعك، وإذن
+        المتصفح معطّل من الخادم.</li>
+      <li><strong>لا نستخدم أدوات تتبع إعلانية من شركات أخرى.</strong> لا جوجل أناليتكس،
+        ولا بكسل فيسبوك، ولا ملفات تعريف ارتباط إعلانية تابعة لجهات خارجية. القياس الوحيد
+        قياسنا نحن، من الطرف الأول، وقائم على موافقتك.</li>
+    </ul>
+    <blockquote>
+      <p><strong>نقطة تستدعي الانتباه.</strong> خانة الرسالة في الموقع تدعوك حالياً إلى ذكر
+        الإصابات. إذا كتبت معلومات صحية هناك فستُحفظ في تلك الرسالة حتى يعالج الاستقبال
+        الاستفسار. <strong>نحن بصدد تغيير هذه الصياغة</strong>، لكن إلى أن يتم ذلك، نرجو
+        إخبارنا بالإصابات هاتفياً أو عند وصولك بدلاً من كتابتها في النموذج.</p>
+    </blockquote>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 4 -->
+  <section class="sec" id="ar-lawful-basis" aria-labelledby="ar-basis-h">
+    <h3 id="ar-basis-h">4. الأساس القانوني للاحتفاظ بالبيانات</h3>
+    <p><mark class="tbc">[TRANSLATION TO BE REVIEWED — مصطلحات الأسس القانونية أدناه تحتاج
+      تدقيق مترجم قانوني معتمد لضمان مطابقتها لصياغة المرسوم بقانون اتحادي رقم 45 لسنة
+      2021]</mark></p>
+    <div class="tw" tabindex="0" role="region" aria-label="الأساس القانوني لكل فئة من البيانات">
+      <table>
+        <caption>الأساس القانوني</caption>
+        <thead><tr><th scope="col">البيان</th><th scope="col">الأساس القانوني</th><th scope="col">بعبارة بسيطة</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">الاسم والهاتف وسجل الحجوزات وملاحظات التفضيلات</th><td><strong>تنفيذ عقد</strong></td><td>لا يمكننا تقديم جلسة في التاسعة مساء الخميس دون معرفة من أنت وكيف نصل إليك. لا تلزم موافقة لذلك، ولا يمكن رفضه مع إتمام الحجز.</td></tr>
+          <tr><th scope="row">سجلات المدفوعات والإكراميات</th><td><strong>التزام قانوني</strong> (ضريبي ومحاسبي) <strong>وعقد</strong></td><td>يلزم القانون الضريبي في الدولة المنشأة بالاحتفاظ بسجلاتها المحاسبية.</td></tr>
+          <tr><th scope="row">الرسائل التسويقية</th><td><strong>موافقة</strong></td><td>منفصلة، اختيارية، ويمكن سحبها في أي وقت. ولا تُدمج أبداً في زر إرسال نموذج الحجز. رفضها لا يكلفك شيئاً.</td></tr>
+          <tr><th scope="row">معرّفات التحليلات ومصادر الزيارات</th><td><strong>موافقة</strong></td><td>نسألك قبل حفظ أي شيء. الرفض بنقرة واحدة والموقع يعمل كما هو تماماً.</td></tr>
+          <tr><th scope="row">صور الضيوف</th><td><strong>موافقة</strong></td><td>تُطلب منفصلة وشخصياً وتُسجّل في سجلك.</td></tr>
+          <tr><th scope="row">سجلات الموظفين والرواتب والمستحقات</th><td><strong>عقد العمل والتزام قانوني</strong></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 5 -->
+  <section class="sec" id="ar-cookies" aria-labelledby="ar-cookies-h">
+    <h3 id="ar-cookies-h">5. ملفات تعريف الارتباط والتحليلات — والرفض لا يغيّر شيئاً</h3>
+    <p>عند زيارتك الأولى لموقع berelax.ae نسألك ما إذا كان يمكننا قياس مصادر زيارات
+      موقعنا.</p>
+    <ul>
+      <li>زرّا <strong>الموافقة</strong> و<strong>الرفض</strong> بالحجم نفسه والبروز نفسه.
+        لا يوجد زر رفض باهت.</li>
+      <li>الرفض بـ <strong>نقرة واحدة</strong>، لا عبر سلسلة إعدادات.</li>
+      <li>يمكنك تغيير رأيك في أي وقت من الرابط في أسفل كل صفحة. سحب الموافقة سهل بقدر
+        منحها.</li>
+      <li><strong>الموقع يعمل بالكامل إن رفضت.</strong> يمكنك قراءة قائمة الجلسات والأسعار،
+        وإرسال نموذج الحجز، والنقر على واتساب، والاتصال بنا. الشيء الوحيد الذي يتوقف هو
+        قياسنا لمصادر الزيارات.</li>
+      <li>نموذج الحجز وأزرار واتساب <strong>لا تُحجب أبداً</strong> خلف الإشعار. إجبارك على
+        قبول التحليلات قبل الحجز لن يكون موافقة حقيقية أصلاً.</li>
+    </ul>
+    <p>هناك ملفا تعريف ارتباط: <code>berelax_consent</code> يحفظ إجابتك ويُضبط مهما كانت،
+      و<code>brx_vid</code> هو معرّف الزائر ولا يُضبط <strong>إلا</strong> إذا وافقت.</p>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 6 -->
+  <section class="sec" id="ar-where-kept" aria-labelledby="ar-where-h">
+    <h3 id="ar-where-h">6. أين تُحفظ بياناتك</h3>
+    <p>تُحفظ بياناتك وتُعالج <strong>خارج دولة الإمارات العربية المتحدة.</strong></p>
+    <dl class="kv">
+      <div><dt>قاعدة البيانات</dt><dd>Supabase (قاعدة بيانات PostgreSQL مُدارة) مستضافة على Amazon Web Services في <mark class="tbc">[TO BE COMPLETED: المنطقة المستخدمة فعلياً — فرانكفورت eu-central-1 هي الخيار المقصود]</mark></dd></div>
+      <div><dt>الدولة</dt><dd><mark class="tbc">[TO BE COMPLETED: ألمانيا، في حال اختيار فرانكفورت]</mark></dd></div>
+      <div><dt>الضمانة المعتمدة</dt><dd><mark class="tbc">[TO BE COMPLETED BY COUNSEL: قرار كفاية، أو ملحق معالجة بيانات يتضمن تعهدات تعاقدية مناسبة بموجب المادتين 22 و23 من المرسوم بقانون، أو موافقتك الصريحة]</mark></dd></div>
+    </dl>
+    <p><strong>لماذا لا نستطيع الإجابة اليوم بصدق:</strong> يسمح القانون بنقل البيانات إلى
+      الخارج متى اعترف مكتب الإمارات لحماية البيانات بأن الدولة المستقبِلة توفّر حماية
+      كافية، أو — في حال عدم وجود هذا الاعتراف — بموجب تعهد تعاقدي مناسب أو بموافقتك
+      الصريحة. وما إذا كانت دولة بعينها أو منطقة استضافة بعينها مشمولة بقرار كفاية منشور
+      هو مسألة تتعلق بالوضع الراهن للممارسة التنظيمية في الدولة، ويجب التحقق من اللائحة
+      التنفيذية للمرسوم بقانون عند نشر هذا الإشعار. ونفضّل ترك هذا الحقل فارغاً ليملأه
+      المستشار القانوني على أن نطبع إجابة مريحة وخاطئة.</p>
+    <p>ما يمكننا قوله الآن: اختيار المنطقة مقصود وموثّق، ولدينا اتفاقيات معالجة بيانات
+      موقّعة مع كل مزوّد، وقاعدة البيانات هي PostgreSQL قياسية دون أي خصائص خاصة بمزوّد
+      بعينه — فإذا اقتضى القانون الإماراتي يوماً حفظ البيانات داخل الدولة، فبالإمكان نقلها
+      دون إعادة بناء النظام.</p>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 7 -->
+  <section class="sec" id="ar-retention" aria-labelledby="ar-ret-h">
+    <h3 id="ar-ret-h">7. مدة الاحتفاظ</h3>
+    <div class="tw" tabindex="0" role="region" aria-label="مدة الاحتفاظ بكل نوع من البيانات">
+      <table>
+        <caption>مدة الاحتفاظ</caption>
+        <thead><tr><th scope="col">البيان</th><th scope="col">المدة</th><th scope="col">ثم ماذا</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">الاسم والهاتف والبريد الإلكتروني</th><td><strong>3 سنوات</strong> من آخر زيارة</td><td>يُستبدل بعنصر نائب مجهول. ويُستبدل رقم هاتفك برمز أحادي الاتجاه حتى يبقى المحظور محظوراً — أما الرقم نفسه فيختفي.</td></tr>
+          <tr><th scope="row">سجلات الحجوزات</th><td><strong>5 سنوات</strong></td><td>يكون اسمك قد أُزيل قبلها؛ ويبقى الحجز دون شخص مرتبط به</td></tr>
+          <tr><th scope="row">المدفوعات والإكراميات وسجل المستحقات</th><td><strong>5 سنوات على الأقل</strong> (القانون الضريبي)</td><td>تُراجع وتُؤرشف. ولا تُحذف أبداً ما دام هناك نزاع قائم.</td></tr>
+          <tr><th scope="row">سجل التدقيق المالي</th><td><strong>7 سنوات</strong></td><td>يُنقل إلى تخزين بارد</td></tr>
+          <tr><th scope="row">تحليلات الموقع (معرّف الزائر ومصدر الزيارة)</th><td><strong>90 يوماً</strong></td><td>تُجرَّد المعرّفات ويبقى اسم القناة فقط — «جوجل»، «إنستجرام» — دون أي طريق للعودة إلى شخص</td></tr>
+          <tr><th scope="row">نقرات أزرار واتساب والاتصال</th><td><strong>90 يوماً</strong></td><td>تُحذف</td></tr>
+          <tr><th scope="row">سجلات الموافقة التسويقية</th><td>حتى سحبها، ثم <strong>3 سنوات</strong></td><td>القدرة على إثبات أنك وافقت ومتى توقفت هي بذاتها متطلب قانوني</td></tr>
+          <tr><th scope="row">جلسات دخول الموظفين</th><td><strong>30 يوماً</strong> بعد انتهائها</td><td>تُحذف</td></tr>
+          <tr><th scope="row">سجلات النظام التي تتضمن عناوين IP</th><td><strong>90 يوماً</strong></td><td>تُحذف</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 8 -->
+  <section class="sec" id="ar-erasure" aria-labelledby="ar-erase-h">
+    <h3 id="ar-erase-h">8. إذا طلبت حذف بياناتك</h3>
+    <p><strong>اقرأ هذا الجزء قبل أن تطلب، لأن الإجابة الصادقة لها شقّان.</strong></p>
+    <p><strong>الشق المتوقَّع.</strong> نحذف اسمك وبريدك الإلكتروني وملاحظات تفضيلاتك.
+      ونستبدل رقم هاتفك برمز أحادي الاتجاه لا يمكن إعادته إلى رقم. ونحذف سجلات موافقتك.
+      ونمسح النصوص الحرة المدوّنة على حجوزاتك. ونعود إلى صندوق استفسارات الموقع فنمحو
+      اسمك ورقمك وبريدك وكل ما كتبته في خانة الرسالة — حتى للاستفسارات التي لم تتحول إلى
+      حجز. ونقطع الصلة بينك وبين كل ما سجّله الموقع عن كيفية وصولك إلينا، ونحذف نقراتك على
+      أزرار واتساب والاتصال، حتى لو كانت تلك البيانات أحدث من 90 يوماً. ويخرج سجلك من دفتر
+      ضيوف الاستقبال تماماً.</p>
+    <p>وعند تنفيذ ذلك، يسلّم النظام المدير بياناً مفصّلاً بما أُزيل بالضبط وما بقي. وإن
+      أردت الاطلاع عليه فاطلبه — فهو حقك.</p>
+
+    <div class="callout callout-erase" role="note">
+      <span class="callout-title">الشق الذي ينبغي أن تعرفه قبل أن تطلب</span>
+      <p><em>نحتفظ بالسجلات المالية.</em> يبقى الحجز — التاريخ والجلسة والمبلغ المدفوع
+        والإكرامية والمعالج وسجل التدقيق المرتبط به. الذي نحذفه هو <strong>أنت</strong>:
+        السجل الذي كان يحمل اسمك يصبح عنصراً نائباً، ويشير سجل الدفع إلى ذلك العنصر النائب
+        بدلاً من شخص.</p>
+      <p><strong>لماذا.</strong> يُلزم القانون الضريبي والمحاسبي في الدولة المنشآت بحفظ
+        دفاترها خمس سنوات. والحق في المحو ليس مطلقاً — فهو يتراجع حيث يوجب القانون حفظ
+        السجلات. ولو حذفنا بند الدفع لاختلّت الدفاتر ولوجد التدقيق الضريبي ثغرة.</p>
+      <p class="pull">فالمقايضة التي نجريها هي: <strong>تبقى المعاملة، ويختفي الشخص.</strong></p>
+      <p>بعد طلب المحو، تُظهر سجلاتنا أن جلسة مدتها 60 دقيقة دُفع ثمنها في الساعة
+        <span dir="ltr">22:15</span> من يوم ثلاثاء في مارس. ولم تعد تُظهر أن ذلك كان أنت.</p>
+      <p>وإن لم يكن هذا ما تودّ سماعه، فنحن نفضّل أن تسمعه الآن لا أن تكتشفه لاحقاً.</p>
+    </div>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 9 -->
+  <section class="sec" id="ar-rights" aria-labelledby="ar-rights-h">
+    <h3 id="ar-rights-h">9. حقوقك</h3>
+    <p><mark class="tbc">[TRANSLATION TO BE REVIEWED — أسماء الحقوق أدناه يجب أن تطابق
+      صياغة المواد 13–17 من المرسوم بقانون بالضبط]</mark></p>
+    <p>بموجب قانون حماية البيانات الشخصية في دولة الإمارات، لك الحق في:</p>
+    <ul>
+      <li><strong>أن تُعلَم</strong> بما نحتفظ به عنك وبما نفعله به — وهذا الإشعار</li>
+      <li><strong>الحصول على نسخة</strong> منه، تشمل حجوزاتك ومدفوعاتك وإكرامياتك وموافقاتك</li>
+      <li><strong>نقلها</strong> في ملف قابل للقراءة آلياً</li>
+      <li><strong>تصحيح</strong> أي معلومة خاطئة</li>
+      <li><strong>محوها</strong>، مع مراعاة السجلات المالية الموضحة أعلاه</li>
+      <li><strong>تقييد</strong> استخدامها أو <strong>الاعتراض</strong> عليه</li>
+      <li><strong>سحب الموافقة</strong> في أي وقت، للتسويق وللتحليلات، دون إبداء سبب ودون
+        أن يؤثر ذلك على أي شيء آخر</li>
+    </ul>
+
+    <h4 id="ar-rights-how">كيف تمارس حقوقك فعلياً</h4>
+    <p>لا نقول «تواصل معنا». هذه هي الطرق الحقيقية:</p>
+    <div class="tw" tabindex="0" role="region" aria-label="طرق ممارسة حقوقك">
+      <table>
+        <caption>الطرق</caption>
+        <thead><tr><th scope="col">الطريقة</th><th scope="col">التفاصيل</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">شخصياً</th><td>تفضّل إلى مكتب الاستقبال في 250 شارع الميناء، برج A/B، الطابق الميزانين، الزاهية، أي يوم بين 11:00 صباحاً و2:00 فجراً. اطلب المدير المناوب وأخبره بأن لديك طلباً يتعلق ببياناتك. أحضر رقم الهاتف الذي حجزت به.</td></tr>
+          <tr><th scope="row">هاتفياً</th><td>اتصل على <strong><span dir="ltr">052 510 8633</span></strong> أو <strong><span dir="ltr">02 557 6533</span></strong> خلال ساعات العمل واطلب المدير المناوب.</td></tr>
+          <tr><th scope="row">عبر واتساب</th><td>راسلنا على <strong><span dir="ltr">052 510 8633</span></strong> واكتب «طلب بيانات» وسنعاود الاتصال بك.</td></tr>
+          <tr><th scope="row">كتابياً</th><td><mark class="tbc">[TO BE COMPLETED: البريد الإلكتروني المخصص لطلبات الخصوصية]</mark></td></tr>
+          <tr><th scope="row">الشخص المسؤول</th><td><mark class="tbc">[TO BE COMPLETED: الاسم]</mark>، <mark class="tbc">[TO BE COMPLETED: رقم هاتف مباشر]</mark></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>ماذا يحدث بعد ذلك.</strong> سنتحقق من هويتك — عادةً بالاتصال برقم الهاتف
+      المسجّل في الحجز — لأن تسليم سجل حجوزات شخص ما إلى غريب يعرف اسمه سيكون الخطأ
+      الأفدح. ولا يستطيع تنفيذ طلب الاطلاع أو المحو إلا المدير أو المالك؛ الاستقبال لا
+      يستطيع. ونهدف إلى الرد خلال <strong>30 يوماً</strong>، وسنخبرك إن كان الأمر سيستغرق
+      أطول ولماذا.</p>
+    <p><strong>طلبان من هذه أسرع من غيرهما:</strong></p>
+    <ul>
+      <li><strong>سحب الموافقة</strong> — للتسويق أو للتحليلات أو للتصوير — يتم عند مكتب
+        الاستقبال في حينه، على يد من هو موجود. إجراء واحد، بلا مدير، وبلا نموذج، وبلا
+        إبداء سبب. فسحب الموافقة سهل بقدر منحها، لأن القانون يوجب ذلك ولأن ما عداه تضليل.
+        ويبقى سجل أنك وافقت سابقاً، حتى إذا سألت يوماً لماذا وصلتك رسالة في مارس الماضي
+        استطعنا أن نريك الجواب.</li>
+      <li><strong>طلب نسخة من بياناتك</strong> يُنتج ملفاً واحداً قابلاً للقراءة آلياً
+        يتضمن سجلك كضيف، وموافقاتك، وكل حجز، وكل دفعة، وكل إكرامية، واستفساراتك عبر
+        الموقع، وأي بيانات عن مصدر وصولك مرتبطة بزياراتك — ويتضمن الملف نفسه قائمة بما
+        <strong>ليس</strong> فيه وسبب ذلك. وهو مستند واحد يجيب على «أرني ما لديكم»
+        و«سلّموني إياه لآخذه إلى جهة أخرى» معاً.</li>
+    </ul>
+    <p><strong>وإذا لم تكن راضياً</strong>، يمكنك تقديم شكوى إلى مكتب الإمارات لحماية
+      البيانات، وهي الجهة الاتحادية المعنية بحماية البيانات الشخصية. ينبغي التحقق من قناة
+      التواصل المعتمدة لديهم على <mark class="tbc">[TO BE COMPLETED: قناة الشكاوى المنشورة
+      لمكتب الإمارات لحماية البيانات وقت النشر]</mark>.</p>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 10 -->
+  <section class="sec" id="ar-health" aria-labelledby="ar-health-h">
+    <h3 id="ar-health-h">10. لماذا نرفض حفظ المعلومات الصحية</h3>
+    <p>نماذج استقبال المساج تسأل عادةً عن الحمل والإصابات وضغط الدم والعمليات الجراحية
+      الحديثة والحساسية. ونحن قررنا ألا نفعل.</p>
+    <p>لسببين. الأول أن البيانات الصحية <strong>بيانات شخصية حساسة</strong> بموجب قانون
+      حماية البيانات الشخصية وتخضع لالتزامات أشد. والثاني، وهو الأهم: يوجب القانون
+      الاتحادي رقم 2 لسنة 2019 في شأن استخدام تكنولوجيا المعلومات والاتصالات في المجالات
+      الصحية حفظ ومعالجة البيانات الصحية المتولدة داخل الدولة داخلها، ويقيّد إرسالها إلى
+      الخارج. وقاعدة بياناتنا ليست داخل الدولة.</p>
+    <p><strong>وما إذا كان ذلك القانون يشمل منتجعاً صحياً غير مرخص كمنشأة صحية فمسألة
+      قابلة للجدل فعلاً</strong> — ونحن لا نؤكد أنه يشملنا، وهي مسألة للمحامين لا
+      للمهندسين. وقد اخترنا ببساطة ألا ندخل في ذلك الجدل. فعدم حفظ أي بيانات صحية على
+      الإطلاق يعني أن السؤال لا يُطرح أصلاً.</p>
+    <p>وإذا أصبح استبيان صحي ضرورياً فعلاً يوماً ما، فسيبقى على ورق، في خزانة مغلقة في
+      المركز، ولن يدخل هذا النظام.</p>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 11 -->
+  <section class="sec" id="ar-children" aria-labelledby="ar-children-h">
+    <h3 id="ar-children-h">11. الأطفال</h3>
+    <p>لا نقبل عن علم حجوزات لمن هم دون 18 عاماً دون حضور ولي أمر، ولا نحتفظ ببيانات عن
+      الأطفال. وإذا كنت تعتقد أننا نحتفظ ببيانات طفل، فأخبرنا عبر أي من الطرق أعلاه
+      وسنزيلها.</p>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 12 -->
+  <section class="sec" id="ar-security" aria-labelledby="ar-security-h">
+    <h3 id="ar-security-h">12. الأمن</h3>
+    <p>بعبارة بسيطة: الاتصال مشفّر، وقاعدة البيانات مشفّرة، وكلمات المرور مُجزّأة ولا
+      تُحفظ أبداً بصيغة قابلة للقراءة، ولا يرى الموظفون إلا ما يقتضيه دورهم، وكل إجراء
+      يمسّ المال يُسجَّل مع بيان من قام به ومن أين، وسجل تلك الإجراءات لا يمكن لأحد تعديله
+      أو حذفه — بما في ذلك نحن. وتُؤخذ نسخ احتياطية يومياً ويُختبر الاسترجاع كل ثلاثة
+      أشهر، لأن نسخة احتياطية غير مُختبَرة أمنية لا خطة.</p>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 13 -->
+  <section class="sec" id="ar-known-issues" aria-labelledby="ar-known-h">
+    <h3 id="ar-known-h">13. مسائل معروفة، قيد المعالجة قبل الإطلاق</h3>
+    <p>نفضّل ذكرها على التظاهر بعدم وجودها.</p>
+    <ol>
+      <li><strong>خانة الرسالة في الموقع تدعو إلى ذكر معلومات صحية.</strong> الصياغة
+        الحالية «إصابات، تفضيل الضغط، المعالج المفضّل…». وهي قيد التغيير، والنظام لا يفحص
+        هذا الحقل بعد بحثاً عن المصطلحات الطبية كما يفحص سجل الضيف. وإلى أن يتغير، نرجو
+        عدم كتابة معلومات صحية في النموذج.</li>
+      <li><strong>إشعار الموافقة غير مفعّل على الموقع بعد.</strong> وإلى أن يُفعَّل، لا
+        يعمل أي برنامج تحليلات إطلاقاً — فلا يُجمع شيء — لكن يجب تفعيله قبل إطلاق نظام
+        إدارة العلاقات.</li>
+      <li><strong>جزء من جدول الاحتفاظ أعلاه حديث البناء ولم يُطبَّق بعد على بيانات
+        حقيقية.</strong> فالإخفاء التلقائي لهوية الضيف بعد ثلاث سنوات يعمل وتم اختباره،
+        لكنه لم يصادف بعد سجلاً عمره ثلاث سنوات لأنه لا يوجد أي سجل كذلك حتى الآن. وأول
+        تطبيق فعلي سيكون بقرار ومراجعة، لا بصمت.</li>
+    </ol>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 14 -->
+  <section class="sec" id="ar-changes" aria-labelledby="ar-changes-h">
+    <h3 id="ar-changes-h">14. تعديلات هذا الإشعار</h3>
+    <p>إذا عدّلنا هذا الإشعار سننشر النسخة الجديدة برقم إصدار وتاريخ جديدين، وسيشير رابط
+      في أسفل الموقع إليها. وتحفظ سجلات الموافقة رقم النسخة التي عُرضت عليك، حتى نعرف
+      دائماً ما وافقت عليه فعلاً.</p>
+    <div class="tw" tabindex="0" role="region" aria-label="سجل الإصدارات">
+      <table>
+        <caption>سجل الإصدارات</caption>
+        <thead><tr><th scope="col">الإصدار</th><th scope="col">التاريخ</th><th scope="col">التعديل</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><code class="v-str">1.0-draft</code></th><td>17 سبتمبر 2026</td><td>المسودة الأولى. غير سارية.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <!-- 15 -->
+  <section class="sec" id="ar-disclaimer" aria-labelledby="ar-disclaimer-h">
+    <h3 id="ar-disclaimer-h">15. إخلاء مسؤولية</h3>
+    <p><strong>هذه الوثيقة ليست استشارة قانونية.</strong> كتبها فريق الهندسة لوصف ما يفعله
+      النظام فعلاً، ويجب أن يراجعها مستشار قانوني إماراتي قبل النشر — بما في ذلك التحقق من
+      الوضع الراهن للائحة التنفيذية للمرسوم بقانون اتحادي رقم 45 لسنة 2021.</p>
+    <a class="totop" href="#ar-contents">&uarr; المحتويات</a>
+  </section>
+
+  <section class="manage" id="manage-ar" hidden data-manage aria-labelledby="manage-ar-h">
+    <h3 id="manage-ar-h">إدارة اختيارك</h3>
+    <p>أعد فتح سؤال التحليلات وغيّر إجابتك. سحب الموافقة سهل بقدر منحها، ولا يتغير أي شيء
+      آخر في الموقع في الحالتين.</p>
+    <button type="button" class="btn-manage" data-manage-btn>إدارة اختيارك</button>
+  </section>
+
+</div>
+</article>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <div class="logo f-logo">
+          <img class="logo-mark" src="assets/logo/be-relax-logo-white.png"
+               alt="BE RELAX — Massage Center and Spa" width="719" height="354"
+               loading="lazy" decoding="async">
+        </div>
+        <p class="f-about">
+          A candlelit sanctuary in Abu Dhabi. Certified therapists, natural oils
+          and treatments shaped around your body — not a fixed script.
+        </p>
+      </div>
+      <div><h4>This notice</h4><ul>
+        <li><a href="#en-contents">English contents</a></li>
+        <li><a href="#doc-ar" lang="ar" dir="rtl">النسخة العربية</a></li>
+        <li><a href="#en-erasure">Erasure and financial records</a></li>
+        <li><a href="#en-rights">Your rights</a></li>
+        <li><a href="index.html">Back to the website</a></li>
+      </ul></div>
+      <div><h4>Visit</h4><ul>
+        <li><a href="https://maps.app.goo.gl/uuZxw2Q4snj2SEH47" target="_blank" rel="noopener">250 Al Meena Street, Tower Block A/B<br>M-Floor, Al Zahiyah, Abu Dhabi</a></li>
+        <li><a href="https://wa.me/971525108633" target="_blank" rel="noopener">052 510 8633 · WhatsApp</a></li>
+        <li><a href="tel:+971563429399">056 342 9399</a></li>
+        <li><a href="tel:+97125576533">02 557 6533</a></li>
+        <li>Daily · 11:00 am – 2:00 am</li>
+      </ul></div>
+    </div>
+    <div class="f-bottom">
+      <span>&copy; <span id="yr">2026</span> BE RELAX Massage Center and Spa. All rights reserved.</span>
+      <span class="f-ver">Privacy notice <code class="v-str">1.0-draft</code> · 17 September 2026 · draft</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ES5 only. Nothing here is required for the notice to be readable: with
+   JavaScript off, both languages are already in the page, the switch at the
+   top is a pair of ordinary anchors, and every section is reachable. */
+(function () {
+  "use strict";
+
+  var KEY = "berelax_privacy_lang";
+  var root = document.documentElement;
+  var links = { en: document.getElementById("lang-en"), ar: document.getElementById("lang-ar") };
+
+  function setLang(l, moveFocus) {
+    if (l !== "ar") l = "en";
+    root.setAttribute("data-lang", l);
+    root.setAttribute("lang", l);
+    if (l === "ar") root.setAttribute("dir", "rtl"); else root.removeAttribute("dir");
+    if (links.en) links.en.setAttribute("aria-current", l === "en" ? "true" : "false");
+    if (links.ar) links.ar.setAttribute("aria-current", l === "ar" ? "true" : "false");
+    try { sessionStorage.setItem(KEY, l); } catch (e) {}
+    /* Keep the address bar shareable without adding a history entry. */
+    if (window.history && history.replaceState) {
+      var q = location.search.replace(/[?&]lang=(ar|en)/gi, "").replace(/^&/, "?");
+      if (q === "?") q = "";
+      q = q ? q + "&lang=" + l : "?lang=" + l;
+      try { history.replaceState(null, "", location.pathname + q + location.hash); } catch (e2) {}
+    }
+    if (moveFocus) {
+      var h = document.getElementById(l === "ar" ? "ar-h" : "en-h");
+      if (h) {
+        h.setAttribute("tabindex", "-1");
+        h.focus();
+        if (h.scrollIntoView) h.scrollIntoView();
+      }
+    }
+  }
+
+  function docOf(node) {
+    while (node && node !== document.body) {
+      if (node.getAttribute && node.getAttribute("data-lang-doc")) return node.getAttribute("data-lang-doc");
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  /* Following a link into the language that is currently hidden must work. */
+  function followHash() {
+    var id = location.hash ? location.hash.substring(1) : "";
+    if (!id) return;
+    if (id === "doc-ar") { setLang("ar", false); return; }
+    if (id === "doc-en") { setLang("en", false); return; }
+    var target = document.getElementById(id);
+    if (!target) return;
+    var owner = docOf(target);
+    if (owner && owner !== root.getAttribute("data-lang")) {
+      setLang(owner, false);
+      if (target.scrollIntoView) target.scrollIntoView();
+    }
+  }
+
+  function bindLang(l) {
+    var a = links[l];
+    if (!a) return;
+    a.onclick = function (e) {
+      if (e && e.preventDefault) e.preventDefault(); else if (window.event) window.event.returnValue = false;
+      setLang(l, true);
+      return false;
+    };
+  }
+  bindLang("en");
+  bindLang("ar");
+  setLang(root.getAttribute("data-lang") || "en", false);
+  followHash();
+  if (window.addEventListener) window.addEventListener("hashchange", followHash, false);
+
+  /* Self-check. The tag machines read and the strings a guest reads live in the
+     same file, so they can still be edited apart by hand. Say so, loudly. */
+  (function () {
+    var meta = document.querySelector('meta[name="berelax:privacy-version"]');
+    if (!meta || !window.console || !console.warn) return;
+    var want = (meta.getAttribute("content") || "").replace(/^\s+|\s+$/g, "");
+    var shown = document.querySelectorAll(".v-str");
+    for (var i = 0; i < shown.length; i++) {
+      var got = (shown[i].textContent || shown[i].innerText || "").replace(/^\s+|\s+$/g, "");
+      if (got !== want) {
+        console.warn('BE RELAX privacy: <meta berelax:privacy-version> says "' + want +
+          '" but this page prints "' + got + '". They must match, or a guest cannot ' +
+          "check their consent record. See assets/js/README.md \u00A77.");
+      }
+    }
+  }());
+
+  var yr = document.getElementById("yr");
+  if (yr) yr.firstChild.nodeValue = String(new Date().getFullYear());
+
+  /* "Manage your choice" — shown only when the consent gate is actually loaded.
+     consent.js is dormant until window.BERELAX_ATTRIBUTION_API is set, so on the
+     site as it ships today this control stays hidden and the page is unchanged. */
+  var wired = false;
+  function wireConsent() {
+    if (wired) return;
+    var api = window.__berelaxConsent;
+    if (!api || typeof api.reopen !== "function") return;
+    wired = true;
+    var boxes = document.querySelectorAll("[data-manage]");
+    for (var i = 0; i < boxes.length; i++) {
+      boxes[i].removeAttribute("hidden");
+      var btn = boxes[i].querySelector("[data-manage-btn]");
+      if (btn) btn.onclick = function () { window.__berelaxConsent.reopen(); };
+    }
+  }
+  /* consent.js is deferred, so it has not run yet when this inline script does. */
+  if (document.readyState === "loading" && window.addEventListener) {
+    document.addEventListener("DOMContentLoaded", wireConsent, false);
+  } else {
+    setTimeout(wireConsent, 0);
+  }
+  if (window.addEventListener) window.addEventListener("load", wireConsent, false);
+}());
+</script>
+
+<!-- ============ ATTRIBUTION + CONSENT · spec §10, §11.3 ============
+     DORMANT AS PASTED, exactly as in index.html. consent.js returns on
+     its first statement while BERELAX_ATTRIBUTION_API is unset: no
+     banner, no storage, no network, and this page behaves exactly as
+     it does today. "Manage your choice" above stays hidden.
+
+     TO GO LIVE, uncomment exactly this one line — here and in
+     index.html, together:
+
+         window.BERELAX_ATTRIBUTION_API = "https://api.berelax.ae/v1";
+
+     BERELAX_PRIVACY_VERSION is deliberately NOT set here: consent.js
+     reads this page's <meta name="berelax:privacy-version"> instead,
+     so the published notice is the single source of the string.
+     ================================================================ -->
+<script>
+/* window.BERELAX_ATTRIBUTION_API = "https://api.berelax.ae/v1"; */
+</script>
+<script src="assets/js/consent.js" defer></script>
+
+</body>
+</html>

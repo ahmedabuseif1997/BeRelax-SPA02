@@ -1,6 +1,8 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { PinoLogger } from 'nestjs-pino';
 import { ErrorCode } from '@berelax/contracts';
+import { pathOf } from './logger';
 
 /**
  * Last line of defence. Every response leaving this API has the same shape,
@@ -8,7 +10,9 @@ import { ErrorCode } from '@berelax/contracts';
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
+  constructor(private readonly logger: PinoLogger) {
+    this.logger.setContext(AllExceptionsFilter.name);
+  }
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const http = host.switchToHttp();
@@ -56,10 +60,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return;
     }
 
-    this.logger.error(
-      { err: exception instanceof Error ? exception.stack : String(exception), requestId, path: req.url },
-      'unhandled exception',
-    );
+    // `requestId` and `route` are bindings on every line already (§12.3), so
+    // neither is repeated here. The error goes through as an OBJECT: the `err`
+    // serialiser keeps the stack and strips the request body an HTTP client may
+    // have stapled to it. `pathOf` is `req.url` without its query string, which
+    // is guest input and has no business in a log line.
+    this.logger.error({ err: exception, path: pathOf(req) }, 'unhandled exception');
 
     // Never leak an internal message to a caller.
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({

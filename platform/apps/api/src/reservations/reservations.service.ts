@@ -232,6 +232,35 @@ export class ReservationsService {
       const startsAt = new Date(dto.startsAt);
       const ref = await nextReservationRef(tx, startsAt);
 
+      // Same resolution the employee gets, for the same reason: an inactive or
+
+      // out-of-branch room must not end up on a booking just because the
+
+      // foreign key does not carry the branch.
+
+      if (dto.roomId) {
+
+        const room = await tx.room.findFirst({
+
+          where: { id: dto.roomId, branchId: actor.branchId, isActive: true },
+
+          select: { id: true },
+
+        });
+
+        if (!room) {
+
+          throw new NotFoundException(
+
+            apiError(ErrorCode.NOT_FOUND, 'No such room in this branch.'),
+
+          );
+
+        }
+
+      }
+
+
       const created = await tx.reservation.create({
         data: {
           ref,
@@ -374,6 +403,37 @@ export class ReservationsService {
         }
         baseCostFils = service.priceFils;
         durationMinutes = service.durationMinutes;
+      }
+
+      // Both ids are resolved the way create() resolves them. Taking them
+      // straight from the body is not a foreign-key problem — the constraints
+      // only reference employees(id) and rooms(id), with no branch in the key —
+      // it is a soft-delete problem: reassigning to a departed therapist writes
+      // a COMMISSION_ACCRUAL that payout refuses to settle (it filters
+      // deletedAt: null) and that both the tips and utilisation reports omit
+      // for the same reason. The liability would exist in the ledger and appear
+      // in nothing a manager reads.
+      if (dto.employeeId && dto.employeeId !== reservation.employeeId) {
+        const employee = await tx.employee.findFirst({
+          where: { id: dto.employeeId, branchId: actor.branchId, deletedAt: null },
+          select: { id: true },
+        });
+        if (!employee) {
+          throw new NotFoundException(
+            apiError(ErrorCode.NOT_FOUND, 'No such therapist in this branch.'),
+          );
+        }
+      }
+      if (dto.roomId) {
+        const room = await tx.room.findFirst({
+          where: { id: dto.roomId, branchId: actor.branchId, isActive: true },
+          select: { id: true },
+        });
+        if (!room) {
+          throw new NotFoundException(
+            apiError(ErrorCode.NOT_FOUND, 'No such room in this branch.'),
+          );
+        }
       }
 
       const updated = await tx.reservation.update({

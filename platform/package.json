@@ -11,7 +11,7 @@
     "dev": "pnpm --filter api start:dev",
     "lint": "eslint .",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm --filter api test",
+    "test": "pnpm -r --no-bail test",
     "test:e2e": "pnpm --filter api test:e2e",
     "db:migrate": "pnpm --filter api prisma:migrate",
     "db:seed": "pnpm --filter api prisma:seed",

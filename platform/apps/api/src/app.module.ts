@@ -2,8 +2,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
 
 import { validateEnv } from './config/env';
+import type { Env } from './config/env';
+import { buildLoggerParams } from './common/logger';
 import { PrismaModule } from './prisma/prisma.module';
 import { CommonModule } from './common/common.module';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
@@ -25,11 +28,25 @@ import { ShiftsModule } from './shifts/shifts.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ComplianceModule } from './compliance/compliance.module';
 import { ReportsModule } from './reports/reports.module';
+import { ReconciliationModule } from './reconciliation/reconciliation.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv, cache: true }),
+
+    // Imported before anything else that registers middleware: Nest applies
+    // middleware in module-import order, and a request logged from the second
+    // middleware onwards is a request whose first line is missing. Spec §12.3.
+    LoggerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) =>
+        buildLoggerParams({
+          LOG_LEVEL: config.get('LOG_LEVEL', { infer: true }),
+          NODE_ENV: config.get('NODE_ENV', { infer: true }),
+        }),
+    }),
+
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: () => ({
@@ -53,6 +70,7 @@ import { HealthModule } from './health/health.module';
     PaymentsModule,
     ComplianceModule,
     ReportsModule,
+    ReconciliationModule,
     HealthModule,
   ],
   providers: [

@@ -25,11 +25,16 @@ Paste this immediately **before `</body>`**, after the site's existing
      BERELAX_ATTRIBUTION_API is unset: no banner, no storage, no network,
      and the page behaves exactly as it does today.
 
-     TO GO LIVE, uncomment exactly this one line:
+     TO GO LIVE, uncomment this line:
 
          window.BERELAX_ATTRIBUTION_API = "https://api.berelax.ae/v1";
 
      To turn it all off again, comment it back. Nothing else changes.
+
+     A privacy-notice version must also resolve, or the gate stays shut
+     and says so in the console — uncomment the line below it, or carry
+     privacy.html's <meta name="berelax:privacy-version"> in this head.
+     See README §7.
 
      The API must be a SUBDOMAIN of this site's own domain (api.berelax.ae
      beside berelax.ae). On a different domain the durable cookie is
@@ -38,13 +43,29 @@ Paste this immediately **before `</body>`**, after the site's existing
 <script>
 /* window.BERELAX_ATTRIBUTION_API = "https://api.berelax.ae/v1"; */
 
-/* Optional, all with working defaults:
+/* REQUIRED — the version of the notice a consent is filed against. Copy the
+   value from privacy.html's <meta name="berelax:privacy-version">, which is
+   the published source. Without it the gate stays shut: no banner, nothing
+   stored, nothing loaded. See §7. */
+/* window.BERELAX_PRIVACY_VERSION = "1.0-draft"; */
+
+/* Optional, both with working defaults:
    window.BERELAX_PRIVACY_URL     = "privacy.html";  where the banner links
-   window.BERELAX_PRIVACY_VERSION = "2026-01";       bump it to re-ask everyone
    window.BERELAX_ATTRIBUTION_SRC = "assets/js/attribution.js"; */
 </script>
 <script src="assets/js/consent.js" defer></script>
 ```
+
+Alternatively, copy this one line from `privacy.html` into `index.html`'s
+`<head>` and leave the global unset — `consent.js` reads it and the two pages
+can no longer disagree:
+
+```html
+<meta name="berelax:privacy-version" content="1.0-draft">
+```
+
+`consent.js` must keep its `defer` (or sit at the end of `<body>`), so the head
+is parsed before that tag is read.
 
 **The enabling line, exactly:**
 
@@ -67,7 +88,9 @@ answers share a single CSS class and cannot drift apart in a later edit.
 
 Also on screen: an **Analytics choice** link in the footer's bottom bar, present
 whatever the visitor chose, because consent must be as easy to withdraw as it
-was to give. The WhatsApp floating button is lifted clear of the sheet while it
+was to give. The same sheet is reachable from `privacy.html`'s **Manage your
+choice** button, which calls `window.__berelaxConsent.reopen()` and hides
+itself entirely while this script is dormant. The WhatsApp floating button is lifted clear of the sheet while it
 is open — a booking control must never sit behind an analytics banner.
 
 Accessibility: real `<button>` elements, `role="dialog"` + `aria-modal`, labelled
@@ -95,7 +118,7 @@ which is written on either answer because a refusal has to be remembered):
 
 | Key | Written when | Contents |
 |---|---|---|
-| `berelax_consent` | On Accept or Decline | `granted\|2026-01` or `denied\|2026-01` — the answer and the privacy-notice version it was given against. A newer version re-asks. |
+| `berelax_consent` | On Accept or Decline | `granted\|1.0-draft` or `denied\|1.0-draft` — the answer and the privacy-notice version it was given against. A newer version re-asks. |
 | `berelax_attr` | On Accept, then on each visit | The §10.1 store: `v`, `visitorId` (UUID v4), `first`, `last`, `touches` (capped at 10 — the oldest *middle* touches drop, first and most recent always survive), `createdAt`, `updatedAt`. The whole store expires 90 days after its **first** touch. |
 
 A touch holds a timestamp, source, medium, the utm fields, `gclid`/`fbclid`, the
@@ -173,9 +196,60 @@ origin (CORS, with credentials) and `COOKIE_DOMAIN` set to `.berelax.ae`.
 3. **A privacy notice exists** at `BERELAX_PRIVACY_URL` (default `privacy.html`)
    and says what §3 above lists, including that financial records survive an
    erasure request (§11.4). The banner links to it; a banner linking to a 404 is
-   not informed consent.
-4. UAE counsel has reviewed the notice and the banner wording (§11 preamble).
+   not informed consent. `privacy.html` must also be in the deploy: the Netlify
+   build copies named files, not the whole repo.
+4. **The version string resolves** — either the global is set in `index.html` or
+   the meta tag is copied into its head, and it matches `privacy.html` exactly.
+   Open the page and check the console: `consent.js` logs an error and does
+   nothing at all when it cannot find a version. See §7.
+5. **The notice is no longer a draft.** No consent from a real guest may be
+   recorded against `1.0-draft`, and test data captured against it must be
+   deleted before launch.
+6. UAE counsel has reviewed the notice and the banner wording (§11 preamble).
 
-Sizes: `attribution.js` 5,874 bytes, `consent.js` 8,047 bytes unminified —
-13,921 for the pair, of which 2,244 is the injected CSS and 3,322 is comments.
-Over the wire, gzipped as Netlify serves them, the pair is 5,812 bytes.
+---
+
+## 7. One version string, three places — and which one wins
+
+A consent record is only worth something if it names the exact document the
+guest was shown. That string appears in three places, and they must never
+disagree:
+
+| Where | What it is | How it gets the value |
+|---|---|---|
+| **`privacy.html`** | **The published source. This one wins.** | `<meta name="berelax:privacy-version" content="1.0-draft">` in the head, and the same string printed visibly at the top of the page and in the footer, because a guest must be able to check which version they agreed to. |
+| `assets/js/consent.js` | What is stored in the browser beside the answer, and what will be sent with the consent | `window.BERELAX_PRIVACY_VERSION` if the page sets it; otherwise the `<meta>` tag of the page the script is running on. **No literal fallback.** With neither, it returns before doing anything: no banner, no `localStorage`, no `attribution.js`. |
+| The front desk | `policyVersion` on `POST /v1/guests/:id/consents` | Read off `privacy.html` — the page reception can open — and kept equal to it. |
+
+**Why this order.** The published page is the only one of the three a guest can
+actually read, so it is the only honest candidate for the source of truth. The
+global stays first in the lookup so a page can override it deliberately (a
+staging notice, a rehearsal), but it is no longer required: leave it unset and
+`index.html` inherits the string by carrying the same one-line `<meta>` tag.
+
+**Why there is no default.** The old fallback shipped a literal in the script.
+Whatever it said, it could be *wrong* — and a consent filed against a wrong or
+meaningless version is indistinguishable from no consent at all. Failing shut is
+the smaller harm: nothing is collected, and the console says exactly what to fix.
+
+**Publishing a new version.** In one commit, never reusing a number:
+
+1. `privacy.html` — the `<meta>` tag, the two visible version chips (the block
+   at the top and the footer line), and the "Changes to this notice" table in
+   both languages.
+2. `docs/compliance/privacy-notice.md` — its version table and change log.
+3. `index.html` — only if it sets `window.BERELAX_PRIVACY_VERSION` or carries
+   its own copy of the `<meta>` tag.
+4. Tell reception the new string, so `policyVersion` moves with it.
+
+Everyone who has already answered is re-asked automatically: `consent.js` stores
+`answer|version` and treats a stored version that is not the current one as no
+answer at all. That is the correct behaviour when the notice changes.
+
+---
+
+Sizes: `attribution.js` 5,874 bytes, `consent.js` 10,413 bytes unminified —
+16,287 for the pair, of which 2,244 is the injected CSS and the rest of the
+growth is comments and the version lookup. `privacy.html` is a separate,
+self-contained page: no stylesheet, no script beyond its own inline ES5 and the
+same two dormant tags above.

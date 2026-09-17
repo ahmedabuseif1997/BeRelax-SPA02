@@ -105,6 +105,9 @@ jobs:
       - name: Unit tests
         run: pnpm --filter api test
 
+      - name: Dashboard tests
+        run: pnpm --filter dashboard test
+
       # The exit criterion for the whole foundation phase: 25 simultaneous
       # bookings for one slot, exactly one accepted.
       - name: End-to-end tests

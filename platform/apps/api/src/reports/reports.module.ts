@@ -19,8 +19,13 @@ import { UtilisationReportService } from './utilisation-report.service';
  * is a page somebody will argue with, and a five-hundred-line service is one
  * nobody re-reads before changing.
  *
- * PrismaService comes from the global PrismaModule. Nothing is exported —
- * every route in is an HTTP route with a role gate on it.
+ * PrismaService comes from the global PrismaModule.
+ *
+ * `DailyReportService` is the one export, and it is exported for exactly one
+ * reason: the parallel pilot's nightly reconciliation (§14, Phase 7) compares
+ * reception's paper against the system's close-out, and it must compare against
+ * THESE figures. A second implementation of "what the spa took last night" is
+ * how a reconciliation tool becomes the thing that needs reconciling.
  */
 @Module({
   controllers: [ReportsController],
@@ -31,5 +36,6 @@ import { UtilisationReportService } from './utilisation-report.service';
     TipsReportService,
     AttributionReportService,
   ],
+  exports: [DailyReportService],
 })
 export class ReportsModule {}

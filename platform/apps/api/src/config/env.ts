@@ -39,6 +39,17 @@ export const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   SENTRY_DSN: z.string().optional(),
   IDEMPOTENCY_TTL_HOURS: z.coerce.number().int().positive().default(24),
+
+  /// Phase 7. How far the counted drawer may differ from the system before a
+  /// night is called mismatched. Zero by default: a variance is a finding to
+  /// record and chase, not a rounding allowance. Integer fils.
+  ///
+  /// Declared here so the key is part of the documented environment, but left
+  /// as a string on purpose: `reconciliation.config.ts` owns what it MEANS, and
+  /// its parser rejects "2.50" with a message that says why. Coercing here too
+  /// would put two validators on one key, and the less helpful one would win by
+  /// running first.
+  RECONCILIATION_CASH_TOLERANCE_FILS: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

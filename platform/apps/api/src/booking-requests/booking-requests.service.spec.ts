@@ -106,6 +106,7 @@ function convertDto(overrides: Partial<ConvertBookingRequestDto> = {}): ConvertB
 type Tx = {
   $queryRaw: jest.Mock;
   service: { findFirst: jest.Mock };
+  room: { findFirst: jest.Mock };
   employee: { findFirst: jest.Mock };
   guest: { upsert: jest.Mock };
   bookingRequest: {
@@ -131,6 +132,7 @@ function setup(
     found?: boolean;
     nextSeq?: number;
     serviceMissing?: boolean;
+  roomMissing?: boolean;
     employeeMissing?: boolean;
     servicePriceFils?: number;
     serviceDurationMinutes?: number;
@@ -144,6 +146,13 @@ function setup(
       if (strings.join('').includes('nextval')) return [{ seq: BigInt(options.nextSeq ?? 417) }];
       return options.found === false ? [] : [{ id: request.id }];
     }),
+    // The room is resolved in branch and active on this path too — a security
+    // review found it was taken straight from the body.
+    room: {
+      findFirst: jest.fn().mockResolvedValue(
+        options.roomMissing ? null : { id: ROOM_ID },
+      ),
+    },
     service: {
       findFirst: jest.fn().mockResolvedValue(
         options.serviceMissing

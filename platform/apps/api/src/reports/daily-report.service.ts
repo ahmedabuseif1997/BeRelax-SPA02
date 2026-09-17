@@ -62,6 +62,25 @@ export interface CashDrawerView {
   note: string;
 }
 
+/**
+ * The card side of the same question, cut from the same payment rows.
+ *
+ * It exists because the terminal prints a Z-report at close and that total is
+ * the one figure in the building nobody can argue with -- it comes from the
+ * bank, not from a person. Reconciling against it needs the NET card position
+ * (a refund put back through the terminal is inside the Z-report total too),
+ * with the split alongside so a disagreement can actually be chased.
+ */
+export interface CardTerminalView {
+  /** Net. Compare this with the terminal's Z-report total, to the fil. */
+  expectedCardFils: number;
+  baseCardFils: number;
+  tipCardFils: number;
+  refundedCardFils: number;
+  adjustmentCardFils: number;
+  note: string;
+}
+
 export interface DailyReportView {
   businessDay: string;
   generatedAt: string;
@@ -72,7 +91,13 @@ export interface DailyReportView {
   takings: DailyTakingsView;
   tips: DailyTipsView;
   cashDrawer: CashDrawerView;
+  cardTerminal: CardTerminalView;
 }
+
+const TERMINAL_NOTE =
+  'Net card position for this trading night: everything taken on the terminal, less anything ' +
+  'put back through it. The terminal Z-report is the authority on this line and the two must ' +
+  'agree TO THE FIL -- a card total has no counting error to forgive.';
 
 const DRAWER_NOTE =
   'Cash the business took in on this trading day, refunds already deducted. A DIRECT_CASH ' +
@@ -173,8 +198,169 @@ export class DailyReportService {
       takings: presentTakings(paymentRows),
       tips: presentTips(tipRows),
       cashDrawer: presentCashDrawer(paymentRows),
+      cardTerminal: presentCardTerminal(paymentRows),
     };
   }
+
+  /**
+   * The rest of the close-out sheet: the night broken down far enough that
+   * somebody holding reception's paper can find where the two disagree.
+   *
+   * Separate from `daily()` rather than folded into it, for two reasons. The
+   * four statements above answer the question a manager asks forty times a
+   * month and carry a 600 ms budget (§12.1); these three are read once a night,
+   * by one person, standing at a till. And nothing here is a new definition of
+   * any figure `daily()` already gives — these are DECOMPOSITIONS of it, cut
+   * from the same tables on the same trading day, which is why they live beside
+   * it instead of in whatever module needed them.
+   *
+   * Its own REPEATABLE READ transaction, so the three agree with each other.
+   * They are read a moment after `daily()` and could in principle disagree with
+   * it by one checkout; that is why every figure the reconciliation actually
+   * COMPARES comes from `daily()`'s single snapshot and everything here is
+   * context for chasing a difference down.
+   */
+  async closeOutDetail(query: DailyReportQuery, actor: AuthUser): Promise<CloseOutDetailView> {
+    const day = query.businessDay ?? businessDay(new Date());
+    const branchId = actor.branchId;
+
+    const [therapistRows, tipRows, openRows, deskRows] = await this.prisma.$transaction(
+      [
+        // 1. Bookings by therapist. The paper sheet is written per therapist, so
+        //    this is the column reception actually reads across.
+        this.prisma.$queryRaw<TherapistStatusRow[]>`
+          SELECT e.id::text                                                     AS "employeeId",
+                 e.display_name                                                 AS "displayName",
+                 count(*) FILTER (WHERE r.status = 'COMPLETED')::int            AS "completed",
+                 count(*) FILTER (WHERE r.status = 'IN_PROGRESS')::int          AS "inProgress",
+                 count(*) FILTER (WHERE r.status = 'NO_SHOW')::int              AS "noShow",
+                 count(*) FILTER (WHERE r.status = 'CANCELLED')::int            AS "cancelled",
+                 count(*) FILTER (WHERE r.status = 'SCHEDULED')::int            AS "scheduled"
+            FROM reservations r
+            JOIN employees e ON e.id = r.employee_id
+           WHERE r.branch_id = ${branchId}::uuid
+             AND r.business_day = ${day}::date
+           GROUP BY e.id, e.display_name
+           ORDER BY e.display_name`,
+
+        // 2. Tips per therapist, both modes. The SAME filter `daily()` uses —
+        //    reversed pairs out of both sides — so these lines sum to the
+        //    night's two tip totals rather than to a second, larger number.
+        this.prisma.$queryRaw<TherapistTipRow[]>`
+          SELECT t.employee_id::text                  AS "employeeId",
+                 t.type::text                         AS "type",
+                 COALESCE(SUM(t.amount_fils), 0)::int AS "totalFils"
+            FROM tips t
+           WHERE t.branch_id = ${branchId}::uuid
+             AND t.business_day = ${day}::date
+             AND t.reversed_by_tip_id IS NULL
+           GROUP BY t.employee_id, t.type`,
+
+        // 3. Everything still in a room. A session nobody checked out is a tip
+        //    nobody has recorded, so the night's figures are still moving and it
+        //    cannot honestly be signed off. Named, with a ref, so it can be closed.
+        this.prisma.$queryRaw<OpenSessionRow[]>`
+          SELECT r.id::text                  AS "reservationId",
+                 r.ref                       AS "ref",
+                 e.display_name              AS "therapist",
+                 rm.name                     AS "room",
+                 r.starts_at                 AS "startsAt",
+                 r.blocked_until             AS "blockedUntil",
+                 r.actual_arrival_at         AS "actualArrivalAt",
+                 r.base_cost_fils::int       AS "baseCostFils",
+                 (r.blocked_until < now() - make_interval(hours => ${NEEDS_CHECKOUT_AFTER_HOURS}::int))
+                                             AS "overdue"
+            FROM reservations r
+            JOIN employees e ON e.id = r.employee_id
+            LEFT JOIN rooms rm ON rm.id = r.room_id
+           WHERE r.branch_id = ${branchId}::uuid
+             AND r.business_day = ${day}::date
+             AND r.status = 'IN_PROGRESS'
+           ORDER BY r.starts_at`,
+
+        // 4. Who actually took cash at the desk. §15.4: the system cannot prove
+        //    the cash reached the drawer, so what it can do is name the people
+        //    on shift when it was taken. A variance attributed to nobody is a
+        //    variance nobody investigates.
+        this.prisma.$queryRaw<CashDeskRow[]>`
+          SELECT u.id::text                          AS "userId",
+                 u.full_name                         AS "fullName",
+                 count(*)::int                       AS "entries",
+                 COALESCE(SUM(p.amount_fils), 0)::int AS "amountFils"
+            FROM payments p
+            JOIN users u ON u.id = p.collected_by_user_id
+           WHERE p.branch_id = ${branchId}::uuid
+             AND p.business_day = ${day}::date
+             AND p.method = 'CASH'
+           GROUP BY u.id, u.full_name
+           ORDER BY SUM(p.amount_fils) DESC, u.full_name`,
+      ],
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
+
+    return {
+      businessDay: day,
+      byTherapist: presentByTherapist(therapistRows, tipRows),
+      openSessions: openRows.map((row) => ({
+        reservationId: row.reservationId,
+        ref: row.ref,
+        therapist: row.therapist,
+        room: row.room,
+        startsAt: row.startsAt.toISOString(),
+        blockedUntil: row.blockedUntil.toISOString(),
+        actualArrivalAt: row.actualArrivalAt ? row.actualArrivalAt.toISOString() : null,
+        baseCostFils: row.baseCostFils,
+        overdue: row.overdue,
+      })),
+      cashDesk: deskRows,
+    };
+  }
+}
+
+/** One therapist's night, as reception's sheet lists it. */
+export interface TherapistNightLine {
+  employeeId: string;
+  displayName: string;
+  /** Guests who actually arrived: COMPLETED plus still IN_PROGRESS. */
+  sessions: number;
+  completed: number;
+  inProgress: number;
+  scheduled: number;
+  noShow: number;
+  cancelled: number;
+  /** Handed straight over. Never in the drawer, never owed out. §9.1. */
+  tipsDirectCashFils: number;
+  /** Added to the bill. In the drawer or on the terminal, and owed out. §9.1. */
+  tipsCollectedByBusinessFils: number;
+}
+
+/** A treatment still in a room when the night was closed. */
+export interface OpenSessionLine {
+  reservationId: string;
+  ref: string;
+  therapist: string;
+  room: string | null;
+  startsAt: string;
+  blockedUntil: string;
+  actualArrivalAt: string | null;
+  baseCostFils: number;
+  /** More than two hours past `blockedUntil` — forgotten, not merely running. §8.4. */
+  overdue: boolean;
+}
+
+/** Who took cash at the desk tonight, and how much of it. §15.4. */
+export interface CashDeskLine {
+  userId: string;
+  fullName: string;
+  entries: number;
+  amountFils: number;
+}
+
+export interface CloseOutDetailView {
+  businessDay: string;
+  byTherapist: TherapistNightLine[];
+  openSessions: OpenSessionLine[];
+  cashDesk: CashDeskLine[];
 }
 
 interface StatusRow {
@@ -295,4 +481,83 @@ function presentCashDrawer(rows: PaymentRow[]): CashDrawerView {
     adjustmentCashFils: sumWhere(cash, (row) => row.kind === PaymentKind.ADJUSTMENT),
     note: DRAWER_NOTE,
   };
+}
+
+/**
+ * The card total, cut from the same rows as the drawer.
+ *
+ * Signed throughout, exactly like the cash drawer: a refund put back through
+ * the terminal is already deducted, because the Z-report this is checked
+ * against is net too. `isTipRefund` files a refunded tip against the tip line
+ * rather than the base for the same reason it does upstairs — a 50 AED tip sent
+ * back must never read as a shortfall on a 250 AED treatment (§13.3, 4b).
+ */
+function presentCardTerminal(rows: PaymentRow[]): CardTerminalView {
+  const card = rows.filter((row) => row.method === PaymentMethod.CARD);
+
+  return {
+    expectedCardFils: sumWhere(card, () => true),
+    baseCardFils: sumWhere(card, (row) => row.kind === PaymentKind.BASE),
+    tipCardFils: sumWhere(card, (row) => row.kind === PaymentKind.TIP || isTipRefund(row)),
+    refundedCardFils: sumWhere(card, (row) => row.kind === PaymentKind.REFUND && !isTipRefund(row)),
+    adjustmentCardFils: sumWhere(card, (row) => row.kind === PaymentKind.ADJUSTMENT),
+    note: TERMINAL_NOTE,
+  };
+}
+
+interface TherapistStatusRow {
+  employeeId: string;
+  displayName: string;
+  completed: number;
+  inProgress: number;
+  noShow: number;
+  cancelled: number;
+  scheduled: number;
+}
+
+interface TherapistTipRow {
+  employeeId: string;
+  type: TipType;
+  totalFils: number;
+}
+
+interface OpenSessionRow {
+  reservationId: string;
+  ref: string;
+  therapist: string;
+  room: string | null;
+  startsAt: Date;
+  blockedUntil: Date;
+  actualArrivalAt: Date | null;
+  baseCostFils: number;
+  overdue: boolean;
+}
+
+type CashDeskRow = CashDeskLine;
+
+/**
+ * A therapist with bookings but no tips still gets a line, with two zeros on
+ * it. Dropping them would make the sheet read as though they were not working,
+ * and "the sheet says Maya did nothing" is a conversation nobody should have to
+ * have over a printout.
+ */
+function presentByTherapist(
+  rows: TherapistStatusRow[],
+  tips: TherapistTipRow[],
+): TherapistNightLine[] {
+  const tipsFor = (employeeId: string, type: TipType): number =>
+    tips.find((row) => row.employeeId === employeeId && row.type === type)?.totalFils ?? 0;
+
+  return rows.map((row) => ({
+    employeeId: row.employeeId,
+    displayName: row.displayName,
+    sessions: row.completed + row.inProgress,
+    completed: row.completed,
+    inProgress: row.inProgress,
+    scheduled: row.scheduled,
+    noShow: row.noShow,
+    cancelled: row.cancelled,
+    tipsDirectCashFils: tipsFor(row.employeeId, TipType.DIRECT_CASH),
+    tipsCollectedByBusinessFils: tipsFor(row.employeeId, TipType.COLLECTED_BY_BUSINESS),
+  }));
 }

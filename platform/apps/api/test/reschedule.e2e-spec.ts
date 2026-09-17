@@ -155,6 +155,39 @@ describe('rescheduling a booking', () => {
     expect(res.body.error.code).toBe(ErrorCode.RESERVATION_NOT_SCHEDULED);
   });
 
+  it('refuses to reassign to a therapist who has left', async () => {
+    // Found by security review. Every sibling path resolves the employee in
+    // branch and not soft-deleted; reschedule took it straight from the body.
+    // The consequence is not a foreign-key error — the key does not carry the
+    // branch — it is a COMMISSION_ACCRUAL against a departed therapist that
+    // payout refuses to settle and that both the tips and utilisation reports
+    // omit. A liability in the ledger, visible in nothing a manager reads.
+    const created = await book();
+    const manager = await authTokenFor(app.http, fx.users.manager.email);
+
+    await request(app.http)
+      .delete(route(`/employees/${fx.employeeIds[1]}`))
+      .set('Authorization', `Bearer ${manager}`)
+      .expect((r) => { if (r.status >= 400) throw new Error(`soft delete failed: ${r.status}`); });
+
+    const res = await patch(created.body.id, { employeeId: fx.employeeIds[1] });
+    expect(res.status).toBe(404);
+
+    // And the booking still belongs to the therapist it started with.
+    const after = await request(app.http)
+      .get(route(`/reservations/${created.body.id}`))
+      .set('Authorization', `Bearer ${reception}`);
+    expect(after.body.employee?.id ?? after.body.employeeId).toBe(fx.employeeIds[0]);
+  });
+
+  it('refuses a room that is not this branch\'s', async () => {
+    const created = await book();
+    const res = await patch(created.body.id, {
+      roomId: '0192ffff-0000-7000-8000-00000000ffff',
+    });
+    expect(res.status).toBe(404);
+  });
+
   it('rejects a patch that asks for nothing', async () => {
     const created = await book();
     const res = await patch(created.body.id, {});
