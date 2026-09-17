@@ -20,6 +20,18 @@ const USER_ID = '0192dddd-0000-7000-8000-00000000000d';
 /** 19:00 Dubai, 16 September 2026. */
 const STARTS_AT = new Date('2026-09-16T19:00:00+04:00');
 
+/**
+ * Four minutes after the booking. Every "now" in this file is frozen here.
+ *
+ * Two tests used to omit `actualArrivalAt` and lean on the real clock. They
+ * passed on the day they were written and failed the next: check-in's ±12h
+ * plausibility window (§8.2) closes as the wall clock walks away from a fixture
+ * pinned to a fixed date. A test that expires is worse than no test — it goes
+ * red for a reason that has nothing to do with the code, and the next person
+ * learns to ignore it.
+ */
+const NOW = new Date('2026-09-16T19:04:00+04:00');
+
 function reservationFixture(overrides: Partial<Reservation> = {}): Reservation {
   return {
     id: RESERVATION_ID,
@@ -148,6 +160,14 @@ async function caught(run: () => Promise<unknown>): Promise<{ status: number; bo
 }
 
 describe('CheckInHandler — step 1 of the two-step financial workflow', () => {
+  beforeEach(() => {
+    jest.useFakeTimers().setSystemTime(NOW);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   describe('rejections', () => {
     it('404s when no such booking exists in this branch', async () => {
       const { handler, tx } = setup({ found: false });

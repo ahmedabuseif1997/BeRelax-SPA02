@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   ParseUUIDPipe,
   Post,
   Query,
@@ -30,6 +31,8 @@ import {
   ReservationView,
   ReservationsService,
   listReservationsQuerySchema,
+  rescheduleReservationSchema,
+  type RescheduleReservationDto,
 } from './reservations.service';
 
 /** Every staff role can read the grid; a THERAPIST is narrowed to their own. §6.4. */
@@ -122,6 +125,22 @@ export class ReservationsController {
     @Ctx() ctx: RequestContext,
   ): Promise<ReservationView> {
     return this.reservations.cancel(id, dto, actor, ctx);
+  }
+
+  /**
+   * Move a booking. No availability pre-check: the update goes in and the
+   * exclusion constraints decide, so a clash comes back as a 409 naming the
+   * resource rather than a race nobody noticed. §5.5.
+   */
+  @Patch(':id')
+  @Roles(...RECEPTIONIST_PLUS)
+  reschedule(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(rescheduleReservationSchema)) dto: RescheduleReservationDto,
+    @CurrentUser() actor: AuthUser,
+    @Ctx() ctx: RequestContext,
+  ): Promise<ReservationView> {
+    return this.reservations.reschedule(id, dto, actor, ctx);
   }
 
   @Post(':id/no-show')

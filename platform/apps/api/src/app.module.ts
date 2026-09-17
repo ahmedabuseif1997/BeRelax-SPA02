@@ -23,6 +23,8 @@ import { EmployeesModule } from './employees/employees.module';
 import { CatalogueModule } from './catalogue/catalogue.module';
 import { ShiftsModule } from './shifts/shifts.module';
 import { PaymentsModule } from './payments/payments.module';
+import { ComplianceModule } from './compliance/compliance.module';
+import { ReportsModule } from './reports/reports.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -49,6 +51,8 @@ import { HealthModule } from './health/health.module';
     CatalogueModule,
     ShiftsModule,
     PaymentsModule,
+    ComplianceModule,
+    ReportsModule,
     HealthModule,
   ],
   providers: [

@@ -2,7 +2,6 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { Guest, GuestConsent } from '@prisma/client';
@@ -32,34 +31,13 @@ import { apiError } from '../reservations/reservations.service';
  * unambiguous — a check that rejected "no jasmine oil" would teach reception to
  * route around it within a week, and then it protects nothing.
  */
-const MEDICAL_TERMS: ReadonlyArray<{ term: string; pattern: RegExp }> = [
-  { term: 'pregnancy', pattern: /\bpregnan/i },
-  { term: 'diabetes', pattern: /\bdiabet/i },
-  { term: 'hypertension', pattern: /\bhypertens/i },
-  { term: 'blood pressure', pattern: /\bblood\s+pressure\b/i },
-  { term: 'medication', pattern: /\bmedication/i },
-  { term: 'surgery', pattern: /\bsurger/i },
-  { term: 'epilepsy', pattern: /\bepilep/i },
-  { term: 'asthma', pattern: /\basthma\b/i },
-  { term: 'heart condition', pattern: /\bheart\s+condition/i },
-];
+// The medical screen now lives in `../common/medical-screen`, because the same
+// rule has to hold for `reservations.notes` and `booking_requests.message` too —
+// free text does not care which table it lands in. Re-exported here so existing
+// callers and their tests keep working.
+import { assertNotMedical } from '../common/medical-screen';
+export { assertNotMedical };
 
-/** Exported for the spec: both directions of this check are worth asserting. */
-export function assertNotMedical(notes: string | null | undefined): void {
-  if (!notes) return;
-  const hit = MEDICAL_TERMS.find((t) => t.pattern.test(notes));
-  if (!hit) return;
-
-  throw new UnprocessableEntityException(
-    apiError(
-      ErrorCode.GUEST_NOTES_MEDICAL_CONTENT,
-      'Guest notes are for preferences only. Keep medical information on paper in the locked cabinet — this system stores no health data.',
-      // The matched term, never the text that was submitted: the point is to
-      // tell reception what tripped, not to log the thing we refused to store.
-      { term: hit.term },
-    ),
-  );
-}
 
 /* ───────────────────────── presentation ───────────────────────── */
 
@@ -101,6 +79,33 @@ export interface GuestConsentView {
   withdrawnAt: string | null;
   source: string;
   policyVersion: string;
+}
+
+/**
+ * What is true NOW, per consent type — the single question a marketing sender
+ * asks before it sends anything. Derived from the latest record of that type, so
+ * a withdrawal turns it false without deleting the evidence that it was ever true.
+ */
+export interface ConsentStateView {
+  granted: boolean;
+  /** When the state last changed: granted at, or withdrawn at. */
+  since: string | null;
+  /** The notice version the guest actually saw, when consent stands. */
+  policyVersion: string | null;
+  source: string | null;
+}
+
+/**
+ * The consent ledger for one guest: what stands today, and everything that ever
+ * did. §11.6 keeps the history for three years past a withdrawal because proof
+ * that consent EXISTED is itself a legal necessity — the day a guest says they
+ * never agreed to anything, the withdrawn row is the answer.
+ */
+export interface GuestConsentLedgerView {
+  guestId: string;
+  current: Record<ConsentType, ConsentStateView>;
+  /** Newest first. Nothing is ever removed from this by a withdrawal. */
+  history: GuestConsentView[];
 }
 
 export function presentGuest(guest: Guest): GuestView {
@@ -272,6 +277,116 @@ export class GuestsService {
       },
     });
     return presentConsent(consent);
+  }
+
+  /**
+   * Everything recorded, and what it adds up to. §7.5.
+   *
+   * RECEPTIONIST+ for the same reason `recordConsent` is: the desk is where a
+   * guest says "actually, stop texting me", and a consent state reception can
+   * write but not read is a consent state nobody can act on.
+   */
+  async listConsents(id: string, actor: AuthUser): Promise<GuestConsentLedgerView> {
+    const guest = await this.findInBranch(id, actor.branchId);
+    return this.buildConsentLedger(this.prisma, guest.id);
+  }
+
+  /**
+   * Withdrawal, PDPL Art. 6: **as easy to withdraw as it was to give**.
+   *
+   * Granting is one authenticated POST, so withdrawal is one authenticated POST
+   * at the same role — not a manager escalation, not a form, not a reason field.
+   * The moment this returns, marketing has stopped: `current.MARKETING.granted`
+   * is false and that is the flag any sender reads.
+   *
+   * The row is UPDATED, never deleted. `withdrawnAt` is the whole point — §11.6
+   * keeps consent records for three years past a withdrawal because the proof
+   * that consent once existed is what answers a complaint about the messages that
+   * were sent while it stood. Deleting the record to honour the withdrawal would
+   * destroy the evidence that the sending was lawful.
+   *
+   * Nothing is written to `financial_audit_log`: that table records what changed
+   * about the MONEY (§9.6), and the consent row with its own timestamps is
+   * already a complete, dated record of this event.
+   */
+  async withdrawConsent(
+    id: string,
+    type: ConsentType,
+    actor: AuthUser,
+  ): Promise<GuestConsentLedgerView> {
+    const guest = await this.findInBranch(id, actor.branchId);
+
+    return this.prisma.$transaction(async (tx) => {
+      const recorded = await tx.guestConsent.findMany({ where: { guestId: guest.id, type } });
+
+      if (recorded.length === 0) {
+        throw new NotFoundException(
+          apiError(
+            ErrorCode.CONSENT_NOT_FOUND,
+            'No consent of that type was ever recorded for this guest, so there is nothing to withdraw.',
+            { type },
+          ),
+        );
+      }
+
+      const standing = recorded.filter((c) => c.granted && c.withdrawnAt === null);
+      if (standing.length === 0) {
+        // Not a failure of the guest's wish — it is already what they asked for.
+        // Said plainly so the desk knows the click did nothing rather than
+        // assuming it did something.
+        throw new ConflictException(
+          apiError(
+            ErrorCode.CONSENT_ALREADY_WITHDRAWN,
+            'That consent is already withdrawn or was refused. Nothing changed.',
+            { type },
+          ),
+        );
+      }
+
+      // updateMany, because a guest can hold more than one standing grant of the
+      // same type — one taken at the desk, one off the website form. Withdrawing
+      // one of them and leaving the other standing is how a guest who asked to be
+      // left alone keeps receiving messages.
+      await tx.guestConsent.updateMany({
+        where: { guestId: guest.id, type, granted: true, withdrawnAt: null },
+        data: { withdrawnAt: new Date() },
+      });
+
+      return this.buildConsentLedger(tx, guest.id);
+    });
+  }
+
+  /**
+   * The ledger, from the rows. `current` is derived on every read rather than
+   * stored on `guests`: a cached consent flag is a second source of truth, and
+   * the copy that drifts is the one that sends a message to somebody who said no.
+   */
+  private async buildConsentLedger(
+    client: Prisma.TransactionClient | PrismaService,
+    guestId: string,
+  ): Promise<GuestConsentLedgerView> {
+    const rows = await client.guestConsent.findMany({
+      where: { guestId },
+      orderBy: { grantedAt: 'desc' },
+    });
+
+    const current = {} as Record<ConsentType, ConsentStateView>;
+    for (const type of Object.values(ConsentType)) {
+      // Rows are newest first, so the first of each type is the state in force.
+      const latest = rows.find((r) => r.type === type);
+      current[type] = latest
+        ? {
+            granted: latest.granted && latest.withdrawnAt === null,
+            since: (latest.withdrawnAt ?? latest.grantedAt).toISOString(),
+            policyVersion: latest.granted && !latest.withdrawnAt ? latest.policyVersion : null,
+            source: latest.source,
+          }
+        : // Never asked is not the same as refused, but it has the same effect:
+          // no consent, so no processing that depends on one.
+          { granted: false, since: null, policyVersion: null, source: null };
+    }
+
+    return { guestId, current, history: rows.map(presentConsent) };
   }
 
   /**

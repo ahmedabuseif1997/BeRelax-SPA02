@@ -8,6 +8,7 @@ import {
   formatAed,
 } from '@berelax/contracts';
 import { PrismaService } from '../prisma/prisma.service';
+import { screenPublicText } from '../common/medical-screen';
 import type { Env } from '../config/env';
 import { apiError } from '../reservations/reservations.service';
 import { publicReference } from '../booking-requests/booking-requests.service';
@@ -171,7 +172,11 @@ export class PublicService {
           guestEmail: dto.guestEmail ?? null,
           requestedServiceId,
           requestedAt: dto.requestedAt ? new Date(dto.requestedAt) : null,
-          message: dto.message ?? null,
+          // The guest is not staff and cannot be taught a rule: refusing the
+          // enquiry because they mentioned a shoulder would lose the booking
+          // and teach them nothing. Accept it, keep the preference text only,
+          // and let them tell the therapist in person. §11.5.
+          message: screenPublicText(dto.message).text,
           sourceChannel: SourceChannel.WEBSITE_FORM,
           attributionId,
         },

@@ -538,3 +538,98 @@ export const auditQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).max(100_000).optional().default(0),
 });
 export type AuditQuery = z.infer<typeof auditQuerySchema>;
+
+/* ────────── data subject rights and retention (§11.4, §11.6) ────────── */
+
+/**
+ * An erasure request, answered by anonymisation. §11.4.
+ *
+ * The reason is mandatory and it is not bureaucracy: `GUEST_ERASED` is the only
+ * audit entry whose subject can never be re-read afterwards, so the reason is
+ * the entire record of WHY a name left the guest book. "Guest asked by phone on
+ * the 14th" is the difference between a defensible erasure and an unexplained
+ * one when the Data Office asks.
+ *
+ * There is deliberately no `deleteFinancialRecords` flag. The right to erasure
+ * yields to another legal obligation and UAE tax law requires five years of
+ * accounting records, so that option does not exist to be offered. §11.4.
+ */
+export const eraseGuestSchema = z.object({
+  reason: z.string().min(3, 'Say why this guest is being erased.').max(300),
+});
+export type EraseGuestDto = z.infer<typeof eraseGuestSchema>;
+
+/**
+ * The manual trigger for the retention job. §11.6.
+ *
+ * Neither retention PERIOD is settable here, and that omission is the point: the
+ * register published at `/compliance/processing-register` states three years for
+ * guest identity and ninety days for attribution, and a register that says one
+ * thing while an endpoint quietly does another is worse than no register. The
+ * periods come from ATTRIBUTION_RETENTION_DAYS and GUEST_RETENTION_YEARS, which
+ * are deployment configuration and reviewed as such.
+ *
+ * `dryRun` answers "what would tonight's run touch" without touching it, which
+ * is the only honest way to approve the first run against real data.
+ */
+export const retentionRunSchema = z.object({
+  dryRun: z.boolean().optional().default(false),
+  /** Cap on guests anonymised in one pass; the rest wait for the next run. */
+  limit: z.number().int().min(1).max(5000).optional().default(500),
+});
+export type RetentionRunDto = z.infer<typeof retentionRunSchema>;
+
+/* ────────────────────────── reports (§7.4) ─────────────────────────── */
+
+/**
+ * Every window below is expressed in TRADING days, never calendar days: the spa
+ * closes at 02:00 and a 01:30 booking belongs to the night before it (§3.3).
+ * `from`/`to` are inclusive `business_day` bounds, which is also what the
+ * indexes on `reservations`, `payments`, `tips` and `shifts` are cut on.
+ *
+ * None of these are cross-field `.refine()`d. `from > to` and a span wider than
+ * the reporting cap are both decided in the service, so the reply can carry
+ * VALIDATION_FAILED or REPORT_RANGE_TOO_LARGE with the offending dates in
+ * `details` — a refine here would flatten both into one anonymous 422.
+ */
+
+/**
+ * The close-out sheet. One trading day, defaulting to tonight in the service
+ * rather than here, because "today" is a question about the clock at the moment
+ * of the request and a schema default would be computed once at import.
+ */
+export const dailyReportQuerySchema = z.object({
+  businessDay: isoDate.optional(),
+});
+export type DailyReportQuery = z.infer<typeof dailyReportQuerySchema>;
+
+/** `day` is the close-out view; `week` and `month` are what a landlord asks for. */
+export const ReportGroupBy = { DAY: 'day', WEEK: 'week', MONTH: 'month' } as const;
+export type ReportGroupBy = (typeof ReportGroupBy)[keyof typeof ReportGroupBy];
+
+export const revenueReportQuerySchema = z.object({
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+  groupBy: z.nativeEnum(ReportGroupBy).optional().default(ReportGroupBy.DAY),
+});
+export type RevenueReportQuery = z.infer<typeof revenueReportQuerySchema>;
+
+/** Booked minutes over ROSTERED minutes, so the divisor comes from `shifts`. */
+export const utilisationReportQuerySchema = z.object({
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+});
+export type UtilisationReportQuery = z.infer<typeof utilisationReportQuerySchema>;
+
+export const tipsReportQuerySchema = z.object({
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+});
+export type TipsReportQuery = z.infer<typeof tipsReportQuerySchema>;
+
+/** Channel ROI, first touch and last touch, over the same cohort. §10.6. */
+export const attributionReportQuerySchema = z.object({
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+});
+export type AttributionReportQuery = z.infer<typeof attributionReportQuerySchema>;

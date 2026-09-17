@@ -328,6 +328,7 @@ form{
 }
 .field textarea{resize:vertical;min-height:100px}
 .row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field-hint{font-size:12.5px;color:var(--muted);margin:6px 2px 0;line-height:1.5}
 .form-note{font-size:12.5px;color:var(--muted);text-align:center;margin:14px 0 0;font-weight:300}
 
 /* ---------- footer ---------- */
@@ -1412,8 +1413,14 @@ body.nav-open .fab{opacity:0;pointer-events:none}
             <option>90 minutes</option><option>120 minutes</option>
           </select></div>
       </div>
-      <div class="field"><label for="f-msg">Anything We Should Know?</label>
-        <textarea id="f-msg" name="message" placeholder="Injuries, pressure preference, preferred therapist…"></textarea></div>
+      <!-- Preferences only. This field must never invite health or medical
+           information: BE RELAX does not collect or store any, and asking for
+           "injuries" is what would make it arrive anyway. See
+           docs/spa-crm-architecture-spec.md §11.5. -->
+      <div class="field"><label for="f-msg">Any Preferences?</label>
+        <textarea id="f-msg" name="message" maxlength="500"
+          placeholder="Pressure, oil, preferred therapist…"></textarea>
+        <p class="field-hint">Preferences only, please — anything health-related is best mentioned to your therapist in person.</p></div>
       <button type="submit" class="btn btn-primary" style="width:100%">Request Booking</button>
       <p class="form-note">This sample form opens WhatsApp with your details pre-filled. Connect it to your booking system when you go live.</p>
     </form>

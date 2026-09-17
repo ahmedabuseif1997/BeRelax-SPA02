@@ -2261,15 +2261,19 @@ type AttributionStore = {
   write(store);
   window.__berelaxAttr = store;
 
+  // Clip every field to the server's limits before storing or sending. One long
+  // utm_campaign from an agency would otherwise 422 the entire beacon —
+  // source 120, medium 60, campaign/term/content/gclid/fbclid 200,
+  // referrer 253, landing 300.
+
   // Mirror to the server so a visitor who never submits a form is still counted,
   // and so the visitorId lands in a server-set HttpOnly cookie (see §10.5).
   try {
-    var body = JSON.stringify({
-      visitorId: store.visitorId,
-      touch:     store.last,
-      first:     store.first,
-      touchCount: store.touches.length
-    });
+    // The WHOLE store, not a summary. The server validates this against
+    // `attributionSchema`, which requires v, visitorId, first, last, touches,
+    // createdAt and updatedAt — a trimmed body 422s and the beacon is lost
+    // silently, because sendBeacon has no error callback to tell you.
+    var body = JSON.stringify(store);
     if (navigator.sendBeacon) {
       navigator.sendBeacon(API + '/public/attribution/touch', new Blob([body], { type: 'application/json' }));
     } else {
@@ -2475,7 +2479,29 @@ async erase(guestId: string, reason: string, actor: AuthUser, ctx: RequestContex
 
     await tx.guestConsent.deleteMany({ where: { guestId } });
 
-    // Attribution is severed from the person immediately, even inside the 90 days.
+    // `booking_requests` carries its OWN copy of the guest's name, phone and
+    // email, because a website enquiry arrives before any guest row exists to
+    // point at. Severing only `guests` would leave the person in plain text in
+    // a table nobody thought to look at — the commonest way an erasure quietly
+    // fails. Match on the phone as well as the id: enquiries that were never
+    // converted have no `guestId` at all.
+    await tx.bookingRequest.updateMany({
+      where: { OR: [{ guestId }, { guestPhone: before.phone }] },
+      data: {
+        guestName: 'Erased guest',
+        guestPhone: erasedToken,
+        guestEmail: null,
+        message: null,
+      },
+    });
+
+    // Free text on a reservation is neither an amount nor a date, so the
+    // five-year retention obligation does not reach it.
+    await tx.reservation.updateMany({ where: { guestId }, data: { notes: null } });
+
+    // Attribution is severed from the person immediately, even inside the 90 days,
+    // and reduced to the same {source, medium, campaign} shape the 90-day prune
+    // produces — so a snapshot only ever exists in one of two states, not three.
     await tx.attributionSnapshot.updateMany({
       where: { reservations: { some: { guestId } } },
       data:  { visitorId: NULL_UUID, touches: [], landingPath: null, prunedAt: new Date() },

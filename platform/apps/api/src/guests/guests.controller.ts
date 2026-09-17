@@ -10,7 +10,9 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { z } from 'zod';
 import {
+  ConsentType,
   CreateGuestConsentDto,
   CreateGuestDto,
   UpdateGuestDto,
@@ -23,6 +25,7 @@ import { Ctx, CurrentUser, Roles } from '../common/decorators';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import type { AuthUser, RequestContext } from '../common/request-context';
 import {
+  GuestConsentLedgerView,
   GuestConsentView,
   GuestDetailView,
   GuestView,
@@ -30,6 +33,9 @@ import {
   ListGuestsQuery,
   listGuestsQuerySchema,
 } from './guests.service';
+
+/** The `:type` path segment, checked against the enum rather than trusted. */
+const consentTypeParamSchema = z.nativeEnum(ConsentType);
 
 /** §7.3: the guest book is reception's. §7.5 puts consent capture at the same desk. */
 const RECEPTIONIST_PLUS = [UserRole.OWNER, UserRole.MANAGER, UserRole.RECEPTIONIST] as const;
@@ -101,5 +107,30 @@ export class GuestsController {
     @Ctx() ctx: RequestContext,
   ): Promise<GuestConsentView> {
     return this.guests.recordConsent(id, dto, actor, ctx);
+  }
+
+  /** What stands today and everything that ever did. §11.4, §11.6. */
+  @Get(':id/consents')
+  listConsents(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() actor: AuthUser,
+  ): Promise<GuestConsentLedgerView> {
+    return this.guests.listConsents(id, actor);
+  }
+
+  /**
+   * PDPL Art. 6 — withdrawal must be as easy as granting, so it sits at the same
+   * desk, behind the same role, and takes no body at all. One call and the
+   * marketing stops; the record that the consent existed stays, because proving
+   * it existed is what answers a complaint about the messages already sent.
+   */
+  @Post(':id/consents/:type/withdraw')
+  @HttpCode(HttpStatus.OK)
+  withdrawConsent(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('type', new ZodValidationPipe(consentTypeParamSchema)) type: ConsentType,
+    @CurrentUser() actor: AuthUser,
+  ): Promise<GuestConsentLedgerView> {
+    return this.guests.withdrawConsent(id, type, actor);
   }
 }

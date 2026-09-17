@@ -51,10 +51,10 @@ The seed prints its login credentials at the end. They are development-only and 
 ```
 platform/
 ├── apps/
-│   ├── api/                      NestJS backend — 67 routes
+│   ├── api/                      NestJS backend — 79 routes
 │   │   ├── prisma/
 │   │   │   ├── schema.prisma     20 models, 11 enums
-│   │   │   ├── migrations/       7 — 1 generated, 6 hand-written
+│   │   │   ├── migrations/       8 — 1 generated, 7 hand-written
 │   │   │   └── seed.ts
 │   │   └── src/
 │   │       ├── auth/             JWT, bcrypt, refresh rotation, RBAC
@@ -67,6 +67,8 @@ platform/
 │   │       ├── employees/        staff, commission, restricted legal names
 │   │       ├── catalogue/        services, categories, rooms
 │   │       ├── shifts/           roster, clock in and out
+│   │       ├── reports/          close-out, revenue, utilisation, tips, channels
+│   │       ├── compliance/       export, erasure, retention, the Art. 7 register
 │   │       ├── prisma/           client, branch-scope extension
 │   │       ├── common/           audit, idempotency, error filters, context
 │   │       ├── config/           env validation — the process refuses a bad one
@@ -75,6 +77,11 @@ platform/
 └── packages/
     └── contracts/                zod schemas, money and time helpers,
                                   shared by the API and the dashboard
+
+assets/js/                        the public site's attribution + consent gate,
+                                  shipped DORMANT — see assets/js/README.md
+docs/compliance/                  privacy notice (EN + AR), processing register,
+                                  breach runbook
 ```
 
 ### The dashboard
@@ -241,17 +248,33 @@ The API must be reachable at **`api.berelax.ae`** — a subdomain of the public 
 
 | Phase | State |
 |---|---|
-| **0 — Foundations** | Done. Schema, seven migrations, seed, contracts package, concurrency suite. |
+| **0 — Foundations** | Done. Schema, eight migrations, seed, contracts package, concurrency suite. |
 | **1 — Auth** | Done. Login, refresh rotation with reuse detection, lockout, guards, RBAC, user management. |
-| **2 — Booking core** | Done. Reservations, availability, the booking-request inbox and conversion, guests, employees, catalogue, shifts, and the dashboard grid, booking sheet, check-in and checkout. |
-| **3 — The money** | Done. Both tip modes, refunds, adjustments, tip reversals, payout batches, the ledger, the earnings split and the audit query. |
-| **4 — Attribution** | Server side is built — the touch beacon, the `brx_vid` cookie mirror, the `/r/*` redirects and the snapshot chain through to a reservation. **Still to do: the client script and the consent gate on the public site**, which need the `.ae` domain and the `api.` subdomain to exist. |
-| **5 — Reporting** | Not started. `/reports/*` returns 404 and the dashboard says so plainly rather than showing zeros. |
-| **6 — Compliance** | Not started. Guest export and erasure (§7.5), the retention job on `pg_cron`, the privacy notice, the processing register, the breach runbook, a rehearsed restore. |
-| **7 — Pilot** | Not started. Two weeks running in parallel with paper. |
+| **2 — Booking core** | Done. Reservations (including reschedule), availability, the enquiry inbox and conversion, guests, employees, catalogue, shifts, and the dashboard. |
+| **3 — The money** | Done. Both tip modes, refunds, adjustments, tip reversals, payout batches, the ledger, the earnings split, the audit query. |
+| **4 — Attribution** | Server done. Client written and **shipped dormant** — one line turns it on, and it needs the `.ae` domain first. See below. |
+| **5 — Reporting** | Done. Daily close-out, revenue, therapist utilisation, tips, channel ROI — and the dashboard pages for all five. |
+| **6 — Compliance** | Code done: export, erasure, consent withdrawal, retention, the derived Art. 7 register. Documents drafted. **Not signed off** — see below. |
+| **7 — Pilot** | Not started. Two weeks in parallel with paper, reconciled nightly. |
 
-Known gaps inside what is built: `PATCH /reservations/:id` (reschedule and reassign) exists in the specification but not in the code or the UI, so a change of time is currently a cancel and a rebook.
+### Before real guest data goes anywhere near this
 
-Nothing here has touched real guest data, and nothing should until Phase 6 is complete.
+The code is ready; the business is not, and these are not engineering tasks:
+
+1. **Counsel review.** `docs/compliance/` carries ten open questions, led by the status of the PDPL's Executive Regulations, the cross-border transfer safeguard, and whether Federal Law 2/2019 reaches a non-clinical spa. None is answered in the documents, because none should be guessed.
+2. **63 blanks.** The privacy notice and register are full of `[TO BE COMPLETED]` — DPO, breach contact, hosting regions, DPA statuses. The breach runbook needs a named person with a mobile, not a shared inbox.
+3. **One privacy-notice version string** in three places: the notice, `BERELAX_PRIVACY_VERSION` in the page, and the `policyVersion` reception records. A consent filed against a version naming no document proves nothing.
+4. **`privacy.html` does not exist.** The consent banner links to it.
+5. **A rehearsed backup restore.** An untested backup is a hope.
+
+### The attribution client is deliberately switched off
+
+`assets/js/attribution.js` and `assets/js/consent.js` are written, tested and committed — and `index.html` does not reference them. Nothing renders, nothing is stored and nothing is sent until:
+
+```js
+window.BERELAX_ATTRIBUTION_API = "https://api.berelax.ae/v1";
+```
+
+is uncommented in the snippet in `assets/js/README.md`. That subdomain does not exist yet, and the cookie mirror only works from a subdomain of the site's own domain (§10.5), so enabling it earlier would beacon into nothing and quietly lose iOS attribution anyway.
 
 

@@ -10,6 +10,7 @@ import {
   businessDay,
 } from '@berelax/contracts';
 import { PrismaService } from '../prisma/prisma.service';
+import { screenPublicText } from '../common/medical-screen';
 import { AuditAction, AuditService, pickAuditFields } from '../common/audit.service';
 import type { AuthUser, RequestContext } from '../common/request-context';
 import type { Env } from '../config/env';
@@ -243,7 +244,9 @@ export class BookingRequestsService {
           // THE POINT OF THIS METHOD. Carrying the snapshot across is what keeps
           // touch → request → reservation → payment a join instead of a guess. §10.3.
           attributionId: request.attributionId,
-          notes: dto.notes ?? request.message ?? null,
+          // The enquiry's own message was screened on the way in (§11.5), so
+          // only reception's addition needs checking here.
+          notes: screenPublicText(dto.notes ?? request.message).text,
           createdByUserId: actor.id,
         },
         include: RESERVATION_INCLUDE,

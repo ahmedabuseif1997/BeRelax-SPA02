@@ -64,17 +64,26 @@ const CTX: RequestContext = {
 
 type Db = {
   guest: { findMany: jest.Mock; findFirst: jest.Mock; create: jest.Mock; update: jest.Mock };
-  guestConsent: { create: jest.Mock };
+  guestConsent: {
+    create: jest.Mock;
+    findMany: jest.Mock;
+    updateMany: jest.Mock;
+    deleteMany: jest.Mock;
+  };
   reservation: { findMany: jest.Mock };
+  $transaction: jest.Mock;
 };
 
 function setup(
   options: {
     guest?: Guest | null;
     visits?: Array<{ status: string; startsAt: Date }>;
+    /** The consent rows on file, newest first — as the service reads them. */
+    consents?: GuestConsent[];
   } = {},
 ) {
   const guest = options.guest === undefined ? guestFixture() : options.guest;
+  const consents = options.consents ?? [];
 
   const db: Db = {
     guest: {
@@ -87,8 +96,14 @@ function setup(
     },
     guestConsent: {
       create: jest.fn(async ({ data }: { data: GuestConsent }) => consentFixture(data)),
+      findMany: jest.fn(async ({ where }: { where: { type?: string } }) =>
+        where.type ? consents.filter((c) => c.type === where.type) : consents,
+      ),
+      updateMany: jest.fn(async () => ({ count: 1 })),
+      deleteMany: jest.fn(async () => ({ count: consents.length })),
     },
     reservation: { findMany: jest.fn().mockResolvedValue(options.visits ?? []) },
+    $transaction: jest.fn(async (cb: (client: Db) => Promise<unknown>) => cb(db)),
   };
 
   return { db, service: new GuestsService(db as unknown as PrismaService) };
@@ -427,6 +442,128 @@ describe('GuestsService', () => {
 
       expect(status).toBe(404);
       expect(db.guestConsent.create).not.toHaveBeenCalled();
+    });
+  });
+
+  /* ───────── the consent ledger and its withdrawal — §11.4, PDPL Art. 6 ───────── */
+
+  describe('listConsents', () => {
+    it('answers what stands today as well as everything that ever did', async () => {
+      const { service } = setup({
+        consents: [
+          consentFixture({ id: 'c2', type: ConsentType.MARKETING, granted: true, withdrawnAt: null }),
+          consentFixture({
+            id: 'c1',
+            type: ConsentType.PHOTO,
+            granted: true,
+            withdrawnAt: new Date('2026-09-14T10:00:00.000Z'),
+          }),
+        ],
+      });
+
+      const ledger = await service.listConsents(GUEST_ID, actorFixture());
+
+      expect(ledger.current.MARKETING.granted).toBe(true);
+      expect(ledger.current.MARKETING.policyVersion).toBe('2026-01');
+      // Withdrawn, so it no longer stands — and the row is still there.
+      expect(ledger.current.PHOTO.granted).toBe(false);
+      expect(ledger.current.PHOTO.since).toBe('2026-09-14T10:00:00.000Z');
+      // Never asked is not refused, but it has the same effect.
+      expect(ledger.current.DATA_PROCESSING).toEqual({
+        granted: false,
+        since: null,
+        policyVersion: null,
+        source: null,
+      });
+      expect(ledger.history).toHaveLength(2);
+    });
+
+    it('404s a guest from another branch', async () => {
+      const { service } = setup({ guest: null });
+      const { status } = await caught(() => service.listConsents(GUEST_ID, actorFixture()));
+      expect(status).toBe(404);
+    });
+  });
+
+  describe('withdrawConsent', () => {
+    it('stops the marketing and keeps the proof that it was ever allowed', async () => {
+      const { service, db } = setup({
+        consents: [consentFixture({ type: ConsentType.MARKETING, granted: true, withdrawnAt: null })],
+      });
+
+      await service.withdrawConsent(GUEST_ID, ConsentType.MARKETING, actorFixture());
+
+      const [call] = db.guestConsent.updateMany.mock.calls as Array<
+        [{ where: Record<string, unknown>; data: { withdrawnAt: Date } }]
+      >;
+      expect(call[0].where).toEqual({
+        guestId: GUEST_ID,
+        type: ConsentType.MARKETING,
+        granted: true,
+        withdrawnAt: null,
+      });
+      expect(call[0].data.withdrawnAt).toBeInstanceOf(Date);
+      // §11.6: the record survives the withdrawal, because proof that consent
+      // existed is what answers a complaint about what was already sent.
+      expect(db.guestConsent.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('withdraws EVERY standing grant of that type, not just the newest', async () => {
+      // One taken at the desk, one off the website form. Leaving the second
+      // standing is how a guest who asked to be left alone keeps hearing from us.
+      const { service, db } = setup({
+        consents: [
+          consentFixture({ id: 'c2', type: ConsentType.MARKETING, granted: true, source: 'website' }),
+          consentFixture({ id: 'c1', type: ConsentType.MARKETING, granted: true, source: 'reception-ipad' }),
+        ],
+      });
+
+      await service.withdrawConsent(GUEST_ID, ConsentType.MARKETING, actorFixture());
+
+      expect(db.guestConsent.updateMany).toHaveBeenCalledTimes(1);
+      expect(db.guestConsent.updateMany.mock.calls[0]![0].where.withdrawnAt).toBeNull();
+    });
+
+    it('is as easy as granting: no reason, no body, the same role', async () => {
+      const { service } = setup({
+        consents: [consentFixture({ type: ConsentType.MARKETING, granted: true })],
+      });
+      // PDPL Art. 6. The signature is the assertion — there is nothing else to pass.
+      await expect(
+        service.withdrawConsent(GUEST_ID, ConsentType.MARKETING, actorFixture(UserRole.RECEPTIONIST)),
+      ).resolves.toBeDefined();
+    });
+
+    it('404s when no consent of that type was ever recorded', async () => {
+      const { service, db } = setup({ consents: [] });
+
+      const { status, body } = await caught(() =>
+        service.withdrawConsent(GUEST_ID, ConsentType.MARKETING, actorFixture()),
+      );
+
+      expect(status).toBe(404);
+      expect(body.error.code).toBe(ErrorCode.CONSENT_NOT_FOUND);
+      expect(db.guestConsent.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('409s when it is already withdrawn, so the desk knows the click did nothing', async () => {
+      const { service, db } = setup({
+        consents: [
+          consentFixture({
+            type: ConsentType.MARKETING,
+            granted: true,
+            withdrawnAt: new Date('2026-09-14T10:00:00.000Z'),
+          }),
+        ],
+      });
+
+      const { status, body } = await caught(() =>
+        service.withdrawConsent(GUEST_ID, ConsentType.MARKETING, actorFixture()),
+      );
+
+      expect(status).toBe(409);
+      expect(body.error.code).toBe(ErrorCode.CONSENT_ALREADY_WITHDRAWN);
+      expect(db.guestConsent.updateMany).not.toHaveBeenCalled();
     });
   });
 });

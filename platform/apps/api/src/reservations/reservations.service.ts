@@ -20,6 +20,7 @@ import {
 } from '@berelax/contracts';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditAction, AuditService, pickAuditFields } from '../common/audit.service';
+import { assertNotMedical } from '../common/medical-screen';
 import type { AuthUser, RequestContext } from '../common/request-context';
 
 /* ───────────────────────── shared helpers ───────────────────────── */
@@ -156,6 +157,31 @@ export const listReservationsQuerySchema = z.object({
 });
 export type ListReservationsQuery = z.infer<typeof listReservationsQuerySchema>;
 
+/**
+ * Reschedule and reassign. Every field is optional; whatever is sent moves, the
+ * rest stays. Lives here rather than in `@berelax/contracts` for the same reason
+ * the query above does — the dashboard does not build it yet.
+ */
+export const rescheduleReservationSchema = z
+  .object({
+    startsAt: z.string().datetime({ offset: true }).optional(),
+    employeeId: z.string().uuid().optional(),
+    roomId: z.string().uuid().nullable().optional(),
+    serviceId: z.string().uuid().optional(),
+    notes: z.string().max(500).optional(),
+    reason: z.string().min(3).max(300),
+  })
+  .refine(
+    (v) =>
+      v.startsAt !== undefined ||
+      v.employeeId !== undefined ||
+      v.roomId !== undefined ||
+      v.serviceId !== undefined ||
+      v.notes !== undefined,
+    { message: 'Nothing to change.' },
+  );
+export type RescheduleReservationDto = z.infer<typeof rescheduleReservationSchema>;
+
 /* ───────────────────────── the service ───────────────────────── */
 
 @Injectable()
@@ -180,6 +206,9 @@ export class ReservationsService {
     actor: AuthUser,
     ctx: RequestContext,
   ): Promise<ReservationView> {
+    // Reception typing into the CRM gets a hard refusal — they can be taught
+    // the rule, and the refusal is how they learn it. §11.5.
+    assertNotMedical(dto.notes);
     return this.prisma.$transaction(async (tx) => {
       const service = await tx.service.findFirst({
         where: { id: dto.serviceId, branchId: actor.branchId, isActive: true },
@@ -293,6 +322,87 @@ export class ReservationsService {
   }
 
   /** Cancelling releases the slot immediately: the exclusion constraints skip cancelled rows. §5.2. */
+  /**
+   * Move a booking: a different time, a different therapist, a different room,
+   * a different treatment. Only while it is still SCHEDULED — once the guest has
+   * checked in they are on the table and money has changed hands, and once it is
+   * terminal it is history.
+   *
+   * There is NO availability check here, deliberately. The update is issued and
+   * the exclusion constraints arbitrate exactly as they do for an insert (§5.5);
+   * moving a booking into an occupied window raises 23P01 and the filter turns
+   * it into a 409 naming the resource that clashed. Checking first would open
+   * the same race the constraints exist to close.
+   */
+  async reschedule(
+    id: string,
+    dto: RescheduleReservationDto,
+    actor: AuthUser,
+    ctx: RequestContext,
+  ): Promise<ReservationView> {
+    return this.prisma.$transaction(async (tx) => {
+      assertNotMedical(dto.notes);
+
+      const reservation = await lockReservation(tx, id, actor.branchId);
+      const from = reservation.status as ReservationStatus;
+
+      if (from !== ReservationStatus.SCHEDULED) {
+        throw new ConflictException(
+          apiError(
+            ErrorCode.RESERVATION_NOT_SCHEDULED,
+            from === ReservationStatus.IN_PROGRESS
+              ? 'That treatment has already started. Cancel it instead, and book again.'
+              : 'That booking is finished and cannot be moved.',
+            { status: from },
+          ),
+        );
+      }
+
+      // A different treatment is a different price. Safe to re-snapshot only
+      // because nothing has been collected yet — a SCHEDULED booking has taken
+      // no money, by construction (§8.2 collects at check-in).
+      let baseCostFils = reservation.baseCostFils;
+      let durationMinutes = reservation.durationMinutes;
+      if (dto.serviceId && dto.serviceId !== reservation.serviceId) {
+        const service = await tx.service.findFirst({
+          where: { id: dto.serviceId, branchId: actor.branchId, isActive: true },
+        });
+        if (!service) {
+          throw new NotFoundException(
+            apiError(ErrorCode.NOT_FOUND, 'That treatment is not on the menu.'),
+          );
+        }
+        baseCostFils = service.priceFils;
+        durationMinutes = service.durationMinutes;
+      }
+
+      const updated = await tx.reservation.update({
+        where: { id: reservation.id },
+        data: {
+          // endsAt, blockedUntil and businessDay are NOT set here — the derive
+          // trigger recomputes all three from startsAt and durationMinutes.
+          ...(dto.startsAt ? { startsAt: new Date(dto.startsAt) } : {}),
+          ...(dto.employeeId ? { employeeId: dto.employeeId } : {}),
+          ...(dto.roomId !== undefined ? { roomId: dto.roomId } : {}),
+          ...(dto.serviceId ? { serviceId: dto.serviceId, durationMinutes, baseCostFils } : {}),
+          ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
+        },
+        include: RESERVATION_INCLUDE,
+      });
+
+      await this.audit.write(tx, ctx, {
+        action: AuditAction.RESERVATION_RESCHEDULED,
+        entityType: 'Reservation',
+        entityId: reservation.id,
+        beforeState: pickAuditFields(reservation),
+        afterState: { ...pickAuditFields(updated), reason: dto.reason },
+        amountFils: baseCostFils === reservation.baseCostFils ? undefined : baseCostFils,
+      });
+
+      return presentReservation(updated);
+    });
+  }
+
   async cancel(
     id: string,
     dto: CancelReservationDto,

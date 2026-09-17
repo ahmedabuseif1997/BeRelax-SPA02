@@ -201,3 +201,199 @@ export interface GuestSummary {
   notes: string | null;
   isBlocked: boolean;
 }
+
+/* ───────────────────────── reports (§7.4, MANAGER+) ───────────────────────── */
+
+/**
+ * Mirrors `apps/api/src/reports/*.service.ts`, by hand and for the same reason
+ * as everything above it: those view types live inside the API and are not
+ * exported from @berelax/contracts.
+ *
+ * Every money field is integer fils and stays that way until `formatAed`
+ * renders it (§3.1). Every date field is a TRADING day — `YYYY-MM-DD` after the
+ * 06:00 cutover — so a 01:30 booking is filed to the night before (§3.3).
+ */
+
+export interface TipLine {
+  tipCount: number;
+  totalFils: number;
+}
+
+/** `GET /reports/daily?businessDay=` */
+export interface DailyReportView {
+  businessDay: string;
+  generatedAt: string;
+  bookings: {
+    total: number;
+    scheduled: number;
+    inProgress: number;
+    completed: number;
+    cancelled: number;
+    noShow: number;
+    /** IN_PROGRESS more than two hours past `blockedUntil`. §8.4. */
+    needingCheckout: number;
+  };
+  guestsSeen: number;
+  therapists: { worked: number; rostered: number };
+  takings: {
+    grossFils: number;
+    baseCollectedFils: number;
+    baseRefundedFils: number;
+    tipsCollectedFils: number;
+    adjustmentsFils: number;
+    byMethod: Array<{ method: PaymentMethod; entries: number; amountFils: number }>;
+  };
+  tips: {
+    directCash: TipLine;
+    collectedByBusiness: TipLine;
+    totalFils: number;
+    payableFils: number;
+    labels: { directCash: string; collectedByBusiness: string };
+  };
+  cashDrawer: {
+    expectedCashFils: number;
+    baseCashFils: number;
+    tipCashFils: number;
+    refundedCashFils: number;
+    adjustmentCashFils: number;
+    note: string;
+  };
+}
+
+export type ReportGroupBy = 'day' | 'week' | 'month';
+
+export interface RevenuePeriodView {
+  periodStart: string;
+  periodEnd: string;
+  label: string;
+  completedVisits: number;
+  noShows: number;
+  cancellations: number;
+  baseCollectedFils: number;
+  baseRefundedFils: number;
+  adjustmentsFils: number;
+  /** base + refunds + adjustments. The only revenue line — tips are never in it. */
+  netRevenueFils: number;
+  tipsCollectedByBusinessFils: number;
+  tipsDirectCashFils: number;
+}
+
+/** `GET /reports/revenue?from=&to=&groupBy=` */
+export interface RevenueReportView {
+  from: string;
+  to: string;
+  groupBy: ReportGroupBy;
+  generatedAt: string;
+  periods: RevenuePeriodView[];
+  totals: Omit<RevenuePeriodView, 'periodStart' | 'periodEnd' | 'label'>;
+  legend: { revenue: string; tipsCollectedByBusiness: string; tipsDirectCash: string };
+}
+
+export interface TherapistUtilisationView {
+  employeeId: string;
+  displayName: string;
+  sessions: number;
+  minutesBooked: number;
+  minutesRostered: number;
+  minutesClocked: number;
+  shifts: number;
+  daysWorked: number;
+  /** booked over ROSTERED. `null` when nothing was rostered — never a made-up 0. */
+  utilisationPct: number | null;
+  noShows: number;
+  minutesLostToNoShows: number;
+  revenueGeneratedFils: number;
+  tips: { directCash: TipLine; collectedByBusiness: TipLine };
+}
+
+/** `GET /reports/therapist-utilisation?from=&to=` */
+export interface UtilisationReportView {
+  from: string;
+  to: string;
+  generatedAt: string;
+  therapists: TherapistUtilisationView[];
+  totals: {
+    sessions: number;
+    minutesBooked: number;
+    minutesRostered: number;
+    utilisationPct: number | null;
+    revenueGeneratedFils: number;
+    tipsDirectCashFils: number;
+    tipsCollectedByBusinessFils: number;
+  };
+  basis: string;
+}
+
+/** `GET /reports/tips?from=&to=` */
+export interface TipsReportView {
+  from: string;
+  to: string;
+  generatedAt: string;
+  byMode: {
+    directCash: TipLine;
+    collectedByBusiness: TipLine;
+    totalFils: number;
+    labels: { directCash: string; collectedByBusiness: string };
+  };
+  byTherapist: Array<{
+    employeeId: string;
+    displayName: string;
+    directCash: TipLine;
+    collectedByBusiness: TipLine;
+    totalEarnedFils: number;
+    /** Whole-ledger balance, all time. Not window-scoped — a balance is a balance. §9.3. */
+    outstandingPayableFils: number;
+    unbatchedPayableFils: number;
+  }>;
+  byDay: Array<{
+    businessDay: string;
+    directCash: TipLine;
+    collectedByBusiness: TipLine;
+    totalFils: number;
+  }>;
+  payable: { totalOutstandingFils: number; totalUnbatchedFils: number; basis: string };
+}
+
+export type ChannelRole = 'DISCOVERS' | 'CLOSES' | 'BALANCED';
+
+export interface AttributionChannelView {
+  source: string;
+  medium: string;
+  campaign: string | null;
+  visitors: number;
+  enquiries: number;
+  bookings: number;
+  completedVisits: number;
+  revenueFils: number;
+  /** §10.6's rate. `null` where nothing enquired — never a fabricated 0%. */
+  conversionPct: number | null;
+  completionPct: number | null;
+}
+
+/** `GET /reports/attribution?from=&to=` */
+export interface AttributionReportView {
+  from: string;
+  to: string;
+  generatedAt: string;
+  firstTouch: AttributionChannelView[];
+  lastTouch: AttributionChannelView[];
+  gap: Array<{
+    source: string;
+    medium: string;
+    campaign: string | null;
+    firstTouchRevenueFils: number;
+    lastTouchRevenueFils: number;
+    differenceFils: number;
+    firstTouchCompletedVisits: number;
+    lastTouchCompletedVisits: number;
+    role: ChannelRole;
+  }>;
+  totals: {
+    visitors: number;
+    enquiries: number;
+    bookings: number;
+    completedVisits: number;
+    revenueFils: number;
+  };
+  basis: string;
+}

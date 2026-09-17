@@ -51,6 +51,18 @@ export const ErrorCode = {
   GUEST_NOTES_MEDICAL_CONTENT: 'GUEST_NOTES_MEDICAL_CONTENT',
   GUEST_PHONE_TAKEN: 'GUEST_PHONE_TAKEN',
 
+  // Data subject rights and retention (§11.4, §11.6). An erasure is an
+  // ANONYMISATION, so "already erased" is a state of the row rather than a
+  // missing one -- a second erase must not re-hash a number that is no longer
+  // there, and must say so plainly instead of silently doing nothing.
+  GUEST_ALREADY_ERASED: 'GUEST_ALREADY_ERASED',
+  /** No consent of that type was ever recorded for this guest. */
+  CONSENT_NOT_FOUND: 'CONSENT_NOT_FOUND',
+  /** There is one, but it is already withdrawn or was a refusal. Nothing to end. */
+  CONSENT_ALREADY_WITHDRAWN: 'CONSENT_ALREADY_WITHDRAWN',
+  /** `prune_attribution()` is not installed -- the §5.6 migration never ran. */
+  RETENTION_FUNCTION_MISSING: 'RETENTION_FUNCTION_MISSING',
+
   // Employees and the catalogue
   EMPLOYEE_HAS_FUTURE_BOOKINGS: 'EMPLOYEE_HAS_FUTURE_BOOKINGS',
   ROOM_NAME_TAKEN: 'ROOM_NAME_TAKEN',
@@ -84,6 +96,15 @@ export const ErrorCode = {
   // read DEFAULT_BRANCH_ID; if that is unset and the branch is ambiguous there
   // is nothing safe to guess at.
   BRANCH_NOT_CONFIGURED: 'BRANCH_NOT_CONFIGURED',
+
+  // Reporting (§7.4). Reports are read-only, so the only thing they can refuse
+  // is the QUESTION: a window so wide that answering it would take the daily
+  // close-out off its 600 ms budget for everyone else on the branch (§12.1).
+  // A period that ends before it starts is still VALIDATION_FAILED -- it is the
+  // same mistake `resolveTradingWindow` already names everywhere else in the
+  // money layer, and a second code for it would only split the dashboard's
+  // handling in two.
+  REPORT_RANGE_TOO_LARGE: 'REPORT_RANGE_TOO_LARGE',
 
   // Generic
   RATE_LIMITED: 'RATE_LIMITED',
