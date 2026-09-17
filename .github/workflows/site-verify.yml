@@ -1,0 +1,348 @@
+name: Site Verify
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  THE PUBLIC SITE'S PUBLISH DIRECTORY IS AN ALLOWLIST. THIS ENFORCES IT.
+#
+#  The repository root holds the website AND the CRM backend source
+#  (platform/), the architecture spec and the compliance file (docs/), and the
+#  deploy pipeline (.github/). Neither host is told "serve the repo" — both are
+#  told to assemble a directory containing three things and serve that.
+#
+#  docs/runbooks/netlify-to-vercel.md §2 is the human version of this check.
+#  A human runs it once, at cutover, while tired. These jobs run it every time.
+#
+#  ── TWO JOBS, TWO DIFFERENT MOMENTS ──────────────────────────────────────────
+#
+#  publish-dir  runs on every push that touches the site. It builds _site/ with
+#               the command taken OUT OF vercel.json (not a copy of it — the
+#               file itself, so the two cannot drift) and fails if anything but
+#               the three allowed entries lands in it. This catches a leak
+#               BEFORE it is ever deployed.
+#
+#  live-check   runs on demand against a deployed URL. It is runbook §2.1-§2.3
+#               executed rather than read: what must be served, what must NOT
+#               be served, and the security headers. Run it against the
+#               *.vercel.app URL before touching DNS, and again after.
+#
+#  ── WHY THE MUST-NOT-SERVE LIST IS PARTLY GENERATED ──────────────────────────
+#
+#  A hand-written denylist fails open the day someone adds a fourth directory
+#  to the repository root: nobody remembers to add it here. So live-check reads
+#  the actual top-level of the repository at the checked-out commit and asserts
+#  that every entry which is not one of the three allowed ones returns 404.
+#  Add a directory tomorrow and it is covered tomorrow, without an edit.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'privacy.html'
+      - 'assets/**'
+      - 'vercel.json'
+      - 'netlify.toml'
+      - '.github/workflows/site-verify.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'privacy.html'
+      - 'assets/**'
+      - 'vercel.json'
+      - '.github/workflows/site-verify.yml'
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: 'Deployment to check, no trailing slash (e.g. https://xxxx.vercel.app). Leave empty to run the publish-directory check only.'
+        required: false
+        type: string
+      compare_to:
+        description: 'Optional: a second origin to diff headers against, e.g. the site that is live today. Leave empty to skip the diff.'
+        required: false
+        type: string
+
+concurrency:
+  group: site-verify-${{ github.ref }}-${{ github.event.inputs.deployment_url }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────────────
+  #  Does the build produce a publish directory containing ONLY the site?
+  # ───────────────────────────────────────────────────────────────────────────
+  publish-dir:
+    name: Publish directory contains only the site
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build _site using the command from vercel.json itself
+        run: |
+          set -euo pipefail
+          # Read the real command out of the real file. If someone edits
+          # vercel.json, this job tests the edit — not a stale transcription.
+          BUILD_CMD="$(jq -re '.buildCommand' vercel.json)"
+          OUT_DIR="$(jq -re '.outputDirectory' vercel.json)"
+          echo "vercel.json buildCommand:      $BUILD_CMD"
+          echo "vercel.json outputDirectory:   $OUT_DIR"
+          echo "::group::build"
+          bash -c "$BUILD_CMD"
+          echo "::endgroup::"
+          echo "OUT_DIR=$OUT_DIR" >> "$GITHUB_ENV"
+
+      - name: Top level of the publish directory must be exactly the allowlist
+        run: |
+          set -euo pipefail
+          EXPECTED=$'assets\nindex.html\nprivacy.html'
+          ACTUAL="$(cd "$OUT_DIR" && ls -A | sort)"
+
+          echo "--- expected ---"; echo "$EXPECTED"
+          echo "--- actual   ---"; echo "$ACTUAL"
+
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo ""
+            echo "::error::The publish directory is not the allowlist."
+            echo "Anything extra here would be served on the public website."
+            diff <(echo "$EXPECTED") <(echo "$ACTUAL") || true
+            exit 1
+          fi
+          echo "OK — three entries, nothing else."
+
+      - name: No internal file types anywhere inside the publish directory
+        run: |
+          set -euo pipefail
+          # Belt and braces for the case where something internal is copied
+          # INSIDE assets/ rather than at the top level, where the check above
+          # would not see it.
+          FOUND=0
+          while IFS= read -r f; do
+            echo "::error file=$f::internal file inside the publish directory"
+            FOUND=1
+          done < <(find "$OUT_DIR" \( \
+              -name '*.md'      -o -name '*.yml'   -o -name '*.yaml' \
+            -o -name '*.toml'   -o -name '*.lock'  -o -name '*.sql'  \
+            -o -name '*.prisma' -o -name '*.env*'  -o -name '*.pem'  \
+            -o -name '*.key'    -o -name '*.ts'    -o -name '*.tsx'  \
+            -o -name 'package.json' -o -name 'Dockerfile' -o -name 'docker-compose*' \
+            \) -type f | sort)
+
+          [ "$FOUND" -eq 0 ] || { echo "::error::Internal files found in the publish directory."; exit 1; }
+          echo "OK — nothing internal inside."
+
+      - name: Summary
+        run: |
+          set -euo pipefail
+          {
+            echo "### Publish directory"
+            echo ""
+            echo "\`$OUT_DIR/\` holds **$(find "$OUT_DIR" -type f | wc -l) files**, top level:"
+            echo ""
+            echo '```'
+            (cd "$OUT_DIR" && ls -A)
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  #  Runbook §2, executed against a real deployment.
+  # ───────────────────────────────────────────────────────────────────────────
+  live-check:
+    name: Deployed site serves the right thing, and nothing else
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deployment_url != ''
+
+    env:
+      SITE: ${{ github.event.inputs.deployment_url }}
+      COMPARE_TO: ${{ github.event.inputs.compare_to }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Normalise and sanity-check the URL
+        run: |
+          set -euo pipefail
+          SITE="${SITE%/}"
+          case "$SITE" in
+            https://*) ;;
+            *) echo "::error::deployment_url must start with https:// — got '$SITE'"; exit 1 ;;
+          esac
+          echo "SITE=$SITE" >> "$GITHUB_ENV"
+          echo "Checking: $SITE"
+
+      # ── §2.1 ────────────────────────────────────────────────────────────────
+      - name: What MUST be served — every line 200
+        run: |
+          set -euo pipefail
+          FAIL=0
+          for p in \
+            / \
+            /index.html \
+            /privacy.html \
+            /assets/logo/be-relax-logo-dark.png \
+            /assets/photos/hero-team.jpg \
+            /assets/videos/spa-tour-01.mp4 \
+            /assets/js/consent.js \
+          ; do
+            CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$SITE$p" || echo 000)"
+            printf '%s  %s\n' "$CODE" "$p"
+            if [ "$CODE" != "200" ]; then
+              echo "::error::$p returned $CODE, expected 200"
+              FAIL=1
+            fi
+          done
+          # privacy.html especially: the consent banner links to it, and a
+          # banner pointing at a 404 is not consent.
+          [ "$FAIL" -eq 0 ] || exit 1
+
+      # ── §2.2, explicit ──────────────────────────────────────────────────────
+      - name: What must NOT be served — every line 404 (explicit list)
+        run: |
+          set -euo pipefail
+          FAIL=0
+          for p in \
+            /platform/ \
+            /platform/package.json \
+            /platform/pnpm-lock.yaml \
+            /platform/docker-compose.yml \
+            /platform/apps/api/package.json \
+            /platform/apps/api/prisma/schema.prisma \
+            /platform/apps/dashboard/vercel.json \
+            /docs/ \
+            /docs/spa-crm-architecture-spec.md \
+            /docs/compliance/data-processing-register.md \
+            /docs/compliance/privacy-notice.md \
+            /docs/compliance/runbooks/data-breach.md \
+            /docs/runbooks/go-live.md \
+            /docs/runbooks/netlify-to-vercel.md \
+            /docs/sql/verify-core-constraints.sql \
+            /scripts/backup-verify.sh \
+            /.github/workflows/platform-deploy.yml \
+            /.github/workflows/platform-ci.yml \
+            /netlify.toml \
+            /vercel.json \
+            /README.md \
+            /.gitignore \
+            /.env \
+            /.env.example \
+          ; do
+            CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$SITE$p" || echo 000)"
+            printf '%s  %s\n' "$CODE" "$p"
+            if [ "$CODE" != "404" ]; then
+              echo "::error::$p returned $CODE — it must be 404. DO NOT MOVE DNS."
+              FAIL=1
+            fi
+          done
+          [ "$FAIL" -eq 0 ] || {
+            echo "::error::A path that must not be public answered. This is a stop-the-world event — see runbook §2.2."
+            exit 1
+          }
+
+      # ── §2.2, generated from the repository as it actually is ───────────────
+      - name: What must NOT be served — every root entry that is not the site
+        run: |
+          set -euo pipefail
+          FAIL=0
+          ALLOWED='index.html privacy.html assets'
+          while IFS= read -r entry; do
+            case " $ALLOWED " in *" $entry "*) continue ;; esac
+            for p in "/$entry" "/$entry/"; do
+              CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$SITE$p" || echo 000)"
+              printf '%s  %s\n' "$CODE" "$p"
+              if [ "$CODE" != "404" ]; then
+                echo "::error::$p returned $CODE — it must be 404."
+                FAIL=1
+              fi
+            done
+          done < <(git ls-tree --name-only HEAD | sed 's#/$##' | sort -u)
+          [ "$FAIL" -eq 0 ] || exit 1
+
+      # ── §2.3 ────────────────────────────────────────────────────────────────
+      - name: Security headers on every URL class
+        run: |
+          set -euo pipefail
+          FAIL=0
+
+          want_header () {  # url, header-name, expected-value
+            local url="$1" name="$2" want="$3" got
+            got="$(curl -sS -D - -o /dev/null --max-time 25 "$url" \
+                   | tr -d '\r' \
+                   | grep -i "^$name:" | head -1 | sed "s/^[^:]*: *//" | tr 'A-Z' 'a-z')"
+            if [ "$got" != "$(echo "$want" | tr 'A-Z' 'a-z')" ]; then
+              echo "::error::$url — $name is '$got', expected '$want'"
+              FAIL=1
+            else
+              printf '  ok  %-22s %s\n' "$name" "$url"
+            fi
+          }
+
+          for p in / /index.html /privacy.html /assets/js/consent.js; do
+            want_header "$SITE$p" 'x-content-type-options' 'nosniff'
+            want_header "$SITE$p" 'x-frame-options'        'SAMEORIGIN'
+            want_header "$SITE$p" 'referrer-policy'        'strict-origin-when-cross-origin'
+            want_header "$SITE$p" 'permissions-policy'     'geolocation=(), microphone=(), camera=()'
+          done
+
+          # The pages that must always revalidate. privacy.html is the serious
+          # one: it carries the version string consent records are filed
+          # against, and a stale copy is a consent problem, not a perf one.
+          for p in / /index.html /privacy.html; do
+            want_header "$SITE$p" 'cache-control' 'public, max-age=0, must-revalidate'
+          done
+
+          for p in /assets/js/consent.js /assets/photos/hero-team.jpg; do
+            want_header "$SITE$p" 'cache-control' 'public, max-age=3600, must-revalidate'
+          done
+
+          [ "$FAIL" -eq 0 ] || exit 1
+
+      - name: Privacy version string is reachable and parseable
+        run: |
+          set -euo pipefail
+          # Consent records are filed against this exact string. If the
+          # deployed page does not carry it, consent cannot be versioned.
+          V="$(curl -sS --max-time 25 "$SITE/privacy.html" \
+               | grep -o 'name="berelax:privacy-version"[^>]*' | head -1)"
+          if [ -z "$V" ]; then
+            echo "::error::privacy.html does not carry the berelax:privacy-version meta tag"
+            exit 1
+          fi
+          echo "  ok  $V"
+
+      - name: Optional — diff headers against the site that is live today
+        if: env.COMPARE_TO != ''
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          OTHER="${COMPARE_TO%/}"
+          hdrs () {
+            curl -sS -D - -o /dev/null --max-time 25 "$1" \
+              | tr -d '\r' \
+              | grep -iE '^(x-content-type-options|x-frame-options|referrer-policy|permissions-policy|cache-control):' \
+              | tr 'A-Z' 'a-z' | sed 's/: */: /' | sort
+          }
+          for p in /privacy.html /assets/photos/hero-team.jpg; do
+            echo "--- $p ---"
+            diff <(hdrs "$OTHER$p") <(hdrs "$SITE$p") && echo "  identical"
+          done
+          # `/` may legitimately differ: netlify.toml sets its no-cache rule on
+          # /index.html, vercel.json sets it on / as well. More revalidation,
+          # never less. Shown for the record, not enforced.
+          echo "--- / (informational) ---"
+          diff <(hdrs "$OTHER/") <(hdrs "$SITE/") || true
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Deployment check"
+            echo ""
+            echo "Target: \`$SITE\`"
+            echo ""
+            echo "- must-serve paths → 200"
+            echo "- must-not-serve paths → 404 (explicit list + every repo root entry)"
+            echo "- security headers + cache-control per URL class"
+            echo "- privacy version meta tag present"
+          } >> "$GITHUB_STEP_SUMMARY"

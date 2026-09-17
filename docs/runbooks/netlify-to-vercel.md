@@ -29,6 +29,29 @@ was never copied in. Keep it that way. Do not replace it with rules that block
 `platform/` and `docs/` by name — that is a denylist, and a denylist fails open
 the day someone adds a fourth directory.
 
+> **The allowlist is not quite enough on its own.** `assets/` is copied whole,
+> and it contained six internal `README.md` files describing the site's own file
+> layout. They were live on the public site for as long as the site has been up.
+> Both build commands now end in `find _site -name '*.md' -delete`, and both
+> hosts run the identical command so the two trees stay byte-for-byte the same
+> during the migration. The lesson generalises: an allowlist of *directories*
+> still admits whatever is inside them.
+
+**This section is now also a CI job.** `.github/workflows/site-verify.yml` runs
+`publish-dir` on every push that touches the site: it reads `buildCommand` and
+`outputDirectory` out of `vercel.json` itself — not a copy — builds the
+directory, and fails if the top level is anything other than the three allowed
+entries or if any internal file type appears anywhere inside. The checks in §2
+below are the same workflow's `live-check` job, run against a deployment URL.
+Run it rather than reading it:
+
+> **Actions → Site Verify → Run workflow →** paste the `*.vercel.app` URL into
+> `deployment_url`, and optionally the currently-live origin into `compare_to`.
+> It executes §2.1, §2.2 and §2.3 and goes red on any failure. §2.2's
+> must-not-serve list is partly generated from the repository's actual root at
+> the checked-out commit, so a directory added later is covered without an edit
+> here.
+
 > `vercel.json` is strict JSON. It cannot carry comments, and Vercel rejects
 > unknown keys, so there is nowhere in that file to write any of this down.
 > **This runbook is where the reasoning lives.** If you change `vercel.json`,
