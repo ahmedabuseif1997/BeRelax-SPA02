@@ -28,17 +28,26 @@ import { ConsentType, ErrorCode } from '@berelax/contracts';
 import { seed } from '../prisma/seed';
 import { bootstrapTestApp, getPrisma, resetDatabase, route } from './setup-e2e';
 import type { PrismaService } from '../src/prisma/prisma.service';
+import { validateEnv } from '../src/config/env';
 import type { INestApplication } from '@nestjs/common';
 
 /** Pinned, for the same reason the invariant suite pins it: a fixture that moves with the clock fails once a quarter. */
 const SEED_ANCHOR_DAY = '2026-09-16';
 
 /**
- * The salt the application booted with. `validateEnv` supplies this default
- * outside production, and reading it the same way here is what lets the suite
- * recompute a token the API wrote — which is the whole stability claim.
+ * The salt the application actually booted with.
+ *
+ * Resolved through `validateEnv`, not `process.env`, because they disagree:
+ * validateEnv treats an empty string as absent so that a key left blank in
+ * .env.example falls back to its default, while `process.env.X ?? default`
+ * keeps the empty string. With ERASURE_SALT="" the app hashes with the default
+ * and this file hashed with "", and the suite failed on a token mismatch that
+ * had nothing to do with erasure.
+ *
+ * Anything that recomputes what the API wrote has to read config the way the
+ * API reads it.
  */
-const ERASURE_SALT = process.env.ERASURE_SALT ?? 'dev-only-erasure-salt-change-me';
+const ERASURE_SALT = validateEnv(process.env).ERASURE_SALT;
 
 function expectedToken(phone: string): string {
   return `erased:${createHash('sha256').update(`${phone}${ERASURE_SALT}`).digest('hex').slice(0, 24)}`;
