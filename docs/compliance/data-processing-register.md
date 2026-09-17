@@ -52,7 +52,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **Collected from** | The data subject, directly, via `POST /v1/public/booking-requests` |
 | **Recipients** | Reception, managers and the owner (`RECEPTIONIST+`). Not therapists. |
 | **Processors** | Supabase (storage), Vercel (API compute), Netlify (serves the form) |
-| **Storage** | Supabase PostgreSQL, `[TO BE COMPLETED: region]` |
+| **Storage** | Supabase PostgreSQL, AWS `eu-central-1` (Frankfurt, Germany) — provisioned 2026-09-17 |
 | **Transfer safeguard** | See [§4 Cross-border transfer](#4-cross-border-transfer) |
 | **Retention** | No **time-based** retention rule exists for `booking_requests`. **This is a gap** — see [G4](#5-known-gaps-between-the-specification-and-the-code). Converted enquiries inherit the reservation's 5-year life; declined and spam enquiries are currently kept indefinitely. |
 | **On erasure** | Enquiries are matched on `guest_id` **or** on a bare `guest_phone` (so an enquiry that was never converted is still caught) and rewritten: `guest_name` → `Erased guest`, `guest_phone` → the salted token, `guest_email` → `NULL`, `message` → `NULL`. The free text goes with the person. |
@@ -74,7 +74,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 | **Collected from** | The data subject, directly (at the desk, by phone, by WhatsApp, or converted from A1) |
 | **Recipients** | `RECEPTIONIST+` for the guest book. Therapists see **their own** bookings only, and cannot read the guest list. |
 | **Processors** | Supabase, Vercel (API compute, and the manager dashboard renders this data in the browser) |
-| **Storage** | Supabase PostgreSQL, `[TO BE COMPLETED: region]` |
+| **Storage** | Supabase PostgreSQL, AWS `eu-central-1` (Frankfurt, Germany) — provisioned 2026-09-17 |
 | **Retention** | Guest identity: **3 years** after last visit, then anonymised by `RetentionService` (`GUEST_RETENTION_YEARS`, read from configuration and never from a request body — "an endpoint that lets a caller shorten them is an endpoint that makes the register a lie"). Reservations: **5 years**, with the guest fields already severed. Triggered by `POST /v1/compliance/retention/run` (`OWNER`), which supports `dryRun` and a `limit`, and reports candidates, anonymised, remaining and failures. |
 | **Erasure** | Anonymisation, not deletion: `full_name` → `Erased guest`, `email` → `NULL`, `notes` → `NULL`, `phone` → a salted SHA-256 token (uniqueness-checked against the branch, so the `(branch_id, phone)` index cannot collide), plus `anonymised_at` and `deleted_at` stamped so the shell leaves reception's guest book entirely. `reservations.notes` is cleared as well — free text is neither an amount nor a date, so the five-year obligation does not reach it, and free text is exactly where a person hides. `ERASURE_SALT` must never be rotated — rotation orphans every already-erased record. |
 | **One code path** | The retention job does **not** write its own anonymisation. It calls the same `GuestErasureService.erase()` the rights endpoint calls, so §11.4 and §11.6 cannot drift into two different definitions of "erased". |
@@ -294,7 +294,7 @@ the database so an auditor can verify the claim rather than take it on trust.
 
 | Processor | Role | What it can see | Location | DPA |
 |---|---|---|---|---|
-| **Supabase** | Managed PostgreSQL — the primary data store | **Everything.** Every table in this register. Supabase staff have the access their platform terms describe. | AWS, `[TO BE COMPLETED: region — Frankfurt `eu-central-1` intended]` | `[TO BE COMPLETED: signed DPA on file — date and countersignature]` |
+| **Supabase** | Managed PostgreSQL — the primary data store | **Everything.** Every table in this register. Supabase staff have the access their platform terms describe. | AWS `eu-central-1` (Frankfurt, Germany) — **provisioned**, project `berelax-crm-prod`, 2026-09-17 | `[TO BE COMPLETED: signed DPA on file — date and countersignature]` |
 | **Vercel** | Hosts **both** the NestJS API (`apps/api`, serverless functions — moved here from Railway) and the manager dashboard (`apps/dashboard`, Next.js). Two projects, one processor and one DPA. | All data in transit through the API, plus environment secrets (`JWT_SECRET`, `ERASURE_SALT`, database credentials) and application logs containing IP addresses; and whatever a signed-in staff member's browser requests — guest records, bookings, payments, reports | Both projects pin `regions: ["fra1"]` in `vercel.json` and must match the Supabase region. `[TO BE COMPLETED: confirm the deployed region of each project]` | `[TO BE COMPLETED]` |
 | **Netlify** | Hosts the public static site (`index.html` and assets) — configured in `netlify.toml` | **No guest database access.** The site is static; the publish directory is assembled to exclude `platform/` and `docs/`. Netlify sees visitor request logs (IP, user agent, referrer) for the public site. | `[TO BE COMPLETED: Netlify edge — global]` | `[TO BE COMPLETED]` |
 | **Cloudflare** | Intended for Turnstile (bot protection on the public booking form) and/or CDN/DNS | Would see the visitor's IP and the Turnstile challenge on form submission | Global edge | `[TO BE COMPLETED]` |
@@ -314,8 +314,8 @@ United Arab Emirates.
 
 | | |
 |---|---|
-| **Destination** | `[TO BE COMPLETED: country and region actually provisioned]` |
-| **Intended choice** | Frankfurt (`eu-central-1`), on the reasoning that the surrounding GDPR regime gives the strongest available argument on adequacy |
+| **Destination** | **Germany — AWS `eu-central-1` (Frankfurt)**, provisioned 2026-09-17. Matches the `regions: ["fra1"]` already pinned in both Vercel projects, so the database and the API sit in one jurisdiction and this notice names one country rather than two. |
+| **Choice made** | Frankfurt (`eu-central-1`), on the reasoning that the surrounding GDPR regime gives the strongest available argument on adequacy. A first attempt provisioned Mumbai (`ap-south-1`) on latency grounds; that is not the criterion a cross-border transfer turns on, it would have split the database from the Frankfurt-pinned API across two jurisdictions, and it was **paused** empty (verified zero rows in every table) and re-provisioned in Frankfurt before any guest data existed. The paused Mumbai project `berelax-crm` still exists and must be **deleted** from the Supabase dashboard — pausing is not deletion, and an empty-but-present project in the wrong jurisdiction is a thing a future reader has to explain. |
 | **Safeguard relied on** | `[TO BE COMPLETED BY COUNSEL]` — one of: an adequacy determination recognised by the UAE Data Office (PDPL Art. 22), an appropriate contractual undertaking (Art. 23), or the data subject's express consent |
 | **Decision recorded by** | `[TO BE COMPLETED: name and date of the person who provisioned the region]` |
 
