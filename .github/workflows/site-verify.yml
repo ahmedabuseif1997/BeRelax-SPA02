@@ -294,35 +294,62 @@ jobs:
       # ── §2.3 ────────────────────────────────────────────────────────────────
       - name: Security headers on every URL class
         run: |
-          set -euo pipefail
+          set -uo pipefail   # deliberately NOT -e; see below
           FAIL=0
           H=/tmp/hdrs.txt
 
-          fetch () {  # one request, all headers, then read them from disk
-            curl -sS -D "$H" -o /dev/null --max-time 25 "$1" || return 1
-            tr -d '\r' < "$H" > "$H.clean" && mv "$H.clean" "$H"
+          #  No `set -e` in this step, on purpose. The first version had it, and
+          #  a `grep` for a header that is absent returns 1, which under -e and
+          #  pipefail killed the script before it could print WHICH header was
+          #  missing. The step failed in under a second with no output — the
+          #  least useful possible result from a check whose entire job is to
+          #  say what is wrong. Every lookup below tolerates its own failure and
+          #  reports it instead.
+
+          hdr () {  # header-name -> value, lowercased, empty if absent
+            grep -i "^$1:" "$H" 2>/dev/null | head -1 | sed 's/^[^:]*: *//' | tr 'A-Z' 'a-z'
+            return 0
           }
 
-          want () {  # url, header-name, expected-value  (reads the saved response)
-            local url="$1" name="$2" want="$3" got
-            got="$(grep -i "^$name:" "$H" | head -1 | sed 's/^[^:]*: *//' | tr 'A-Z' 'a-z')"
-            if [ "$got" != "$(echo "$want" | tr 'A-Z' 'a-z')" ]; then
-              echo "::error::$url — $name is '$got', expected '$want'"
+          want () {  # url, header-name, expected-value
+            local url="$1" name="$2" expect="$3" got
+            got="$(hdr "$name")"
+            if [ "$got" = "$(echo "$expect" | tr 'A-Z' 'a-z')" ]; then
+              printf '  ok      %-24s %s\n' "$name" "$url"
+            elif [ -z "$got" ]; then
+              printf '  ABSENT  %-24s %s\n' "$name" "$url"
+              echo "::error::$url is missing the $name header (expected '$expect')"
               FAIL=1
             else
-              printf '  ok  %-24s %s\n' "$name" "$url"
+              printf '  WRONG   %-24s %s\n' "$name" "$url"
+              echo "::error::$url — $name is '$got', expected '$expect'"
+              FAIL=1
             fi
           }
 
           check_url () {  # url, expected cache-control
             local url="$1" cc="$2"
-            fetch "$url" || { echo "::error::could not fetch $url"; FAIL=1; return; }
+            echo "── $url"
+            if ! curl -sS -D "$H" -o /dev/null --max-time 25 "$url"; then
+              echo "::error::could not fetch $url"; FAIL=1; return 0
+            fi
+            tr -d '\r' < "$H" > "$H.clean" && mv "$H.clean" "$H"
+
             want "$url" 'x-content-type-options' 'nosniff'
             want "$url" 'x-frame-options'        'SAMEORIGIN'
             want "$url" 'referrer-policy'        'strict-origin-when-cross-origin'
             want "$url" 'permissions-policy'     'geolocation=(), microphone=(), camera=()'
             want "$url" 'cache-control'          "$cc"
+
+            # When something is off, show what the host actually sent. Guessing
+            # from an expected-vs-got line alone is how the next hour is wasted.
+            if [ "$FAIL" -ne 0 ]; then
+              echo "  --- response headers as received ---"
+              sed 's/^/      /' "$H"
+              echo "  ------------------------------------"
+            fi
             sleep 0.5
+            return 0
           }
 
           # The pages that must always revalidate. privacy.html is the serious
@@ -336,6 +363,7 @@ jobs:
           check_url "$SITE/assets/photos/hero-team.jpg" 'public, max-age=3600, must-revalidate'
 
           [ "$FAIL" -eq 0 ] || exit 1
+          echo "All header classes correct."
 
       - name: Privacy version string is reachable and parseable
         run: |
