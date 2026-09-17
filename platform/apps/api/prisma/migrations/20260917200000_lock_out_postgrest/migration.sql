@@ -50,8 +50,26 @@
 
 DO $lock_out$
 DECLARE
-  r record;
+  r       record;
+  v_roles text;
 BEGIN
+  -- WHICH OF POSTGREST'S ROLES ACTUALLY EXIST HERE?
+  --
+  -- On Supabase, both. On a stock PostgreSQL — a developer's laptop, and the
+  -- postgres:16-alpine service Platform CI runs against — neither, because
+  -- there is no PostgREST and nothing was ever granted to it. The first
+  -- version of this migration named them unconditionally and CI failed with
+  -- `role "anon" does not exist`, which is the correct response to a
+  -- migration that assumed its own deployment target.
+  --
+  -- Detecting rather than assuming does NOT weaken the control. RLS below is
+  -- enabled unconditionally, on every database; the REVOKE is the second of
+  -- the two mechanisms and it is only meaningful where the grantee exists.
+  SELECT string_agg(quote_ident(rolname), ', ' ORDER BY rolname)
+    INTO v_roles
+    FROM pg_roles
+   WHERE rolname IN ('anon', 'authenticated');
+
   FOR r IN
     SELECT c.relname
       FROM pg_class c
@@ -60,15 +78,42 @@ BEGIN
        AND c.relkind = 'r'
   LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', r.relname);
-    EXECUTE format('REVOKE ALL ON public.%I FROM anon, authenticated', r.relname);
+    IF v_roles IS NOT NULL THEN
+      EXECUTE format('REVOKE ALL ON public.%I FROM %s', r.relname, v_roles);
+    END IF;
   END LOOP;
+
+  IF v_roles IS NULL THEN
+    RAISE NOTICE
+      'Neither anon nor authenticated exists on this database, so there is no PostgREST '
+      'grant to revoke. RLS has still been enabled on every table. Expected on local '
+      'PostgreSQL and in CI; if you see this against Supabase, stop and investigate.';
+  ELSE
+    RAISE NOTICE 'RLS enabled on every table in public, and all privileges revoked from %.', v_roles;
+  END IF;
 END
 $lock_out$;
 
--- Nothing new should be granted to those roles by default either.
-ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES    FROM anon, authenticated;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM anon, authenticated;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON FUNCTIONS FROM anon, authenticated;
+-- Nothing new should be granted to those roles by default either — same
+-- existence check, same reason.
+DO $default_privs$
+DECLARE
+  v_roles text;
+BEGIN
+  SELECT string_agg(quote_ident(rolname), ', ' ORDER BY rolname)
+    INTO v_roles
+    FROM pg_roles
+   WHERE rolname IN ('anon', 'authenticated');
+
+  IF v_roles IS NULL THEN
+    RETURN;
+  END IF;
+
+  EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES    FROM %s', v_roles);
+  EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM %s', v_roles);
+  EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON FUNCTIONS FROM %s', v_roles);
+END
+$default_privs$;
 
 -- Refuse to finish if a single table was missed. A migration that half-applies
 -- a security control is worse than one that fails, because it reports success.
